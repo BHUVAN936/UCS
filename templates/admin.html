@@ -1,0 +1,732 @@
+{% extends "base.html" %}
+
+{% block title %}
+Admin Portal | UCE Connect
+{% endblock %}
+
+{% block content %}
+
+<section class="admin-page">
+
+    <div class="container">
+
+        <!-- =====================================================
+             ADMIN HEADER
+        ====================================================== -->
+
+        <div class="module-page-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    ADMINISTRATOR
+                </p>
+
+                <h1>
+                    Data Management & Progress
+                </h1>
+
+                <p>
+                    Monitor every user link submission,
+                    imported record and module.
+                </p>
+
+            </div>
+
+
+            <div class="admin-header-actions">
+
+                <span class="admin-badge">
+
+                    <i class="fa-solid fa-shield-halved"></i>
+
+                    Admin Portal
+
+                </span>
+
+
+                <a
+                    class="header-button"
+                    href="{{ url_for('main.admin_report') }}"
+                >
+
+                    <i class="fa-solid fa-chart-pie"></i>
+
+                    Full Report
+
+                </a>
+
+
+                <a
+                    class="outline-button"
+                    href="{{ url_for('main.admin_report_pdf') }}"
+                >
+
+                    <i class="fa-solid fa-file-pdf"></i>
+
+                    PDF Report
+
+                </a>
+
+
+                <a
+                    class="outline-button"
+                    href="{{ url_for('main.admin_data') }}"
+                >
+
+                    View All Data
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             OVERALL STATISTICS
+        ====================================================== -->
+
+        <section class="stats">
+
+            <div class="container stats-grid">
+
+                <div>
+
+                    <strong>
+                        {{ "{:,}".format(university_report.total_records) }}
+                    </strong>
+
+                    <span>
+                        Total Records
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        {{ university_report.total_uploads }}
+                    </strong>
+
+                    <span>
+                        User Submissions
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        {{ university_report.populated_modules }}/{{ university_report.total_modules }}
+                    </strong>
+
+                    <span>
+                        Modules With Data
+                    </span>
+
+                </div>
+
+
+                <div>
+
+                    <strong>
+                        {{ university_report.populated_categories }}/{{ university_report.total_categories }}
+                    </strong>
+
+                    <span>
+                        Categories With Data
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             MODULE PROGRESS
+        ====================================================== -->
+
+        <section class="upload-panel">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        MODULE PROGRESS
+                    </p>
+
+                    <h2>
+                        Current Data Coverage
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="specific-upload-grid">
+
+                {% for module in university_report.modules %}
+
+                <article class="specific-upload-card">
+
+
+                    <!-- MODULE HEADER -->
+
+                    <div class="specific-heading">
+
+                        <span class="module-icon">
+
+                            <i
+                                class="fa-solid {{ module.icon|default('fa-folder') }}"
+                            ></i>
+
+                        </span>
+
+
+                        <div>
+
+                            <small>
+                                {{ "%02d"|format(loop.index) }}
+                            </small>
+
+                            <h3>
+                                {{ module.name }}
+                            </h3>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- MODULE DESCRIPTION -->
+
+                    <p>
+
+                        {{ module.description|default(
+                            "University information module."
+                        ) }}
+
+                    </p>
+
+
+                    <!-- RECORD COUNT -->
+
+                    <h3>
+
+                        {{ "{:,}".format(module.total_records|default(0)) }}
+
+                        records
+
+                    </h3>
+
+
+                    <!-- =================================================
+                         CATEGORY / SUB MODULE COUNTS
+                    ================================================== -->
+
+                    {% if module.categories %}
+
+                        {% for category in module.categories %}
+
+                        <div
+                            style="
+                                display:flex;
+                                justify-content:space-between;
+                                align-items:center;
+                                gap:15px;
+                                margin:10px 0;
+                                padding:10px 12px;
+                                border-radius:8px;
+                                background:rgba(0,0,0,0.03);
+                            "
+                        >
+
+                            <span>
+
+                                {% if category.name is defined %}
+
+                                    {{ category.name }}
+
+                                {% else %}
+
+                                    {{ category }}
+
+                                {% endif %}
+
+                            </span>
+
+
+                            <strong>
+
+                                {% if category.count is defined %}
+
+                                    {{ category.count }}
+
+                                {% elif module.category_counts is defined %}
+
+                                    {{ module.category_counts.get(category, 0) }}
+
+                                {% else %}
+
+                                    0
+
+                                {% endif %}
+
+                            </strong>
+
+                        </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div
+                            style="
+                                padding:12px;
+                                margin:10px 0;
+                                border-radius:8px;
+                                background:rgba(0,0,0,0.03);
+                            "
+                        >
+
+                            No category data available.
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- =================================================
+                         MODULE ACTIONS
+                    ================================================== -->
+
+                    <div
+                        style="
+                            display:flex;
+                            flex-wrap:wrap;
+                            gap:10px;
+                            margin-top:18px;
+                        "
+                    >
+
+                        <!-- MODULE REPORT -->
+
+                        <a
+                            class="outline-button"
+                            href="{{ url_for('main.admin_module_report', module=module_key) }}"
+                        >
+
+                            <i class="fa-solid fa-chart-line"></i>
+
+                            Module Report
+
+                        </a>
+
+
+                        <!-- MODULE DATA -->
+
+                        <a
+                            class="outline-button"
+                            href="{{ url_for(
+                                'main.admin_data',
+                                module=module.key
+                            ) }}"
+                        >
+
+                            <i class="fa-solid fa-table"></i>
+
+                            View Module Data
+
+                        </a>
+
+                    </div>
+
+
+                </article>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             LIVE OVERALL REPORT
+        ====================================================== -->
+
+        <section class="admin-report-preview">
+
+            <div>
+
+                <p class="eyebrow">
+                    LIVE REPORT
+                </p>
+
+
+                <h2>
+
+                    {{ "{:,}".format(
+                        university_report.total_records
+                    ) }}
+
+                    records are currently stored
+
+                </h2>
+
+
+                <p>
+
+                    {{ university_report.populated_modules }}
+
+                    of
+
+                    {{ university_report.total_modules }}
+
+                    modules contain data.
+
+                    The report is generated from the
+                    current database.
+
+                </p>
+
+            </div>
+
+
+            <div class="report-preview-actions">
+
+
+                <!-- OVERALL REPORT -->
+
+                <a
+                    class="header-button"
+                    href="{{ url_for('main.admin_report') }}"
+                >
+
+                    View Full Report
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </a>
+
+
+                <!-- CSV -->
+
+                <a
+                    class="outline-button"
+                    href="{{ url_for('main.admin_report_csv') }}"
+                >
+
+                    CSV
+
+                </a>
+
+
+                <!-- PDF -->
+
+                <a
+                    class="outline-button"
+                    href="{{ url_for('main.admin_report_pdf') }}"
+                >
+
+                    PDF
+
+                </a>
+
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             USER SUBMITTED LINKS
+        ====================================================== -->
+
+        <section class="uploads-history">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <p class="eyebrow">
+                        DATA CONTROL
+                    </p>
+
+                    <h2>
+                        User Submitted Links
+                    </h2>
+
+                </div>
+
+
+                <p>
+
+                    Users submit links only.
+                    No file upload is used in the user portal.
+
+                </p>
+
+            </div>
+
+
+            {% if uploads %}
+
+            <div class="history-table-wrapper">
+
+                <table class="history-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Dataset
+                            </th>
+
+                            <th>
+                                User
+                            </th>
+
+                            <th>
+                                Mode
+                            </th>
+
+                            <th>
+                                Target
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Records
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Source
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for upload in uploads %}
+
+                        <tr>
+
+                            <!-- DATASET -->
+
+                            <td>
+
+                                <strong>
+                                    {{ upload.title }}
+                                </strong>
+
+                            </td>
+
+
+                            <!-- USER -->
+
+                            <td>
+
+                                {{ upload.uploader_name or 'Unknown' }}
+
+                                <br>
+
+                                <small>
+                                    {{ upload.uploader_email or '' }}
+                                </small>
+
+                            </td>
+
+
+                            <!-- MODE -->
+
+                            <td>
+
+                                {{ upload.upload_mode|title }}
+
+                            </td>
+
+
+                            <!-- TARGET -->
+
+                            <td>
+
+                                {% if
+                                    upload.target_module
+                                    and modules.get(upload.target_module)
+                                %}
+
+                                    {{ modules[
+                                        upload.target_module
+                                    ].name }}
+
+
+                                    {% if upload.target_category %}
+
+                                        <br>
+
+                                        {{
+                                            modules[
+                                                upload.target_module
+                                            ].categories.get(
+                                                upload.target_category,
+                                                upload.target_category
+                                            )
+                                        }}
+
+                                    {% endif %}
+
+                                {% else %}
+
+                                    Automatic classification
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- STATUS -->
+
+                            <td>
+
+                                {{ upload.status|title }}
+
+                                {% if upload.error_message %}
+
+                                    <br>
+
+                                    <small>
+                                        {{ upload.error_message }}
+                                    </small>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- RECORD COUNT -->
+
+                            <td>
+
+                                {{ upload.row_count }}
+
+                            </td>
+
+
+                            <!-- DATE -->
+
+                            <td>
+
+                                {{ upload.created_at }}
+
+                            </td>
+
+
+                            <!-- SOURCE -->
+
+                            <td>
+
+                                <a
+                                    href="{{ upload.source_url }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+
+                                    Open Link
+
+                                </a>
+
+                            </td>
+
+
+                            <!-- DELETE -->
+
+                            <td>
+
+                                <form
+                                    method="post"
+                                    action="{{
+                                        url_for(
+                                            'main.remove_upload',
+                                            upload_id=upload.id
+                                        )
+                                    }}"
+                                    data-delete-form
+                                >
+
+                                    <button
+                                        type="submit"
+                                        class="delete-button"
+                                    >
+
+                                        <i
+                                            class="fa-solid fa-trash"
+                                        ></i>
+
+                                        Delete
+
+                                    </button>
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {% else %}
+
+
+            <div class="empty-state">
+
+                <i
+                    class="fa-regular fa-folder-open"
+                ></i>
+
+                <p>
+                    No user submissions yet.
+                </p>
+
+            </div>
+
+
+            {% endif %}
+
+        </section>
+
+
+    </div>
+
+</section>
+
+{% endblock %}

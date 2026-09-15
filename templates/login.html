@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}
+Login | UCE Connect
+{% endblock %}
+
+
+{% block content %}
+
+<section class="auth-page">
+
+    <div class="container auth-wrap">
+
+        <div class="auth-card">
+
+            <span class="eyebrow">
+                UCE CONNECT
+            </span>
+
+
+            <h1>
+                Welcome back.
+            </h1>
+
+
+            <p>
+                Login to access the University Information Portal.
+            </p>
+
+
+            <form
+                method="POST"
+                action="{{ url_for('main.login') }}"
+                class="auth-form"
+                autocomplete="on"
+            >
+
+
+                <input
+                    type="hidden"
+                    name="next"
+                    value="{{ request.args.get('next', '') }}"
+                >
+
+
+                <!-- EMAIL -->
+
+                <label>
+
+                    Email
+
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        required
+                        autocomplete="email"
+                    >
+
+                </label>
+
+
+                <!-- PASSWORD -->
+
+                <label>
+
+                    Password
+
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+
+                </label>
+
+
+                <!-- LOGIN -->
+
+                <button
+                    type="submit"
+                    class="primary-button auth-submit"
+                >
+
+                    Login
+
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+            </form>
+
+
+            <!-- REGISTER -->
+
+            <div class="auth-footer">
+
+                <span>
+                    Don't have an account?
+                </span>
+
+
+                <a
+                    href="{{ url_for('main.register') }}"
+                >
+                    Create account
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

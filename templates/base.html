@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="UCE Connect - University Information Portal"
+    >
+
+    <title>
+        {% block title %}UCE Connect{% endblock %}
+    </title>
+
+
+    <!-- Prevent theme flash -->
+    <script>
+        (function () {
+
+            const savedTheme =
+                localStorage.getItem("uce-theme");
+
+            const theme =
+                savedTheme === "dark"
+                    ? "dark"
+                    : "light";
+
+            document.documentElement.setAttribute(
+                "data-theme",
+                theme
+            );
+
+        })();
+    </script>
+
+
+    <!-- Google Fonts -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- Font Awesome -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+
+    <!-- Main CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+
+    {% block head %}{% endblock %}
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="site-header">
+
+        <div class="container navigation">
+
+
+            <!-- BRAND -->
+
+            <a
+                href="{{ url_for('main.home') }}"
+                class="brand"
+            >
+
+                <div class="brand-logo">
+                    UCE
+                </div>
+
+                <div class="brand-text">
+
+                    <strong>
+                        UCE Connect
+                    </strong>
+
+                    <span>
+                        University Information Portal
+                    </span>
+
+                </div>
+
+            </a>
+
+
+            <!-- MOBILE MENU -->
+
+            <button
+                class="mobile-menu-button"
+                id="mobileMenuButton"
+                type="button"
+                aria-label="Open navigation"
+                aria-expanded="false"
+            >
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+
+            <!-- NAVIGATION -->
+
+            <nav
+                class="main-navigation"
+                id="mainNavigation"
+            >
+
+                <a href="{{ url_for('main.home') }}">
+                    Home
+                </a>
+
+                <a href="{{ url_for('main.home') }}#modules">
+                    Modules
+                </a>
+
+                <a href="{{ url_for('main.home') }}#updates">
+                    Updates
+                </a>
+
+                <a href="{{ url_for('main.about') }}">
+                    About
+                </a>
+
+
+                {% if current_user and current_user.role == 'admin' %}
+
+                    <a href="{{ url_for('main.admin') }}">
+                        Admin
+                    </a>
+
+                {% endif %}
+
+            </nav>
+
+
+            <!-- HEADER ACTIONS -->
+
+            <div class="header-actions">
+
+
+                <!-- THEME TOGGLE -->
+
+                <button
+                    class="theme-toggle"
+                    id="themeToggle"
+                    type="button"
+                    aria-label="Switch to dark mode"
+                    title="Switch to dark mode"
+                >
+
+                    <i class="fa-solid fa-moon"></i>
+
+                </button>
+
+
+                {% if current_user %}
+
+
+                    <!-- LOGGED-IN USER -->
+
+                    <span class="user-pill">
+
+                        <i class="fa-solid fa-user"></i>
+
+                        {{ current_user.name }}
+
+                    </span>
+
+
+                    <!-- ADMIN -->
+
+                    {% if current_user.role == 'admin' %}
+
+                        <a
+                            href="{{ url_for('main.admin') }}"
+                            class="header-button secondary-button"
+                        >
+                            Admin
+                        </a>
+
+                    {% endif %}
+
+
+                    <!-- LOGOUT -->
+
+                    <a
+                        href="{{ url_for('main.logout') }}"
+                        class="header-button secondary-button"
+                    >
+                        Logout
+                    </a>
+
+
+                {% else %}
+
+
+                    <!-- LOGIN -->
+
+                    <a
+                        href="{{ url_for('main.login') }}"
+                        class="header-link"
+                    >
+                        Login
+                    </a>
+
+
+                    <!-- REGISTER -->
+
+                    <a
+                        href="{{ url_for('main.register') }}"
+                        class="header-button"
+                    >
+                        Register
+                    </a>
+
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         FLASH MESSAGES
+         ===================================================== -->
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+            <div class="container flash-container">
+
+                {% for category, message in messages %}
+
+                    <div class="flash {{ category }}">
+
+                        <span>
+                            {{ message }}
+                        </span>
+
+                        <button
+                            type="button"
+                            class="flash-close"
+                            onclick="this.parentElement.remove()"
+                            aria-label="Close message"
+                        >
+                            &times;
+                        </button>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+         ===================================================== -->
+
+    <main>
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+
+    <!-- =====================================================
+         FOOTER
+         ===================================================== -->
+
+    <footer class="site-footer">
+
+        <div class="container footer-grid">
+
+
+            <!-- FOOTER MAIN -->
+
+            <div class="footer-main">
+
+                <a
+                    href="{{ url_for('main.home') }}"
+                    class="brand footer-brand"
+                >
+
+                    <div class="brand-logo">
+                        UCE
+                    </div>
+
+                    <div class="brand-text">
+
+                        <strong>
+                            UCE Connect
+                        </strong>
+
+                        <span>
+                            University Information Portal
+                        </span>
+
+                    </div>
+
+                </a>
+
+                <p>
+                    A unified interface for university information,
+                    analytics and updates.
+                </p>
+
+            </div>
+
+
+            <!-- PORTAL -->
+
+            <div class="footer-column">
+
+                <h4>
+                    Portal
+                </h4>
+
+                <a href="{{ url_for('main.home') }}">
+                    Home
+                </a>
+
+                <a href="{{ url_for('main.home') }}#modules">
+                    Modules
+                </a>
+
+                <a href="{{ url_for('main.about') }}">
+                    About
+                </a>
+
+            </div>
+
+
+            <!-- ACCOUNT -->
+
+            <div class="footer-column">
+
+                <h4>
+                    Account
+                </h4>
+
+
+                {% if current_user %}
+
+
+                    {% if current_user.role == 'admin' %}
+
+                        <a href="{{ url_for('main.admin') }}">
+                            Admin Portal
+                        </a>
+
+                    {% endif %}
+
+
+                    <a href="{{ url_for('main.logout') }}">
+                        Logout
+                    </a>
+
+
+                {% else %}
+
+
+                    <a href="{{ url_for('main.login') }}">
+                        Login
+                    </a>
+
+                    <a href="{{ url_for('main.register') }}">
+                        Register
+                    </a>
+
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER BOTTOM -->
+
+        <div class="container footer-bottom">
+
+            <span>
+                © 2026 UCE Connect
+            </span>
+
+            <span>
+                University Information Portal
+            </span>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+         ===================================================== -->
+
+    <script
+        src="{{ url_for('static', filename='script.js') }}"
+    ></script>
+
+
+    {% block scripts %}{% endblock %}
+
+
+</body>
+
+</html>

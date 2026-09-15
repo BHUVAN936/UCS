@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}
+Submit Data Link — UCE Connect
+{% endblock %}
+
+{% block content %}
+
+<section class="admin-page">
+
+    <div class="container">
+
+        <div class="module-page-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    USER DATA SUBMISSION
+                </p>
+
+                <h1>
+                    Submit Data Link
+                </h1>
+
+                <p>
+                    Submit a Google Drive, Google Sheets,
+                    CSV, XLS or XLSX link.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <section class="upload-panel">
+
+            <div class="upload-panel-heading">
+
+                <div class="upload-icon">
+                    <i class="fa-solid fa-link"></i>
+                </div>
+
+                <div>
+
+                    <p class="eyebrow">
+                        LINK ONLY
+                    </p>
+
+                    <h2>
+                        Import Spreadsheet
+                    </h2>
+
+                    <p>
+                        File upload is disabled.
+                        Only a spreadsheet link is accepted.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form
+                method="POST"
+                action="{{ url_for('main.submit_link_post') }}"
+                class="upload-form"
+            >
+
+                <label>
+
+                    Spreadsheet / Google Drive Link
+
+                    <input
+                        type="url"
+                        name="source_url"
+                        placeholder="https://docs.google.com/..."
+                        required
+                    >
+
+                </label>
+
+
+                <label>
+
+                    Processing Mode
+
+                    <select
+                        name="upload_mode"
+                        id="uploadMode"
+                    >
+
+                        <option value="mixed">
+                            Automatic Classification
+                        </option>
+
+                        <option value="specific">
+                            Specific Module
+                        </option>
+
+                    </select>
+
+                </label>
+
+
+                <div
+                    id="specificFields"
+                    hidden
+                >
+
+                    <label>
+
+                        Module
+
+                        <select
+                            name="target_module"
+                            id="targetModule"
+                        >
+
+                            {% for key, item in modules.items() %}
+
+                            <option value="{{ key }}">
+                                {{ item.name }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </label>
+
+
+                    <label>
+
+                        Category
+
+                        <select
+                            name="target_category"
+                            id="targetCategory"
+                        >
+                        </select>
+
+                    </label>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="header-button"
+                >
+
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+
+                    Import Data
+
+                </button>
+
+            </form>
+
+
+            <div class="upload-help">
+
+                <i class="fa-solid fa-circle-info"></i>
+
+                <span>
+
+                    The spreadsheet must be accessible
+                    through the submitted link.
+
+                    The system downloads the data temporarily,
+                    extracts it and stores the rows in the
+                    database.
+
+                </span>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</section>
+
+
+<script>
+
+const UCE_MODULES =
+    {{ modules | tojson }};
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const mode =
+            document.getElementById(
+                "uploadMode"
+            );
+
+        const fields =
+            document.getElementById(
+                "specificFields"
+            );
+
+        const moduleSelect =
+            document.getElementById(
+                "targetModule"
+            );
+
+        const categorySelect =
+            document.getElementById(
+                "targetCategory"
+            );
+
+
+        function updateCategories() {
+
+            categorySelect.innerHTML = "";
+
+            const selected =
+                UCE_MODULES[
+                    moduleSelect.value
+                ];
+
+            if (!selected) {
+                return;
+            }
+
+            Object.entries(
+                selected.categories
+            ).forEach(
+                ([key, label]) => {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value = key;
+                    option.textContent = label;
+
+                    categorySelect.appendChild(
+                        option
+                    );
+
+                }
+            );
+        }
+
+
+        function updateMode() {
+
+            const specific =
+                mode.value === "specific";
+
+            fields.hidden =
+                !specific;
+
+            moduleSelect.disabled =
+                !specific;
+
+            categorySelect.disabled =
+                !specific;
+        }
+
+
+        mode.addEventListener(
+            "change",
+            updateMode
+        );
+
+
+        moduleSelect.addEventListener(
+            "change",
+            updateCategories
+        );
+
+
+        updateCategories();
+        updateMode();
+
+    }
+);
+
+</script>
+
+{% endblock %}

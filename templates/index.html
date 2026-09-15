@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}
+UCE Connect | University Information Portal
+{% endblock %}
+
+{% block content %}
+
+<section class="hero-section">
+
+    <div class="container hero-grid">
+
+        <div class="hero-content">
+
+            <span class="eyebrow">
+                UNIVERSITY INFORMATION PORTAL
+            </span>
+
+            <h1>
+                Your university,
+                <span>connected in one place.</span>
+            </h1>
+
+            <p>
+                Access university information, datasets,
+                analytics and reports through one
+                structured portal.
+            </p>
+
+            <div class="hero-actions">
+
+                <a
+                    href="#modules"
+                    class="primary-button"
+                >
+                    Explore Portal
+                    <i class="fa-solid fa-arrow-down"></i>
+                </a>
+
+                {% if current_user %}
+
+                <a
+                    href="{{ url_for('main.submit_link') }}"
+                    class="secondary-button"
+                >
+                    Submit Data
+                </a>
+
+                {% else %}
+
+                <a
+                    href="{{ url_for('main.login') }}"
+                    class="secondary-button"
+                >
+                    Login
+                </a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div class="hero-card">
+
+            <div class="hero-card-top">
+
+                <span>
+                    UCE PORTAL
+                </span>
+
+                <span class="status">
+                    <i class="fa-solid fa-circle"></i>
+                    Active
+                </span>
+
+            </div>
+
+            <div class="hero-number">
+                {{ "%02d"|format(modules|length) }}
+            </div>
+
+            <h3>
+                Information Modules
+            </h3>
+
+            <div class="hero-card-items">
+
+                <div>
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Academics</span>
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-users"></i>
+                    <span>Students</span>
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Research</span>
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Career</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="stats-section">
+
+    <div class="container stats-grid">
+
+        <div class="stat-item">
+            <strong>{{ modules|length }}</strong>
+            <span>Information Modules</span>
+        </div>
+
+        <div class="stat-item">
+            <strong>01</strong>
+            <span>Unified Portal</span>
+        </div>
+
+        <div class="stat-item">
+            <strong>24/7</strong>
+            <span>Information Access</span>
+        </div>
+
+        <div class="stat-item">
+            <strong>LIVE</strong>
+            <span>Expandable Information</span>
+        </div>
+
+    </div>
+
+</section>
+
+
+<section
+    class="modules-section"
+    id="modules"
+>
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="eyebrow">
+                    EXPLORE THE PORTAL
+                </span>
+
+                <h2>
+                    Information organized
+                    <span>by purpose.</span>
+                </h2>
+
+            </div>
+
+            <p>
+                Select a module to view its related
+                information categories.
+            </p>
+
+        </div>
+
+
+        <div class="module-search">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="text"
+                id="moduleSearch"
+                placeholder="Search modules or information..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="modules-list">
+
+            {% for module_key, module in modules.items() %}
+
+            <div
+                class="portal-module{% if loop.first %} active{% endif %}"
+                data-module="{{ module_key }}"
+                data-module-card
+                data-search="
+                    {{ module.name }}
+                    {{ module.description }}
+                    {% for category_key, category_name in module.categories.items() %}
+                        {{ category_name }}
+                    {% endfor %}
+                "
+            >
+
+                <button
+                    class="module-header"
+                    type="button"
+                    data-module-toggle
+                    aria-expanded="{{ 'true' if loop.first else 'false' }}"
+                >
+
+                    <div class="module-icon">
+
+                        <i
+                            class="fa-solid
+                            {{ module.icon|default('fa-folder') }}"
+                        ></i>
+
+                    </div>
+
+
+                    <div class="module-heading">
+
+                        <span class="module-number">
+                            {{ "%02d"|format(loop.index) }}
+                        </span>
+
+                        <h3>
+                            {{ module.name }}
+                        </h3>
+
+                        <p>
+                            {{ module.description|default(
+                                "University information module."
+                            ) }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="module-toggle">
+
+                        <i class="fa-solid fa-chevron-down"></i>
+
+                    </div>
+
+                </button>
+
+
+                <div
+                    class="module-body"
+                    {% if not loop.first %}hidden{% endif %}
+                >
+
+                    <div class="subtopic-grid">
+
+                        {% for category_key, category_name
+                            in module.categories.items() %}
+
+                        <button
+                            type="button"
+                            class="subtopic-card"
+                            data-topic="{{ category_key }}"
+                            data-module="{{ module_key }}"
+                        >
+
+                            <i class="fa-solid fa-chart-column"></i>
+
+                            <span>
+                                {{ category_name }}
+                            </span>
+
+                            <small>
+                                View information
+                            </small>
+
+                        </button>
+
+                        {% endfor %}
+
+                    </div>
+
+
+                    <div
+                        class="information-panel"
+                        aria-live="polite"
+                    >
+
+                        <div class="select-content">
+
+                            <i class="fa-solid fa-folder-open"></i>
+
+                            <h3>
+                                Select a category
+                            </h3>
+
+                            <p>
+                                Choose a category above to view
+                                the latest uploaded information.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div
+            id="noModuleResults"
+            class="no-data"
+            hidden
+        >
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <h3>
+                No modules found
+            </h3>
+
+            <p>
+                Try another search term.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

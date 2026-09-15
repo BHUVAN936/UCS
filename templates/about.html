@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}
+About | UCE Connect
+{% endblock %}
+
+
+{% block content %}
+
+<section class="about-page">
+
+    <div class="container">
+
+        <a
+            href="{{ url_for('main.home') }}"
+            class="back-link"
+        >
+            <i class="fa-solid fa-arrow-left"></i>
+            Back to Portal
+        </a>
+
+
+        <div class="about-hero">
+
+            <span class="eyebrow">
+                ABOUT THE PROJECT
+            </span>
+
+            <h1>
+                One interface for
+                <span>university information.</span>
+            </h1>
+
+            <p class="about-intro">
+
+                UCE Connect is a Flask-based university information
+                portal designed to make academic, placement,
+                counselling, examination, faculty, research,
+                international and institutional information easier
+                to discover.
+
+            </p>
+
+        </div>
+
+
+        <div class="about-content">
+
+
+            <article class="about-card">
+
+                <div class="about-card-number">
+                    01
+                </div>
+
+                <div>
+
+                    <span class="about-label">
+                        THE GOAL
+                    </span>
+
+                    <h2>
+                        Make information understandable.
+                    </h2>
+
+                    <p>
+
+                        Instead of presenting users with disconnected
+                        documents and long pages, UCE Connect organizes
+                        information into focused modules and
+                        subcategories.
+
+                    </p>
+
+                </div>
+
+            </article>
+
+
+            <article class="about-card">
+
+                <div class="about-card-number">
+                    02
+                </div>
+
+                <div>
+
+                    <span class="about-label">
+                        THE APPROACH
+                    </span>
+
+                    <h2>
+                        Separate information from presentation.
+                    </h2>
+
+                    <p>
+
+                        The interface remains consistent while
+                        university information is organized according
+                        to its corresponding module and category.
+
+                    </p>
+
+                </div>
+
+            </article>
+
+
+            <article class="about-card">
+
+                <div class="about-card-number">
+                    03
+                </div>
+
+                <div>
+
+                    <span class="about-label">
+                        THE STRUCTURE
+                    </span>
+
+                    <h2>
+                        Organize information by purpose.
+                    </h2>
+
+                    <p>
+
+                        University information is divided into
+                        twenty focused modules covering academics,
+                        placements, counselling, examinations,
+                        faculty, research, international programs,
+                        student development and institutional
+                        facilities.
+
+                    </p>
+
+                </div>
+
+            </article>
+
+
+            <article class="about-card">
+
+                <div class="about-card-number">
+                    04
+                </div>
+
+                <div>
+
+                    <span class="about-label">
+                        THE SYSTEM
+                    </span>
+
+                    <h2>
+                        Let uploaded information drive the portal.
+                    </h2>
+
+                    <p>
+
+                        Administrators can upload university data
+                        and associate it with the appropriate
+                        module and category without changing the
+                        portal interface.
+
+                    </p>
+
+                </div>
+
+            </article>
+
+
+        </div>
+
+
+        <div class="about-modules">
+
+            <div class="about-modules-heading">
+
+                <span class="eyebrow">
+                    PORTAL MODULES
+                </span>
+
+                <h2>
+                    One portal.
+                    <span>Twenty information areas.</span>
+                </h2>
+
+            </div>
+
+
+            <div class="about-module-grid">
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>Academics</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>Placements</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Counselling</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-file-lines"></i>
+                    <span>Exams & Evaluation</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                    <span>Progression</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span>Faculty FDP In-House</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-clock"></i>
+                    <span>Workload of Students</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>MOOCs</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-handshake"></i>
+                    <span>MOUs-International</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-plane"></i>
+                    <span>Student Abroad Program</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-earth-americas"></i>
+                    <span>Faculty Exchange Abroad</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-user-tie"></i>
+                    <span>Faculty Affairs</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-person-chalkboard"></i>
+                    <span>Visiting Faculty</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Research</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Faculty FDP Corporate</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>Student Entrepreneurship</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>SAC</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-building-columns"></i>
+                    <span>P&amp;D</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>Registrar Office</span>
+                </div>
+
+
+                <div class="about-module-item">
+                    <i class="fa-solid fa-book"></i>
+                    <span>Library</span>
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

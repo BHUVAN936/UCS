@@ -1,0 +1,852 @@
+{% extends "base.html" %}
+
+{% block title %}
+UCE Connect | Academics
+{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+
+    <div class="container hero-grid">
+
+        <div class="hero-content">
+
+            <span class="eyebrow">
+                UNIVERSITY INFORMATION PORTAL
+            </span>
+
+            <h1>
+                Academics
+                <span>
+                    Information
+                </span>
+            </h1>
+
+            <p>
+                Access academic information including courses,
+                syllabus, curriculum, feedback and academic
+                attainment.
+            </p>
+
+            <div class="hero-actions">
+
+                <a
+                    href="#academic-modules"
+                    class="primary-button"
+                >
+                    Explore Academics
+                    <i class="fa-solid fa-arrow-down"></i>
+                </a>
+
+                {% if current_user %}
+
+                    <a
+                        href="{{ url_for('main.submit_dataset') }}"
+                        class="secondary-button"
+                    >
+                        <i class="fa-solid fa-link"></i>
+                        Submit Data Link
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{{ url_for('main.login') }}"
+                        class="secondary-button"
+                    >
+                        Login to Submit
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div class="hero-card">
+
+            <span>
+                ACADEMICS
+            </span>
+
+            <strong>
+                01
+            </strong>
+
+            <h3>
+                Academic Information
+            </h3>
+
+            <div class="hero-card-line"></div>
+
+            <div class="hero-card-grid">
+
+                <div>
+                    <i class="fa-solid fa-book-open"></i>
+                    Courses
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-file-lines"></i>
+                    Syllabus
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-chart-column"></i>
+                    CO-PO
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-comments"></i>
+                    Feedback
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section
+    class="stats"
+    id="academic-stats"
+>
+
+    <div class="container stats-grid">
+
+        <div>
+            <strong>06</strong>
+            <span>Academic Categories</span>
+        </div>
+
+        <div>
+            <strong>01</strong>
+            <span>Academic Module</span>
+        </div>
+
+        <div>
+            <strong>24/7</strong>
+            <span>Information Access</span>
+        </div>
+
+        <div>
+            <strong>LINK</strong>
+            <span>Data Submission</span>
+        </div>
+
+    </div>
+
+</section>
+
+
+<section
+    class="modules-section"
+    id="academic-modules"
+>
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="eyebrow">
+                    ACADEMICS
+                </span>
+
+                <h2>
+                    Academic information
+                    <span>
+                        by category.
+                    </span>
+                </h2>
+
+            </div>
+
+            <p>
+                Select a category to view the available
+                academic information.
+            </p>
+
+        </div>
+
+
+        <div class="module-search">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="text"
+                id="academicSearch"
+                placeholder="Search academic information..."
+            >
+
+        </div>
+
+
+        <div
+            class="module-list"
+            id="academicModuleList"
+        >
+
+            {% set academic_subtopics = [
+
+                (
+                    'courses',
+                    'Courses Offered',
+                    'fa-book-open'
+                ),
+
+                (
+                    'course-details',
+                    'Course Details',
+                    'fa-circle-info'
+                ),
+
+                (
+                    'syllabus',
+                    'Syllabus Coverage',
+                    'fa-file-lines'
+                ),
+
+                (
+                    'co-po',
+                    'CO-PO Attainment',
+                    'fa-chart-column'
+                ),
+
+                (
+                    'feedback',
+                    'Student Feedback',
+                    'fa-comments'
+                ),
+
+                (
+                    'completion',
+                    'Course Completion',
+                    'fa-clipboard-check'
+                )
+
+            ] %}
+
+
+            <article
+                class="portal-module academic-module"
+                data-search="academics courses syllabus feedback attainment completion"
+            >
+
+
+                <button
+                    type="button"
+                    class="module-header"
+                    aria-expanded="true"
+                >
+
+                    <div class="module-left">
+
+                        <div class="module-icon">
+
+                            <i class="fa-solid fa-graduation-cap"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <span class="module-number">
+                                01
+                            </span>
+
+                            <h3>
+                                Academics
+                            </h3>
+
+                            <p>
+                                Courses, syllabus, curriculum,
+                                feedback and academic attainment.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <span class="module-arrow">
+
+                        <i class="fa-solid fa-chevron-down"></i>
+
+                    </span>
+
+                </button>
+
+
+                <div
+                    class="module-branch"
+                    style="display:block;"
+                >
+
+                    <div class="module-content-layout">
+
+
+                        <!-- LEFT SUBTOPICS -->
+
+                        <aside class="subtopic-sidebar">
+
+                            <div class="sidebar-label">
+                                Academic Information
+                            </div>
+
+
+                            {% for subkey, subname, subicon
+                               in academic_subtopics %}
+
+                                <button
+                                    type="button"
+                                    class="subtopic-button{% if loop.first %} active{% endif %}"
+                                    data-section="{{ subkey }}"
+                                >
+
+                                    <i
+                                        class="fa-solid {{ subicon }}"
+                                    ></i>
+
+                                    <span>
+                                        {{ subname }}
+                                    </span>
+
+                                </button>
+
+                            {% endfor %}
+
+                        </aside>
+
+
+                        <!-- RIGHT CONTENT -->
+
+                        <div class="subtopic-content">
+
+
+                            {% for subkey, subname, subicon
+                               in academic_subtopics %}
+
+                                <section
+                                    class="academic-section"
+                                    id="section-{{ subkey }}"
+                                    data-subtopic="{{ subkey }}"
+                                    style="{% if not loop.first %}display:none;{% endif %}"
+                                >
+
+
+                                    <div class="subtopic-heading">
+
+                                        <div class="subtopic-icon">
+
+                                            <i
+                                                class="fa-solid {{ subicon }}"
+                                            ></i>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <span class="eyebrow">
+                                                ACADEMICS
+                                            </span>
+
+                                            <h3>
+                                                {{ subname }}
+                                            </h3>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- USER LINK SUBMISSION -->
+
+                                    {% if current_user %}
+
+                                        <div class="link-submit-card">
+
+                                            <div class="link-submit-header">
+
+                                                <i
+                                                    class="fa-solid fa-link"
+                                                ></i>
+
+                                                <div>
+
+                                                    <h4>
+                                                        Submit Data Link
+                                                    </h4>
+
+                                                    <p>
+                                                        Paste a Google Drive,
+                                                        Google Sheets, Excel
+                                                        or CSV link.
+                                                    </p>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <form
+                                                method="POST"
+                                                action="{{ url_for('main.submit_dataset') }}"
+                                                class="link-form"
+                                            >
+
+                                                <input
+                                                    type="hidden"
+                                                    name="module"
+                                                    value="academics"
+                                                >
+
+                                                <input
+                                                    type="hidden"
+                                                    name="subtopic"
+                                                    value="{{ subkey }}"
+                                                >
+
+
+                                                <div class="form-group">
+
+                                                    <label>
+                                                        Dataset Name
+                                                    </label>
+
+                                                    <input
+                                                        type="text"
+                                                        name="title"
+                                                        placeholder="Example: Academic Course Data"
+                                                        required
+                                                    >
+
+                                                </div>
+
+
+                                                <div class="form-group">
+
+                                                    <label>
+                                                        Data Link
+                                                    </label>
+
+                                                    <input
+                                                        type="url"
+                                                        name="source_url"
+                                                        placeholder="https://drive.google.com/..."
+                                                        required
+                                                    >
+
+                                                    <small>
+                                                        File upload is not
+                                                        allowed. Only a
+                                                        publicly accessible
+                                                        link is accepted.
+                                                    </small>
+
+                                                </div>
+
+
+                                                <button
+                                                    type="submit"
+                                                    class="primary-button"
+                                                >
+
+                                                    <i
+                                                        class="fa-solid fa-cloud-arrow-down"
+                                                    ></i>
+
+                                                    Fetch Data
+
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    {% else %}
+
+                                        <div class="login-required-card">
+
+                                            <i
+                                                class="fa-solid fa-lock"
+                                            ></i>
+
+                                            <h4>
+                                                Login Required
+                                            </h4>
+
+                                            <p>
+                                                Login to submit a dataset
+                                                link for this academic
+                                                category.
+                                            </p>
+
+                                            <a
+                                                href="{{ url_for('main.login') }}"
+                                                class="primary-button"
+                                            >
+                                                Login
+                                            </a>
+
+                                        </div>
+
+                                    {% endif %}
+
+
+                                    <!-- DATA DISPLAY -->
+
+                                    <div class="dynamic-content">
+
+                                        {% if dataset_data
+                                              and dataset_data.get(subkey) %}
+
+                                            <div class="table-wrapper">
+
+                                                <table class="data-table">
+
+                                                    <thead>
+
+                                                        <tr>
+
+                                                            {% for column
+                                                               in dataset_data[subkey].columns %}
+
+                                                                <th>
+                                                                    {{ column }}
+                                                                </th>
+
+                                                            {% endfor %}
+
+                                                        </tr>
+
+                                                    </thead>
+
+
+                                                    <tbody>
+
+                                                        {% for row
+                                                           in dataset_data[subkey].rows %}
+
+                                                            <tr>
+
+                                                                {% for column
+                                                                   in dataset_data[subkey].columns %}
+
+                                                                    <td>
+                                                                        {{ row.get(column, '') }}
+                                                                    </td>
+
+                                                                {% endfor %}
+
+                                                            </tr>
+
+                                                        {% endfor %}
+
+                                                    </tbody>
+
+                                                </table>
+
+                                            </div>
+
+                                        {% else %}
+
+                                            <div class="select-content">
+
+                                                <i
+                                                    class="fa-solid fa-table"
+                                                ></i>
+
+                                                <h3>
+                                                    No data available
+                                                </h3>
+
+                                                <p>
+                                                    Data submitted for
+                                                    <strong>
+                                                        {{ subname }}
+                                                    </strong>
+                                                    will appear here after
+                                                    it is processed.
+                                                </p>
+
+                                            </div>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </section>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section
+    class="updates-section"
+    id="updates"
+>
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <div>
+
+                <span class="eyebrow">
+                    HOW IT WORKS
+                </span>
+
+                <h2>
+                    Submit a link.
+                    <span>
+                        Get structured data.
+                    </span>
+                </h2>
+
+            </div>
+
+            <p>
+                Users provide a source link instead of uploading
+                files directly.
+            </p>
+
+        </div>
+
+
+        <div class="workflow-grid">
+
+
+            <div class="workflow-card">
+
+                <span>
+                    01
+                </span>
+
+                <i class="fa-solid fa-link"></i>
+
+                <h3>
+                    User submits link
+                </h3>
+
+                <p>
+                    The user selects an academic category and
+                    pastes the Google Drive, Google Sheets,
+                    Excel or CSV link.
+                </p>
+
+            </div>
+
+
+            <div class="workflow-card">
+
+                <span>
+                    02
+                </span>
+
+                <i class="fa-solid fa-gears"></i>
+
+                <h3>
+                    System processes
+                </h3>
+
+                <p>
+                    The backend fetches the linked spreadsheet
+                    and extracts its rows and columns.
+                </p>
+
+            </div>
+
+
+            <div class="workflow-card">
+
+                <span>
+                    03
+                </span>
+
+                <i class="fa-solid fa-user-shield"></i>
+
+                <h3>
+                    Admin views data
+                </h3>
+
+                <p>
+                    The administrator can view the complete
+                    dataset including every available row
+                    and column.
+                </p>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /* -----------------------------------------
+           SUBTOPIC SWITCHING
+        ----------------------------------------- */
+
+        const buttons =
+            document.querySelectorAll(
+                ".subtopic-button"
+            );
+
+
+        const sections =
+            document.querySelectorAll(
+                ".academic-section"
+            );
+
+
+        buttons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const section =
+                            button.dataset.section;
+
+
+                        buttons.forEach(
+                            function (item) {
+
+                                item.classList.remove(
+                                    "active"
+                                );
+
+                            }
+                        );
+
+
+                        sections.forEach(
+                            function (item) {
+
+                                item.style.display =
+                                    "none";
+
+                            }
+                        );
+
+
+                        button.classList.add(
+                            "active"
+                        );
+
+
+                        const selected =
+                            document.getElementById(
+                                "section-" + section
+                            );
+
+
+                        if (selected) {
+
+                            selected.style.display =
+                                "block";
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+        /* -----------------------------------------
+           SEARCH
+        ----------------------------------------- */
+
+        const searchInput =
+            document.getElementById(
+                "academicSearch"
+            );
+
+
+        const module =
+            document.querySelector(
+                ".academic-module"
+            );
+
+
+        if (searchInput && module) {
+
+            searchInput.addEventListener(
+                "input",
+                function () {
+
+                    const query =
+                        searchInput.value
+                        .toLowerCase()
+                        .trim();
+
+
+                    const text =
+                        module.dataset.search
+                        .toLowerCase();
+
+
+                    if (
+                        !query ||
+                        text.includes(query)
+                    ) {
+
+                        module.style.display =
+                            "";
+
+                    } else {
+
+                        module.style.display =
+                            "none";
+
+                    }
+
+                }
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+{% endblock %}

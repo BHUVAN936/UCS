@@ -1,0 +1,1192 @@
+{% extends "base.html" %}
+
+{% block title %}Exams & Evaluation - UCE Connect{% endblock %}
+
+{% block content %}
+
+<section class="module-page">
+
+    <div class="container">
+
+        <!-- PAGE HEADER -->
+
+        <div class="page-heading">
+
+            <span class="eyebrow">
+                UNIVERSITY MODULE
+            </span>
+
+            <h1>
+                Exams & Evaluation
+            </h1>
+
+            <p>
+                Examination schedules, evaluation details,
+                results, assessment and examination-related
+                information.
+            </p>
+
+        </div>
+
+
+        <!-- MODULE LAYOUT -->
+
+        <div class="module-layout">
+
+
+            <!-- LEFT SIDEBAR -->
+
+            <aside class="module-sidebar">
+
+                <div class="sidebar-title">
+                    Exams & Evaluation
+                </div>
+
+
+                <button
+                    type="button"
+                    class="subtopic-button active"
+                    data-section="examinations"
+                >
+
+                    <i class="fa-solid fa-file-pen"></i>
+
+                    <span>
+                        Examinations
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="subtopic-button"
+                    data-section="evaluation"
+                >
+
+                    <i class="fa-solid fa-clipboard-check"></i>
+
+                    <span>
+                        Evaluation
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="subtopic-button"
+                    data-section="results"
+                >
+
+                    <i class="fa-solid fa-square-poll-vertical"></i>
+
+                    <span>
+                        Results
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="subtopic-button"
+                    data-section="assessment"
+                >
+
+                    <i class="fa-solid fa-chart-column"></i>
+
+                    <span>
+                        Assessment
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="subtopic-button"
+                    data-section="examination-schedule"
+                >
+
+                    <i class="fa-solid fa-calendar-days"></i>
+
+                    <span>
+                        Examination Schedule
+                    </span>
+
+                </button>
+
+            </aside>
+
+
+            <!-- RIGHT CONTENT -->
+
+            <div class="module-content">
+
+
+                <!-- EXAMINATIONS -->
+
+                <section
+                    class="subtopic-section active"
+                    id="section-examinations"
+                >
+
+                    <div class="subtopic-header">
+
+                        <div class="subtopic-icon">
+
+                            <i class="fa-solid fa-file-pen"></i>
+
+                        </div>
+
+                        <div>
+
+                            <span class="eyebrow">
+                                EXAMS & EVALUATION
+                            </span>
+
+                            <h2>
+                                Examinations
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if current_user %}
+
+                    <div class="link-submit-card">
+
+                        <div class="link-submit-header">
+
+                            <i class="fa-solid fa-link"></i>
+
+                            <div>
+
+                                <h3>
+                                    Submit Data Link
+                                </h3>
+
+                                <p>
+                                    Paste a Google Drive,
+                                    Google Sheets, Excel or CSV link.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('main.submit_dataset') }}"
+                            class="link-form"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="module"
+                                value="exams_evaluation"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="subtopic"
+                                value="examinations"
+                            >
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Dataset Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    placeholder="Enter dataset name"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Data Link
+                                </label>
+
+                                <input
+                                    type="url"
+                                    name="source_url"
+                                    placeholder="https://drive.google.com/..."
+                                    required
+                                >
+
+                                <small>
+                                    Only a link is accepted.
+                                    Direct file upload is disabled.
+                                </small>
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+
+                                <i
+                                    class="fa-solid fa-cloud-arrow-down"
+                                ></i>
+
+                                Fetch Data
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="login-required-card">
+
+                        <i class="fa-solid fa-lock"></i>
+
+                        <h3>
+                            Login Required
+                        </h3>
+
+                        <p>
+                            Login to submit examination data.
+                        </p>
+
+                        <a
+                            href="{{ url_for('main.login') }}"
+                            class="primary-button"
+                        >
+                            Login
+                        </a>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if dataset_data and dataset_data.get("examinations") %}
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    {% for column in dataset_data["examinations"].columns %}
+
+                                    <th>
+                                        {{ column }}
+                                    </th>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for row in dataset_data["examinations"].rows %}
+
+                                <tr>
+
+                                    {% for column in dataset_data["examinations"].columns %}
+
+                                    <td>
+                                        {{ row.get(column, '') }}
+                                    </td>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-state">
+
+                        <i class="fa-solid fa-database"></i>
+
+                        <h3>
+                            No Data Available
+                        </h3>
+
+                        <p>
+                            Examination data will appear here
+                            after a dataset link is submitted.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </section>
+
+
+                <!-- EVALUATION -->
+
+                <section
+                    class="subtopic-section"
+                    id="section-evaluation"
+                >
+
+                    <div class="subtopic-header">
+
+                        <div class="subtopic-icon">
+                            <i class="fa-solid fa-clipboard-check"></i>
+                        </div>
+
+                        <div>
+
+                            <span class="eyebrow">
+                                EXAMS & EVALUATION
+                            </span>
+
+                            <h2>
+                                Evaluation
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if current_user %}
+
+                    <div class="link-submit-card">
+
+                        <div class="link-submit-header">
+
+                            <i class="fa-solid fa-link"></i>
+
+                            <div>
+
+                                <h3>
+                                    Submit Data Link
+                                </h3>
+
+                                <p>
+                                    Submit the evaluation dataset
+                                    using a link.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('main.submit_dataset') }}"
+                            class="link-form"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="module"
+                                value="exams_evaluation"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="subtopic"
+                                value="evaluation"
+                            >
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Dataset Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    placeholder="Enter dataset name"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Data Link
+                                </label>
+
+                                <input
+                                    type="url"
+                                    name="source_url"
+                                    placeholder="https://drive.google.com/..."
+                                    required
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+
+                                <i class="fa-solid fa-link"></i>
+
+                                Fetch Data
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if dataset_data and dataset_data.get("evaluation") %}
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    {% for column in dataset_data["evaluation"].columns %}
+
+                                    <th>
+                                        {{ column }}
+                                    </th>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for row in dataset_data["evaluation"].rows %}
+
+                                <tr>
+
+                                    {% for column in dataset_data["evaluation"].columns %}
+
+                                    <td>
+                                        {{ row.get(column, '') }}
+                                    </td>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-state">
+
+                        <i class="fa-solid fa-table"></i>
+
+                        <h3>
+                            No Evaluation Data
+                        </h3>
+
+                        <p>
+                            Evaluation data will appear here.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </section>
+
+
+                <!-- RESULTS -->
+
+                <section
+                    class="subtopic-section"
+                    id="section-results"
+                >
+
+                    <div class="subtopic-header">
+
+                        <div class="subtopic-icon">
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                        </div>
+
+                        <div>
+
+                            <span class="eyebrow">
+                                EXAMS & EVALUATION
+                            </span>
+
+                            <h2>
+                                Results
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if current_user %}
+
+                    <div class="link-submit-card">
+
+                        <div class="link-submit-header">
+
+                            <i class="fa-solid fa-link"></i>
+
+                            <div>
+
+                                <h3>
+                                    Submit Results Link
+                                </h3>
+
+                                <p>
+                                    Submit the examination results
+                                    using a link.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('main.submit_dataset') }}"
+                            class="link-form"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="module"
+                                value="exams_evaluation"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="subtopic"
+                                value="results"
+                            >
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Dataset Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    placeholder="Enter dataset name"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Data Link
+                                </label>
+
+                                <input
+                                    type="url"
+                                    name="source_url"
+                                    placeholder="https://drive.google.com/..."
+                                    required
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+
+                                <i class="fa-solid fa-link"></i>
+
+                                Fetch Data
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if dataset_data and dataset_data.get("results") %}
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    {% for column in dataset_data["results"].columns %}
+
+                                    <th>
+                                        {{ column }}
+                                    </th>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for row in dataset_data["results"].rows %}
+
+                                <tr>
+
+                                    {% for column in dataset_data["results"].columns %}
+
+                                    <td>
+                                        {{ row.get(column, '') }}
+                                    </td>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-state">
+
+                        <i class="fa-solid fa-chart-column"></i>
+
+                        <h3>
+                            No Results Data
+                        </h3>
+
+                        <p>
+                            Examination results will appear here.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </section>
+
+
+                <!-- ASSESSMENT -->
+
+                <section
+                    class="subtopic-section"
+                    id="section-assessment"
+                >
+
+                    <div class="subtopic-header">
+
+                        <div class="subtopic-icon">
+                            <i class="fa-solid fa-chart-column"></i>
+                        </div>
+
+                        <div>
+
+                            <span class="eyebrow">
+                                EXAMS & EVALUATION
+                            </span>
+
+                            <h2>
+                                Assessment
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if current_user %}
+
+                    <div class="link-submit-card">
+
+                        <div class="link-submit-header">
+
+                            <i class="fa-solid fa-link"></i>
+
+                            <div>
+
+                                <h3>
+                                    Submit Assessment Link
+                                </h3>
+
+                                <p>
+                                    Submit assessment data using
+                                    a link.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('main.submit_dataset') }}"
+                            class="link-form"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="module"
+                                value="exams_evaluation"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="subtopic"
+                                value="assessment"
+                            >
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Dataset Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    placeholder="Enter dataset name"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Data Link
+                                </label>
+
+                                <input
+                                    type="url"
+                                    name="source_url"
+                                    placeholder="https://drive.google.com/..."
+                                    required
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+
+                                <i class="fa-solid fa-link"></i>
+
+                                Fetch Data
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if dataset_data and dataset_data.get("assessment") %}
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    {% for column in dataset_data["assessment"].columns %}
+
+                                    <th>
+                                        {{ column }}
+                                    </th>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for row in dataset_data["assessment"].rows %}
+
+                                <tr>
+
+                                    {% for column in dataset_data["assessment"].columns %}
+
+                                    <td>
+                                        {{ row.get(column, '') }}
+                                    </td>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-state">
+
+                        <i class="fa-solid fa-database"></i>
+
+                        <h3>
+                            No Assessment Data
+                        </h3>
+
+                        <p>
+                            Assessment data will appear here.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </section>
+
+
+                <!-- EXAMINATION SCHEDULE -->
+
+                <section
+                    class="subtopic-section"
+                    id="section-examination-schedule"
+                >
+
+                    <div class="subtopic-header">
+
+                        <div class="subtopic-icon">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+
+                        <div>
+
+                            <span class="eyebrow">
+                                EXAMS & EVALUATION
+                            </span>
+
+                            <h2>
+                                Examination Schedule
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+
+                    {% if current_user %}
+
+                    <div class="link-submit-card">
+
+                        <div class="link-submit-header">
+
+                            <i class="fa-solid fa-link"></i>
+
+                            <div>
+
+                                <h3>
+                                    Submit Schedule Link
+                                </h3>
+
+                                <p>
+                                    Submit examination schedule
+                                    using a link.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('main.submit_dataset') }}"
+                            class="link-form"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="module"
+                                value="exams_evaluation"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="subtopic"
+                                value="examination-schedule"
+                            >
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Dataset Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="title"
+                                    placeholder="Enter dataset name"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <div class="form-group">
+
+                                <label>
+                                    Data Link
+                                </label>
+
+                                <input
+                                    type="url"
+                                    name="source_url"
+                                    placeholder="https://drive.google.com/..."
+                                    required
+                                >
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+
+                                <i class="fa-solid fa-link"></i>
+
+                                Fetch Data
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if dataset_data and dataset_data.get("examination-schedule") %}
+
+                    <div class="table-wrapper">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    {% for column in dataset_data["examination-schedule"].columns %}
+
+                                    <th>
+                                        {{ column }}
+                                    </th>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for row in dataset_data["examination-schedule"].rows %}
+
+                                <tr>
+
+                                    {% for column in dataset_data["examination-schedule"].columns %}
+
+                                    <td>
+                                        {{ row.get(column, '') }}
+                                    </td>
+
+                                    {% endfor %}
+
+                                </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-state">
+
+                        <i class="fa-solid fa-calendar-days"></i>
+
+                        <h3>
+                            No Schedule Data
+                        </h3>
+
+                        <p>
+                            Examination schedule data will
+                            appear here.
+                        </p>
+
+                    </div>
+
+                    {% endif %}
+
+                </section>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const buttons =
+            document.querySelectorAll(
+                ".subtopic-button"
+            );
+
+        const sections =
+            document.querySelectorAll(
+                ".subtopic-section"
+            );
+
+
+        buttons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const target =
+                            button.dataset.section;
+
+
+                        buttons.forEach(
+                            function (item) {
+
+                                item.classList.remove(
+                                    "active"
+                                );
+
+                            }
+                        );
+
+
+                        sections.forEach(
+                            function (section) {
+
+                                section.classList.remove(
+                                    "active"
+                                );
+
+                            }
+                        );
+
+
+                        button.classList.add(
+                            "active"
+                        );
+
+
+                        const selected =
+                            document.getElementById(
+                                "section-" + target
+                            );
+
+
+                        if (selected) {
+
+                            selected.classList.add(
+                                "active"
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+{% endblock %}

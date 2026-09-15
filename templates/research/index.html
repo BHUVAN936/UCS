@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Research - UCE Connect{% endblock %}
+
+{% block content %}
+
+<section class="module-page">
+    <div class="container">
+
+        <div class="page-heading">
+            <span class="eyebrow">UNIVERSITY MODULE</span>
+            <h1>Research</h1>
+            <p>
+                Research projects, publications, patents,
+                funded projects and research activities.
+            </p>
+        </div>
+
+        <div class="module-layout">
+
+            <aside class="module-sidebar">
+
+                <div class="sidebar-title">Research</div>
+
+                <button class="subtopic-button active"
+                        data-section="research-projects">
+                    <i class="fa-solid fa-flask"></i>
+                    <span>Research Projects</span>
+                </button>
+
+                <button class="subtopic-button"
+                        data-section="publications">
+                    <i class="fa-solid fa-book"></i>
+                    <span>Publications</span>
+                </button>
+
+                <button class="subtopic-button"
+                        data-section="patents">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>Patents</span>
+                </button>
+
+                <button class="subtopic-button"
+                        data-section="funded-projects">
+                    <i class="fa-solid fa-money-bill-trend-up"></i>
+                    <span>Funded Projects</span>
+                </button>
+
+            </aside>
+
+            <div class="module-content">
+
+                {% set sections = [
+                    ("research-projects", "Research Projects", "fa-flask"),
+                    ("publications", "Publications", "fa-book"),
+                    ("patents", "Patents", "fa-lightbulb"),
+                    ("funded-projects", "Funded Projects", "fa-money-bill-trend-up")
+                ] %}
+
+                {% for key, name, icon in sections %}
+
+                <section class="subtopic-section {% if loop.first %}active{% endif %}"
+                         id="section-{{ key }}">
+
+                    <div class="subtopic-header">
+
+                        <div class="subtopic-icon">
+                            <i class="fa-solid {{ icon }}"></i>
+                        </div>
+
+                        <div>
+                            <span class="eyebrow">RESEARCH</span>
+                            <h2>{{ name }}</h2>
+                        </div>
+
+                    </div>
+
+                    {% if current_user %}
+
+                    <div class="link-submit-card">
+
+                        <div class="link-submit-header">
+                            <i class="fa-solid fa-link"></i>
+
+                            <div>
+                                <h3>Submit Data Link</h3>
+                                <p>
+                                    Submit a Google Drive, Google Sheets,
+                                    Excel or CSV link.
+                                </p>
+                            </div>
+                        </div>
+
+                        <form method="POST"
+                              action="{{ url_for('main.submit_dataset') }}"
+                              class="link-form">
+
+                            <input type="hidden"
+                                   name="module"
+                                   value="research">
+
+                            <input type="hidden"
+                                   name="subtopic"
+                                   value="{{ key }}">
+
+                            <div class="form-group">
+                                <label>Dataset Name</label>
+
+                                <input type="text"
+                                       name="title"
+                                       placeholder="Enter dataset name"
+                                       required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Data Link</label>
+
+                                <input type="url"
+                                       name="source_url"
+                                       placeholder="https://drive.google.com/..."
+                                       required>
+
+                                <small>
+                                    Only a link is accepted.
+                                    Direct file upload is disabled.
+                                </small>
+                            </div>
+
+                            <button type="submit"
+                                    class="primary-button">
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                Fetch Data
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="login-required-card">
+                        <i class="fa-solid fa-lock"></i>
+                        <h3>Login Required</h3>
+
+                        <p>Login to submit research data.</p>
+
+                        <a href="{{ url_for('main.login') }}"
+                           class="primary-button">
+                            Login
+                        </a>
+                    </div>
+
+                    {% endif %}
+
+                    {% if dataset_data and dataset_data.get(key) %}
+
+                    <div class="table-wrapper">
+                        <table class="data-table">
+
+                            <thead>
+                                <tr>
+                                    {% for column in dataset_data[key].columns %}
+                                    <th>{{ column }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for row in dataset_data[key].rows %}
+                                <tr>
+                                    {% for column in dataset_data[key].columns %}
+                                    <td>{{ row.get(column, '') }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+
+                        </table>
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-state">
+                        <i class="fa-solid fa-database"></i>
+                        <h3>No Data Available</h3>
+                        <p>
+                            Research data will appear here after
+                            a dataset link is submitted.
+                        </p>
+                    </div>
+
+                    {% endif %}
+
+                </section>
+
+                {% endfor %}
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const buttons = document.querySelectorAll(".subtopic-button");
+    const sections = document.querySelectorAll(".subtopic-section");
+
+    buttons.forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const key = button.dataset.section;
+
+            buttons.forEach(function (item) {
+                item.classList.remove("active");
+            });
+
+            sections.forEach(function (section) {
+                section.classList.remove("active");
+            });
+
+            button.classList.add("active");
+
+            const selected =
+                document.getElementById("section-" + key);
+
+            if (selected) {
+                selected.classList.add("active");
+            }
+
+        });
+
+    });
+
+});
+</script>
+
+{% endblock %}

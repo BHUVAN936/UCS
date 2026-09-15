@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block title %}
+All Data — UCE Connect
+{% endblock %}
+
+{% block content %}
+
+<section class="admin-page">
+
+    <div class="container">
+
+        <div class="module-page-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    ADMINISTRATOR
+                </p>
+
+                <h1>
+                    All Submitted Data
+                </h1>
+
+                <p>
+                    Complete row-by-row and column-by-column
+                    view of imported data.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <section class="upload-panel">
+
+            <div class="admin-search">
+
+                <input
+                    type="search"
+                    id="dataSearch"
+                    placeholder="Search any row, column, user, module or category..."
+                >
+
+            </div>
+
+
+            {% if records %}
+
+            <div class="data-table-wrapper">
+
+                <table
+                    class="admin-data-table"
+                    id="adminDataTable"
+                >
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                #
+                            </th>
+
+                            <th>
+                                Module
+                            </th>
+
+                            <th>
+                                Category
+                            </th>
+
+                            <th>
+                                Source
+                            </th>
+
+                            <th>
+                                Submitted By
+                            </th>
+
+                            {% for column in columns %}
+
+                            <th>
+                                {{ column }}
+                            </th>
+
+                            {% endfor %}
+
+                            <th>
+                                Created
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for row in records %}
+
+                        <tr>
+
+                            <td>
+                                {{ loop.index }}
+                            </td>
+
+                            <td>
+
+                                {% if modules.get(row.module) %}
+
+                                    {{
+                                        modules[
+                                            row.module
+                                        ].name
+                                    }}
+
+                                {% else %}
+
+                                    {{ row.module }}
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if modules.get(row.module) %}
+
+                                    {{
+                                        modules[
+                                            row.module
+                                        ].categories.get(
+                                            row.category,
+                                            row.category
+                                        )
+                                    }}
+
+                                {% else %}
+
+                                    {{ row.category }}
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if row.source_url %}
+
+                                <a
+                                    href="{{ row.source_url }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {{ row.filename }}
+                                </a>
+
+                                {% else %}
+
+                                    {{ row.filename }}
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {{ row.uploader or "Unknown" }}
+
+                                {% if row.uploader_email %}
+
+                                <br>
+
+                                <small>
+                                    {{ row.uploader_email }}
+                                </small>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            {% for column in columns %}
+
+                            <td>
+
+                                {{ row.data.get(
+                                    column,
+                                    ""
+                                ) }}
+
+                            </td>
+
+                            {% endfor %}
+
+
+                            <td>
+                                {{ row.created_at }}
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <i class="fa-regular fa-folder-open"></i>
+
+                <p>
+                    No records have been submitted yet.
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <section class="upload-panel">
+
+            <div class="module-page-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        SOURCE HISTORY
+                    </p>
+
+                    <h2>
+                        User Submitted Links
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            {% if link_submissions %}
+
+            <div class="data-table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                File
+                            </th>
+
+                            <th>
+                                User
+                            </th>
+
+                            <th>
+                                Module
+                            </th>
+
+                            <th>
+                                Category
+                            </th>
+
+                            <th>
+                                Rows
+                            </th>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Source
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for item in link_submissions %}
+
+                        <tr>
+
+                            <td>
+                                {{ item.filename }}
+                            </td>
+
+                            <td>
+
+                                {{ item.uploader }}
+
+                                <br>
+
+                                <small>
+                                    {{ item.uploader_email }}
+                                </small>
+
+                            </td>
+
+                            <td>
+
+                                {% if item.target_module
+                                    and modules.get(
+                                        item.target_module
+                                    )
+                                %}
+
+                                    {{
+                                        modules[
+                                            item.target_module
+                                        ].name
+                                    }}
+
+                                {% else %}
+
+                                    Automatic
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if item.target_module
+                                    and item.target_category
+                                    and modules.get(
+                                        item.target_module
+                                    )
+                                %}
+
+                                    {{
+                                        modules[
+                                            item.target_module
+                                        ].categories.get(
+                                            item.target_category,
+                                            item.target_category
+                                        )
+                                    }}
+
+                                {% else %}
+
+                                    Automatic
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ item.row_count }}
+                            </td>
+
+                            <td>
+                                {{ item.created_at }}
+                            </td>
+
+                            <td>
+
+                                {% if item.source_url %}
+
+                                <a
+                                    href="{{ item.source_url }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Open Link
+                                </a>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <p>
+                No link submissions yet.
+            </p>
+
+            {% endif %}
+
+        </section>
+
+    </div>
+
+</section>
+
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const search =
+            document.getElementById(
+                "dataSearch"
+            );
+
+        const rows =
+            document.querySelectorAll(
+                "#adminDataTable tbody tr"
+            );
+
+
+        if (!search) {
+            return;
+        }
+
+
+        search.addEventListener(
+            "input",
+            function () {
+
+                const value =
+                    search.value
+                    .toLowerCase()
+                    .trim();
+
+
+                rows.forEach(
+                    function (row) {
+
+                        const text =
+                            row.innerText
+                            .toLowerCase();
+
+                        row.style.display =
+                            (
+                                !value
+                                ||
+                                text.includes(
+                                    value
+                                )
+                            )
+                            ? ""
+                            : "none";
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
+
+</script>
+
+{% endblock %}

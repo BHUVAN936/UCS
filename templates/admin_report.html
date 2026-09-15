@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+University Report | UCE Connect
+{% endblock %}
+
+
+{% block content %}
+
+<section class="admin-page report-page">
+
+    <div class="container">
+
+        <!-- ==================================================
+             REPORT HEADER
+        =================================================== -->
+
+        <div class="report-page-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    ADMINISTRATOR · LIVE REPORT
+                </p>
+
+                <h1>
+                    University Data Report
+                </h1>
+
+                <p>
+                    A live summary generated from the
+                    information currently stored in
+                    UCE Connect.
+                </p>
+
+            </div>
+
+
+            <div class="report-actions">
+
+                <a
+                    class="outline-button"
+                    href="{{ url_for('main.admin') }}"
+                >
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Back to Admin
+
+                </a>
+
+
+                <a
+                    class="header-button"
+                    href="{{ url_for('main.admin_report_pdf') }}"
+                >
+
+                    <i class="fa-solid fa-file-pdf"></i>
+
+                    Download PDF
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             KPI CARDS
+        =================================================== -->
+
+        <div class="report-kpi-grid">
+
+            <article class="report-kpi">
+
+                <span>
+                    Total Records
+                </span>
+
+                <strong>
+                    {{ "{:,}".format(
+                        report.total_records
+                    ) }}
+                </strong>
+
+                <small>
+                    Across all modules
+                </small>
+
+            </article>
+
+
+            <article class="report-kpi">
+
+                <span>
+                    Uploaded Files
+                </span>
+
+                <strong>
+                    {{ "{:,}".format(
+                        report.total_uploads
+                    ) }}
+                </strong>
+
+                <small>
+                    Processed successfully
+                </small>
+
+            </article>
+
+
+            <article class="report-kpi">
+
+                <span>
+                    Active Modules
+                </span>
+
+                <strong>
+                    {{ report.populated_modules }}
+                    /
+                    {{ report.total_modules }}
+                </strong>
+
+                <small>
+                    Modules containing data
+                </small>
+
+            </article>
+
+
+            <article class="report-kpi">
+
+                <span>
+                    Active Categories
+                </span>
+
+                <strong>
+                    {{ report.populated_categories }}
+                    /
+                    {{ report.total_categories }}
+                </strong>
+
+                <small>
+                    Categories containing data
+                </small>
+
+            </article>
+
+        </div>
+
+
+        <!-- ==================================================
+             MODULE OVERVIEW
+        =================================================== -->
+
+        <section class="report-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        01 · UNIVERSITY OVERVIEW
+                    </span>
+
+                    <h2>
+                        Information by module
+                    </h2>
+
+                </div>
+
+
+                <span class="report-generated">
+
+                    Generated
+                    {{ report.generated_at }}
+
+                </span>
+
+            </div>
+
+
+            <div class="module-report-list">
+
+                {% for module in report.modules %}
+
+                    {% set percentage =
+                        (
+                            module.total_records
+                            / report.total_records
+                            * 100
+                        )
+                        if report.total_records
+                        else 0
+                    %}
+
+
+                    <article
+                        class="module-report-row"
+                    >
+
+                        <div
+                            class="module-report-title"
+                        >
+
+                            <span
+                                class="module-report-icon"
+                            >
+
+                                <i
+                                    class="fa-solid {{ module.icon }}"
+                                ></i>
+
+                            </span>
+
+
+                            <div>
+
+                                <strong>
+                                    {{ module.name }}
+                                </strong>
+
+                                <small>
+                                    {{ module.description }}
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            class="module-report-bar-area"
+                        >
+
+                            <div
+                                class="module-report-bar-track"
+                            >
+
+                                <div
+                                    class="module-report-bar"
+                                    style="
+                                        width:
+                                        {{
+                                            '%.2f'
+                                            |format(
+                                                percentage
+                                            )
+                                        }}%;
+                                    "
+                                ></div>
+
+                            </div>
+
+
+                            <span>
+
+                                {{
+                                    "{:,}".format(
+                                        module.total_records
+                                    )
+                                }}
+
+                                records
+
+                            </span>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             CATEGORY BREAKDOWN
+        =================================================== -->
+
+        <section class="report-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        02 · CATEGORY BREAKDOWN
+                    </span>
+
+                    <h2>
+                        Data available in each module
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-category-grid">
+
+                {% for module in report.modules %}
+
+                    <article
+                        class="report-category-card"
+                    >
+
+                        <div
+                            class="report-category-header"
+                        >
+
+                            <strong>
+                                {{ module.name }}
+                            </strong>
+
+                            <span>
+
+                                {{
+                                    "{:,}".format(
+                                        module.total_records
+                                    )
+                                }}
+
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            class="report-category-list"
+                        >
+
+                            {% for category in module.categories %}
+
+                                <div
+                                    class="
+                                        report-category-item
+                                        {% if category.count == 0 %}
+                                            is-empty
+                                        {% endif %}
+                                    "
+                                >
+
+                                    <span>
+                                        {{ category.name }}
+                                    </span>
+
+                                    <strong>
+                                        {{
+                                            "{:,}".format(
+                                                category.count
+                                            )
+                                        }}
+                                    </strong>
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             AUTOMATIC ANALYSIS
+        =================================================== -->
+
+        <section class="report-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        03 · AUTOMATIC ANALYSIS
+                    </span>
+
+                    <h2>
+                        Numeric indicators found
+                        in uploaded data
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-analysis-grid">
+
+                {% for module in report.modules %}
+
+                    {% if module.numeric_averages %}
+
+                        <article
+                            class="analysis-module-card"
+                        >
+
+                            <h3>
+                                {{ module.name }}
+                            </h3>
+
+
+                            <div
+                                class="
+                                    analysis-module-values
+                                "
+                            >
+
+                                {% for item
+                                    in module.numeric_averages %}
+
+                                    <div>
+
+                                        <span>
+
+                                            {{
+                                                item.field
+                                                |replace(
+                                                    "_",
+                                                    " "
+                                                )
+                                                |title
+                                            }}
+
+                                        </span>
+
+                                        <strong>
+                                            {{ item.value }}
+                                        </strong>
+
+                                        <small>
+                                            Average
+                                        </small>
+
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </article>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                {% if report.total_records == 0 %}
+
+                    <div class="empty-state">
+
+                        <i
+                            class="fa-regular fa-chart-bar"
+                        ></i>
+
+                        <p>
+                            Upload university data to
+                            generate automatic analysis.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             RECENT ACTIVITY
+        =================================================== -->
+
+        <section class="report-panel">
+
+            <div class="panel-heading">
+
+                <div>
+
+                    <span class="panel-label">
+                        04 · RECENT ACTIVITY
+                    </span>
+
+                    <h2>
+                        Latest uploads
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            {% if report.recent_uploads %}
+
+                <div class="history-table-wrapper">
+
+                    <table class="history-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    File
+                                </th>
+
+                                <th>
+                                    Mode
+                                </th>
+
+                                <th>
+                                    Target
+                                </th>
+
+                                <th>
+                                    Records
+                                </th>
+
+                                <th>
+                                    Uploaded By
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for upload
+                                in report.recent_uploads %}
+
+                                <tr>
+
+                                    <td>
+
+                                        <strong>
+                                            {{ upload.filename }}
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+                                        {{ upload.upload_mode|title }}
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if upload.target_module %}
+
+                                            {{
+                                                modules[
+                                                    upload.target_module
+                                                ].name
+                                            }}
+
+                                            {% if upload.target_category %}
+
+                                                /
+
+                                                {{
+                                                    modules[
+                                                        upload.target_module
+                                                    ].categories.get(
+                                                        upload.target_category,
+                                                        upload.target_category
+                                                    )
+                                                }}
+
+                                            {% endif %}
+
+                                        {% else %}
+
+                                            Automatic classification
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{
+                                            "{:,}".format(
+                                                upload.row_count
+                                            )
+                                        }}
+
+                                    </td>
+
+
+                                    <td>
+                                        {{ upload.uploader }}
+                                    </td>
+
+
+                                    <td>
+                                        {{ upload.created_at }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <i
+                        class="fa-regular fa-folder-open"
+                    ></i>
+
+                    <p>
+                        No uploads yet.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- ==================================================
+             REPORT FOOTER
+        =================================================== -->
+
+        <div class="report-footer-note">
+
+            <i class="fa-solid fa-circle-info"></i>
+
+            <span>
+
+                This report is generated dynamically from
+                the current UCE Connect database.
+                If an administrator uploads or deletes
+                data, regenerate the report to see the
+                updated values.
+
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}
