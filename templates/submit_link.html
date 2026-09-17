@@ -66,21 +66,27 @@ Submit Data Link — UCE Connect
                 class="upload-form"
             >
 
-                <label>
+                <!-- SOURCE LINK -->
+
+                <label for="sourceUrl">
 
                     Spreadsheet / Google Drive Link
 
                     <input
                         type="url"
+                        id="sourceUrl"
                         name="source_url"
                         placeholder="https://docs.google.com/..."
+                        autocomplete="url"
                         required
                     >
 
                 </label>
 
 
-                <label>
+                <!-- PROCESSING MODE -->
+
+                <label for="uploadMode">
 
                     Processing Mode
 
@@ -102,18 +108,21 @@ Submit Data Link — UCE Connect
                 </label>
 
 
+                <!-- SPECIFIC MODULE SELECTION -->
+
                 <div
                     id="specificFields"
                     hidden
                 >
 
-                    <label>
+                    <label for="targetModule">
 
                         Module
 
                         <select
                             name="target_module"
                             id="targetModule"
+                            disabled
                         >
 
                             {% for key, item in modules.items() %}
@@ -129,14 +138,19 @@ Submit Data Link — UCE Connect
                     </label>
 
 
-                    <label>
+                    <!-- SPECIFIC CATEGORY -->
 
-                        Category
+                    <label for="targetCategory">
+
+                        Category / Submodule
 
                         <select
                             name="target_category"
                             id="targetCategory"
+                            disabled
+                            required
                         >
+
                         </select>
 
                     </label>
@@ -144,9 +158,12 @@ Submit Data Link — UCE Connect
                 </div>
 
 
+                <!-- SUBMIT -->
+
                 <button
                     type="submit"
                     class="header-button"
+                    id="importButton"
                 >
 
                     <i class="fa-solid fa-cloud-arrow-down"></i>
@@ -158,6 +175,8 @@ Submit Data Link — UCE Connect
             </form>
 
 
+            <!-- INFORMATION -->
+
             <div class="upload-help">
 
                 <i class="fa-solid fa-circle-info"></i>
@@ -168,8 +187,8 @@ Submit Data Link — UCE Connect
                     through the submitted link.
 
                     The system downloads the data temporarily,
-                    extracts it and stores the rows in the
-                    database.
+                    extracts the rows and stores the imported
+                    records in the database.
 
                 </span>
 
@@ -184,8 +203,11 @@ Submit Data Link — UCE Connect
 
 <script>
 
-const UCE_MODULES =
-    {{ modules | tojson }};
+/* =========================================================
+   MODULE DATA FROM FLASK
+   ========================================================= */
+
+const UCE_MODULES = {{ modules | tojson }};
 
 
 document.addEventListener(
@@ -213,23 +235,51 @@ document.addEventListener(
             );
 
 
+        /* =================================================
+           UPDATE CATEGORY LIST
+           ================================================= */
+
         function updateCategories() {
 
             categorySelect.innerHTML = "";
 
-            const selected =
+
+            const selectedModule =
                 UCE_MODULES[
                     moduleSelect.value
                 ];
 
-            if (!selected) {
+
+            if (
+                !selectedModule ||
+                !selectedModule.categories
+            ) {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value = "";
+                option.textContent =
+                    "No categories available";
+
+                categorySelect.appendChild(
+                    option
+                );
+
                 return;
             }
 
+
+            const categories =
+                selectedModule.categories;
+
+
             Object.entries(
-                selected.categories
+                categories
             ).forEach(
-                ([key, label]) => {
+                function ([key, label]) {
 
                     const option =
                         document.createElement(
@@ -237,6 +287,7 @@ document.addEventListener(
                         );
 
                     option.value = key;
+
                     option.textContent = label;
 
                     categorySelect.appendChild(
@@ -245,24 +296,44 @@ document.addEventListener(
 
                 }
             );
+
         }
 
+
+        /* =================================================
+           UPDATE PROCESSING MODE
+           ================================================= */
 
         function updateMode() {
 
-            const specific =
+            const isSpecific =
                 mode.value === "specific";
 
+
             fields.hidden =
-                !specific;
+                !isSpecific;
+
 
             moduleSelect.disabled =
-                !specific;
+                !isSpecific;
+
 
             categorySelect.disabled =
-                !specific;
+                !isSpecific;
+
+
+            if (isSpecific) {
+
+                updateCategories();
+
+            }
+
         }
 
+
+        /* =================================================
+           EVENTS
+           ================================================= */
 
         mode.addEventListener(
             "change",
@@ -276,7 +347,12 @@ document.addEventListener(
         );
 
 
+        /* =================================================
+           INITIAL STATE
+           ================================================= */
+
         updateCategories();
+
         updateMode();
 
     }

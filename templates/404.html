@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}
+Page Not Found | UCE Connect
+{% endblock %}
+
+{% block content %}
+
+<section class="error-page">
+
+    <div class="error-card">
+
+        <div class="error-icon">
+            <i class="fa-solid fa-compass"></i>
+        </div>
+
+        <p class="eyebrow">
+            ERROR 404
+        </p>
+
+        <h1>
+            Page not found.
+        </h1>
+
+        <p class="error-description">
+            The page you are looking for does not exist,
+            may have been moved, or the URL is incorrect.
+        </p>
+
+        <div class="error-actions">
+
+            <a
+                href="{{ url_for('main.home') }}"
+                class="header-button"
+            >
+                <i class="fa-solid fa-house"></i>
+                Back to Home
+            </a>
+
+            {% if current_user and current_user.role == "admin" %}
+
+            <a
+                href="{{ url_for('main.admin') }}"
+                class="outline-button"
+            >
+                <i class="fa-solid fa-shield-halved"></i>
+                Admin Portal
+            </a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

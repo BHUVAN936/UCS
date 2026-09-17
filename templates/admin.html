@@ -147,6 +147,14 @@ Admin Portal | UCE Connect
         </section>
 
 
+        {% if university_report.unclassified_records %}
+        <div class="upload-help" style="margin-top:16px;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{{ university_report.unclassified_records }} record(s) could not be classified automatically. Review them in <a href="{{ url_for('main.admin_data') }}">All Data</a>.</span>
+        </div>
+        {% endif %}
+
+
         <!-- =====================================================
              MODULE PROGRESS
         ====================================================== -->
@@ -319,18 +327,21 @@ Admin Portal | UCE Connect
                         <!-- MODULE REPORT -->
 
                         <a
-                            class="outline-button"
-                            href="{{ url_for('main.admin_module_report', module=module_key) }}"
+                            class="header-button"
+                            href="{{ url_for(
+                                'main.admin_module_report',
+                                module=module.key
+                            ) }}"
                         >
 
-                            <i class="fa-solid fa-chart-line"></i>
+                            <i class="fa-solid fa-chart-column"></i>
 
                             Module Report
 
                         </a>
 
 
-                        <!-- MODULE DATA -->
+                        <!-- VIEW MODULE DATA -->
 
                         <a
                             class="outline-button"

@@ -2,35 +2,37 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from pypdf import PdfReader
+
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
 
 
 def clean_value(value):
 
-    if pd.isna(value):
-
+    if value is None:
         return ""
+
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
 
     if hasattr(value, "item"):
 
         try:
-
             value = value.item()
-
         except (
             ValueError,
-            TypeError
+            TypeError,
         ):
-
             pass
 
-    if isinstance(
-        value,
-        float
-    ):
+    if isinstance(value, float):
 
         if value.is_integer():
-
             return int(value)
 
     return value
@@ -38,19 +40,13 @@ def clean_value(value):
 
 def clean_records(records):
 
-    cleaned = []
-
-    for record in records:
-
-        cleaned.append(
-            {
-                str(key): clean_value(value)
-                for key, value
-                in record.items()
-            }
-        )
-
-    return cleaned
+    return [
+        {
+            str(key): clean_value(value)
+            for key, value in record.items()
+        }
+        for record in records
+    ]
 
 
 def extract_csv(file_path):
@@ -61,12 +57,10 @@ def extract_csv(file_path):
 
     dataframe = dataframe.fillna("")
 
-    records = dataframe.to_dict(
-        orient="records"
-    )
-
     return clean_records(
-        records
+        dataframe.to_dict(
+            orient="records"
+        )
     )
 
 
@@ -78,16 +72,20 @@ def extract_excel(file_path):
 
     dataframe = dataframe.fillna("")
 
-    records = dataframe.to_dict(
-        orient="records"
-    )
-
     return clean_records(
-        records
+        dataframe.to_dict(
+            orient="records"
+        )
     )
 
 
 def extract_pdf(file_path):
+
+    if PdfReader is None:
+        raise RuntimeError(
+            "PDF support is unavailable. "
+            "Install PyPDF2 to enable PDF extraction."
+        )
 
     reader = PdfReader(
         file_path
@@ -110,7 +108,7 @@ def extract_pdf(file_path):
             pages.append(
                 {
                     "page": page_number,
-                    "content": text.strip()
+                    "content": text.strip(),
                 }
             )
 
@@ -126,31 +124,25 @@ def extract_file(file_path):
     )
 
     if extension == ".csv":
-
-        return (
-            extract_csv(file_path),
-            "csv"
-        )
+        return extract_csv(
+            file_path
+        ), "csv"
 
     if extension in {
         ".xlsx",
-        ".xls"
+        ".xls",
     }:
-
-        return (
-            extract_excel(file_path),
-            extension.replace(
-                ".",
-                ""
-            )
+        return extract_excel(
+            file_path
+        ), extension.replace(
+            ".",
+            ""
         )
 
     if extension == ".pdf":
-
-        return (
-            extract_pdf(file_path),
-            "pdf"
-        )
+        return extract_pdf(
+            file_path
+        ), "pdf"
 
     raise ValueError(
         "Unsupported file type."
@@ -162,5 +154,5 @@ def prepare_json(data):
     return json.dumps(
         data,
         ensure_ascii=False,
-        default=str
+        default=str,
     )

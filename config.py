@@ -2,37 +2,59 @@ import os
 from pathlib import Path
 
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(
+    __file__
+).resolve().parent
 
 
 class Config:
 
     SECRET_KEY = os.getenv(
         "UCE_SECRET_KEY",
-        "uce-connect-development-secret-change-this"
+        "uce-connect-development-secret-change-this",
     )
 
     DATABASE_PATH = str(
-        BASE_DIR / "instance" / "database.db"
+        BASE_DIR
+        / "instance"
+        / "database.db"
     )
 
     UPLOAD_FOLDER = str(
-        BASE_DIR / "instance" / "uploads"
+        BASE_DIR
+        / "instance"
+        / "uploads"
     )
 
-    MAX_CONTENT_LENGTH = 25 * 1024 * 1024
+    MAX_CONTENT_LENGTH = (
+        25 * 1024 * 1024
+    )
 
     ALLOWED_EXTENSIONS = {
         "csv",
         "xlsx",
-        "xls"
+        "xls",
     }
 
     ADMIN_REGISTRATION_CODE = os.getenv(
         "UCE_ADMIN_REGISTRATION_CODE",
-        "Bhuvan@25"
+        "Bhuvan@25",
     )
 
     SESSION_COOKIE_HTTPONLY = True
+
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = False
+
+    # Keep False for localhost development.
+    # Set UCE_COOKIE_SECURE=true when deployed with HTTPS.
+    SESSION_COOKIE_SECURE = (
+        os.getenv(
+            "UCE_COOKIE_SECURE",
+            "false",
+        ).lower()
+        == "true"
+    )
+
+    SESSION_COOKIE_NAME = "uce_session"
+
+    SEND_FILE_MAX_AGE_DEFAULT = 0

@@ -1,5 +1,8 @@
 import csv
 import io
+import hashlib
+import secrets
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import (
@@ -21,7 +24,6 @@ from werkzeug.security import (
 
 from config import Config
 from database.db import get_connection
-
 from services.data_service import (
     MODULES,
     create_dataset,
@@ -32,6 +34,8 @@ from services.data_service import (
     get_user_datasets,
     get_module_data,
     build_module_report,
+    normalize_module,
+    normalize_category,
 )
 
 
@@ -545,6 +549,213 @@ def login():
 
 
 # =========================================================
+# PASSWORD RESET
+# =========================================================
+
+def _hash_reset_token(token):
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+@main_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "GET":
+        return render_template("forgot_password.html")
+
+    email = request.form.get("email", "").strip().lower()
+
+    if not email:
+        flash("Please enter your email address.", "danger")
+        return render_template("forgot_password.html")
+
+    connection = get_connection()
+
+    try:
+        user = connection.execute(
+            """
+            SELECT id, name, email
+            FROM users
+            WHERE email = ? COLLATE NOCASE
+            LIMIT 1
+            """,
+            (email,),
+        ).fetchone()
+
+        if not user:
+            flash("No account was found with that email address.", "danger")
+            return render_template("forgot_password.html")
+
+        # Invalidate older unused reset links for this account.
+        connection.execute(
+            """
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE user_id = ? AND used_at IS NULL
+            """,
+            (user["id"],),
+        )
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = _hash_reset_token(raw_token)
+        minutes = int(getattr(Config, "PASSWORD_RESET_MINUTES", 30))
+        expires_at = (
+            datetime.now(timezone.utc) + timedelta(minutes=minutes)
+        ).isoformat()
+
+        connection.execute(
+            """
+            INSERT INTO password_reset_tokens
+                (user_id, token_hash, expires_at)
+            VALUES (?, ?, ?)
+            """,
+            (user["id"], token_hash, expires_at),
+        )
+        connection.commit()
+
+        reset_url = url_for(
+            "main.reset_password",
+            token=raw_token,
+            _external=True,
+        )
+
+        # Local-development behavior: show the generated link on the page.
+        # This avoids requiring SMTP just to test password recovery locally.
+        return render_template(
+            "forgot_password.html",
+            reset_url=reset_url,
+            dev_mode=True,
+        )
+
+    except Exception as error:
+        connection.rollback()
+        flash(
+            "Unable to process the password reset request. "
+            "Please try again.",
+            "danger",
+        )
+        return render_template("forgot_password.html")
+    finally:
+        connection.close()
+
+
+@main_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    token_hash = _hash_reset_token(token)
+    connection = get_connection()
+
+    try:
+        reset_record = connection.execute(
+            """
+            SELECT id, user_id, expires_at, used_at
+            FROM password_reset_tokens
+            WHERE token_hash = ?
+            LIMIT 1
+            """,
+            (token_hash,),
+        ).fetchone()
+
+        if not reset_record:
+            flash(
+                "This password reset link is invalid or has expired.",
+                "danger",
+            )
+            return redirect(url_for("main.forgot_password"))
+
+        if reset_record["used_at"]:
+            flash(
+                "This password reset link has already been used.",
+                "danger",
+            )
+            return redirect(url_for("main.forgot_password"))
+
+        try:
+            expires_at = datetime.fromisoformat(
+                reset_record["expires_at"].replace("Z", "+00:00")
+            )
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
+        except (ValueError, AttributeError):
+            expires_at = datetime.min.replace(tzinfo=timezone.utc)
+
+        if datetime.now(timezone.utc) >= expires_at:
+            flash(
+                "This password reset link is invalid or has expired.",
+                "danger",
+            )
+            return redirect(url_for("main.forgot_password"))
+
+        if request.method == "GET":
+            return render_template("reset_password.html")
+
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if len(password) < 8:
+            flash(
+                "Password must contain at least 8 characters.",
+                "danger",
+            )
+            return render_template("reset_password.html")
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            return render_template("reset_password.html")
+
+        connection.execute(
+            """
+            UPDATE users
+            SET password_hash = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                generate_password_hash(password),
+                reset_record["user_id"],
+            ),
+        )
+
+        connection.execute(
+            """
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (reset_record["id"],),
+        )
+
+        connection.execute(
+            """
+            UPDATE password_reset_tokens
+            SET used_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+              AND used_at IS NULL
+              AND id <> ?
+            """,
+            (
+                reset_record["user_id"],
+                reset_record["id"],
+            ),
+        )
+
+        connection.commit()
+
+        flash(
+            "Your password has been reset successfully. "
+            "Please login with your new password.",
+            "success",
+        )
+        return redirect(url_for("main.login"))
+
+    except Exception:
+        connection.rollback()
+        flash(
+            "Unable to reset the password. Please request a new link.",
+            "danger",
+        )
+        return redirect(url_for("main.forgot_password"))
+    finally:
+        connection.close()
+
+
+# =========================================================
 # LOGOUT
 # =========================================================
 
@@ -614,12 +825,12 @@ def submit_link_post():
     ).strip().lower()
 
 
-    target_module = request.form.get(
-        "target_module"
+    target_module = normalize_module(
+        request.form.get("target_module", "")
     )
-
-    target_category = request.form.get(
-        "target_category"
+    target_category = normalize_category(
+        request.form.get("target_category", ""),
+        target_module
     )
 
 
@@ -854,55 +1065,74 @@ def my_data():
 
     user = get_current_user()
 
-
-    records = [
-        record
-        for record in get_all_rows()
-        if record.get(
-            "uploaded_by"
-        ) == user["id"]
-    ]
-
+    records = get_all_rows(
+        user_id=user["id"]
+    )
 
     columns = []
 
-
     for record in records:
+        data = record.get("data", {})
 
-        data = record.get(
-            "data",
-            {}
-        )
-
-
-        if not isinstance(
-            data,
-            dict
-        ):
-
+        if not isinstance(data, dict):
             continue
 
-
         for column in data:
-
             if column not in columns:
-
-                columns.append(
-                    column
-                )
-
+                columns.append(column)
 
     return render_template(
         "admin_data.html",
         records=records,
         columns=columns,
-        link_submissions=get_user_datasets(
-            user["id"]
-        ),
+        link_submissions=get_user_datasets(user["id"]),
         modules=MODULES,
         user_view=True,
     )
 
+
+# ADD THE DELETE ROUTE HERE
+@main_bp.route(
+    "/my-data/<int:upload_id>/delete",
+    methods=["POST"]
+)
+@login_required
+def delete_my_upload(upload_id):
+
+    from services.data_service import delete_user_upload
+
+    user = get_current_user()
+
+    try:
+        deleted = delete_user_upload(
+            upload_id,
+            user["id"]
+        )
+    except Exception as error:
+        flash(
+            f"Delete failed: {error}",
+            "danger"
+        )
+        return redirect(
+            request.referrer
+            or
+            url_for("main.my_data")
+        )
+
+    if deleted:
+        flash(
+            "Your submission and its imported records were deleted.",
+            "success"
+        )
+    else:
+        flash(
+            "Submission not found or you do not have permission to delete it.",
+            "danger"
+        )
+
+    return redirect(
+        url_for("main.my_data")
+    )
 
 # =========================================================
 # ADMIN HOME
@@ -931,33 +1161,68 @@ def admin():
 
 
 # =========================================================
-# ADMIN - ALL DATA
+# ADMIN DATA HELPERS
 # =========================================================
 
-@main_bp.route("/admin/data")
-@admin_required
-def admin_data():
+# =========================================================
+# ADMIN DATA HELPERS
+# =========================================================
 
-    module = request.args.get(
-        "module",
-        ""
-    ).strip()
+_RESERVED_DATA_FIELDS = {
+    "module",
+    "module_key",
+    "module_name",
+    "category",
+    "category_key",
+    "category_name",
+    "submodule",
+    "sub_module",
+    "sub-module",
+    "subtopic",
+    "sub_topic",
+    "topic",
+}
 
 
-    category = request.args.get(
-        "category",
-        ""
-    ).strip()
+def _filter_admin_records(records, module=None, category=None):
+    """
+    Keep records strictly inside the requested module/category.
+    This prevents records belonging to other modules from appearing.
+    """
+
+    filtered = []
+
+    module = (module or "").strip().lower()
+    category = (category or "").strip().lower()
+
+    for record in records:
+
+        record_module = str(
+            record.get("module", "")
+        ).strip().lower()
+
+        record_category = str(
+            record.get("category", "")
+        ).strip().lower()
+
+        if module and record_module != module:
+            continue
+
+        if category and record_category != category:
+            continue
+
+        filtered.append(record)
+
+    return filtered
 
 
-    records = get_all_rows(
-        module=module or None,
-        category=category or None,
-    )
-
+def _clean_data_columns(records):
+    """
+    Return only actual imported spreadsheet columns.
+    Module/category metadata is excluded.
+    """
 
     columns = []
-
 
     for record in records:
 
@@ -966,43 +1231,443 @@ def admin_data():
             {}
         )
 
-
-        if not isinstance(
-            data,
-            dict
-        ):
-
+        if not isinstance(data, dict):
             continue
-
 
         for column in data:
 
-            if column not in columns:
+            normalized = str(
+                column
+            ).strip().lower()
 
-                columns.append(
-                    column
+            normalized = normalized.replace(
+                " ",
+                "_"
+            )
+
+            normalized = normalized.replace(
+                "-",
+                "_"
+            )
+
+            if normalized in _RESERVED_DATA_FIELDS:
+                continue
+
+            if column not in columns:
+                columns.append(column)
+
+    return columns
+
+
+def _display_row(record, module_key, category_key):
+    """
+    Convert one database record into a clean display row.
+    """
+
+    data = record.get(
+        "data",
+        {}
+    )
+
+    if not isinstance(data, dict):
+        data = {}
+
+    module_info = MODULES[module_key]
+
+    category_name = (
+        module_info
+        .get("categories", {})
+        .get(
+            category_key,
+            category_key
+        )
+    )
+
+    row = {
+        "Record ID": record.get(
+            "id",
+            ""
+        ),
+
+        "Module": module_info.get(
+            "name",
+            module_key
+        ),
+
+        "Sub-Module": category_name,
+    }
+
+    for key, value in data.items():
+
+        normalized = str(
+            key
+        ).strip().lower()
+
+        normalized = normalized.replace(
+            " ",
+            "_"
+        )
+
+        normalized = normalized.replace(
+            "-",
+            "_"
+        )
+
+        if normalized in _RESERVED_DATA_FIELDS:
+            continue
+
+        row[key] = value
+
+    return row
+
+
+def _build_admin_module_report(
+    module_key,
+    records
+):
+    """
+    Build a complete report for exactly one module.
+
+    Every configured submodule is displayed separately.
+    """
+
+    module_info = MODULES[module_key]
+
+    categories = {}
+
+    all_rows = []
+
+    for category_key, category_name in (
+        module_info
+        .get("categories", {})
+        .items()
+    ):
+
+        category_records = _filter_admin_records(
+            records,
+            module=module_key,
+            category=category_key
+        )
+
+        rows = [
+            _display_row(
+                record,
+                module_key,
+                category_key
+            )
+            for record in category_records
+        ]
+
+        columns = []
+
+        for row in rows:
+
+            for column in row:
+
+                if column not in columns:
+                    columns.append(column)
+
+        categories[category_key] = {
+            "name": category_name,
+            "count": len(rows),
+            "columns": columns,
+            "rows": rows,
+        }
+
+        all_rows.extend(rows)
+
+    numeric_totals = {}
+    numeric_counts = {}
+
+    for row in all_rows:
+
+        for field, value in row.items():
+
+            if field in {
+                "Record ID",
+                "Module",
+                "Sub-Module"
+            }:
+                continue
+
+            try:
+
+                number = float(
+                    str(value)
+                    .replace(",", "")
+                    .replace("%", "")
+                    .strip()
                 )
 
+            except (
+                TypeError,
+                ValueError
+            ):
+                continue
+
+            numeric_totals[field] = (
+                numeric_totals.get(
+                    field,
+                    0
+                ) + number
+            )
+
+            numeric_counts[field] = (
+                numeric_counts.get(
+                    field,
+                    0
+                ) + 1
+            )
+
+    numeric_averages = {}
+
+    for field in numeric_totals:
+
+        count = numeric_counts.get(
+            field,
+            0
+        )
+
+        if count:
+
+            numeric_averages[field] = round(
+                numeric_totals[field] / count,
+                2
+            )
+
+    return {
+        "module_key": module_key,
+
+        "module_name": module_info.get(
+            "name",
+            module_key
+        ),
+
+        "total_records": len(
+            records
+        ),
+
+        "total_columns": (
+            len(
+                _clean_data_columns(
+                    records
+                )
+            ) + 3
+            if records
+            else 0
+        ),
+
+        "categories": categories,
+
+        "numeric_averages":
+            numeric_averages,
+    }
+
+
+# =========================================================
+# ADMIN - ALL DATA
+# =========================================================
+
+@main_bp.route(
+    "/admin/data"
+)
+@admin_required
+def admin_data():
+
+    module = (
+        request.args.get(
+            "module",
+            ""
+        )
+        .strip()
+        .lower()
+    )
+
+    category = normalize_category(
+        request.args.get("category", ""),
+        module
+    )
+
+    # -----------------------------------------------------
+    # VALIDATE MODULE
+    # -----------------------------------------------------
+
+    if module and module not in MODULES:
+
+        flash(
+            "Invalid module selected.",
+            "danger"
+        )
+
+        return redirect(
+            url_for(
+                "main.admin"
+            )
+        )
+
+    # -----------------------------------------------------
+    # VALIDATE SUBMODULE
+    # -----------------------------------------------------
+
+    if category:
+
+        if not module:
+
+            flash(
+                "A module is required when selecting a submodule.",
+                "danger"
+            )
+
+            return redirect(
+                url_for(
+                    "main.admin_data"
+                )
+            )
+
+        if category not in (
+            MODULES[module]
+            .get(
+                "categories",
+                {}
+            )
+        ):
+
+            flash(
+                "Invalid submodule selected.",
+                "danger"
+            )
+
+            return redirect(
+                url_for(
+                    "main.admin_data",
+                    module=module
+                )
+            )
+
+    # -----------------------------------------------------
+    # GET DATABASE RECORDS
+    # -----------------------------------------------------
+
+    records = get_all_rows(
+        module=module or None,
+        category=category or None
+    )
+
+    # -----------------------------------------------------
+    # STRICT FILTER
+    # -----------------------------------------------------
+
+    records = _filter_admin_records(
+        records,
+        module=module or None,
+        category=category or None
+    )
+
+    # -----------------------------------------------------
+    # FIND COLUMNS
+    # -----------------------------------------------------
+
+    columns = _clean_data_columns(
+        records
+    )
+
+    # -----------------------------------------------------
+    # BUILD SUBMODULE TABLES
+    #
+    # This is important:
+    #
+    # Module
+    #   ↓
+    # Submodule 1 → its records
+    # Submodule 2 → its records
+    # Submodule 3 → its records
+    #
+    # Records from another submodule are NOT mixed.
+    # -----------------------------------------------------
+
+    submodule_tables = []
+
+    if module:
+
+        categories = MODULES[module].get(
+            "categories",
+            {}
+        )
+
+        if category:
+
+            categories_to_show = {
+                category:
+                    categories[category]
+            }
+
+        else:
+
+            categories_to_show = categories
+
+        for (
+            category_key,
+            category_name
+        ) in categories_to_show.items():
+
+            category_records = (
+                _filter_admin_records(
+                    records,
+                    module=module,
+                    category=category_key
+                )
+            )
+
+            submodule_tables.append({
+
+                "key":
+                    category_key,
+
+                "name":
+                    category_name,
+
+                "count":
+                    len(category_records),
+
+                "records":
+                    category_records,
+
+                "columns":
+                    _clean_data_columns(
+                        category_records
+                    ),
+            })
+
+    # -----------------------------------------------------
+    # RENDER
+    # -----------------------------------------------------
 
     return render_template(
+
         "admin_data.html",
 
         records=records,
 
         columns=columns,
 
-        link_submissions=get_all_datasets(),
+        submodule_tables=
+            submodule_tables,
+
+        link_submissions=
+            get_all_datasets(),
 
         modules=MODULES,
 
-        selected_module=module,
+        selected_module=
+            module,
 
-        selected_category=category,
+        selected_category=
+            category,
     )
 
 
 # =========================================================
-# ADMIN - OVERALL REPORT
+# ADMIN - OVERALL / STANDARD REPORT
 # =========================================================
 
 @main_bp.route(
@@ -1011,32 +1676,95 @@ def admin_data():
 @admin_required
 def admin_report():
 
+    selected_module = (
+        request.args.get(
+            "module",
+            ""
+        )
+        .strip()
+        .lower()
+    )
+
+    # -----------------------------------------------------
+    # IF A MODULE WAS REQUESTED
+    # -----------------------------------------------------
+
+    if selected_module:
+
+        if selected_module not in MODULES:
+
+            flash(
+                "Invalid module selected.",
+                "danger"
+            )
+
+            return redirect(
+                url_for(
+                    "main.admin_report"
+                )
+            )
+
+        return redirect(
+            url_for(
+                "main.admin_module_report",
+                module=selected_module
+            )
+        )
+
+    # -----------------------------------------------------
+    # OVERALL UNIVERSITY REPORT
+    # -----------------------------------------------------
+
     report = get_report()
 
+    # -----------------------------------------------------
+    # IMPORTANT FIX
+    #
+    # Your admin_report.html expects module_info.
+    #
+    # Previously it was NOT passed here.
+    #
+    # That caused:
+    #
+    # jinja2.exceptions.UndefinedError:
+    # 'module_info' is undefined
+    #
+    # We provide a safe overall module_info object.
+    # -----------------------------------------------------
+
+    module_info = {
+
+        "name":
+            "All University Modules",
+
+        "description":
+            "Overall university data report.",
+
+        "icon":
+            "fa-chart-pie",
+
+        "categories":
+            {},
+    }
 
     return render_template(
+
         "admin_report.html",
 
         report=report,
 
         modules=MODULES,
+
+        overall=True,
+
+        selected_module=None,
+
+        module_info=module_info,
     )
 
 
 # =========================================================
 # ADMIN - MODULE REPORT
-#
-# IMPORTANT:
-#
-# Route uses <module>, NOT <module_key>
-#
-# This matches:
-#
-# url_for(
-#     'main.admin_module_report',
-#     module=module.key
-# )
-#
 # =========================================================
 
 @main_bp.route(
@@ -1047,13 +1775,11 @@ def admin_module_report(module):
 
     module = (
         module
-        or
-        ""
+        or ""
     ).strip().lower()
 
-
     # -----------------------------------------------------
-    # Validate module
+    # VALIDATE MODULE
     # -----------------------------------------------------
 
     if module not in MODULES:
@@ -1069,78 +1795,53 @@ def admin_module_report(module):
             )
         )
 
-
     # -----------------------------------------------------
-    # Get all records for this module
+    # GET ONLY THIS MODULE
     # -----------------------------------------------------
 
     records = get_all_rows(
         module=module
     )
 
-
     # -----------------------------------------------------
-    # Get grouped module data
+    # STRICT FILTER
     # -----------------------------------------------------
 
-    grouped_data = get_module_data(
-        module
+    records = _filter_admin_records(
+        records,
+        module=module
     )
 
-
     # -----------------------------------------------------
-    # Build module report
+    # BUILD REPORT
     # -----------------------------------------------------
 
-    report = build_module_report(
+    report = _build_admin_module_report(
         module,
-        grouped_data
+        records
     )
 
+    # -----------------------------------------------------
+    # DATA COLUMNS
+    # -----------------------------------------------------
+
+    columns = _clean_data_columns(
+        records
+    )
 
     # -----------------------------------------------------
-    # Collect every column
-    # -----------------------------------------------------
-
-    columns = []
-
-
-    for row in records:
-
-        data = row.get(
-            "data",
-            {}
-        )
-
-
-        if not isinstance(
-            data,
-            dict
-        ):
-
-            continue
-
-
-        for column in data:
-
-            if column not in columns:
-
-                columns.append(
-                    column
-                )
-
-
-    # -----------------------------------------------------
-    # Module information
+    # MODULE INFORMATION
+    #
+    # This is required by
+    # admin_module_report.html.
     # -----------------------------------------------------
 
     module_info = MODULES[
         module
     ]
 
-
     # -----------------------------------------------------
-    # Render report
+    # RENDER
     # -----------------------------------------------------
 
     return render_template(
@@ -1173,71 +1874,164 @@ def admin_module_report(module):
 @admin_required
 def admin_report_csv():
 
-    module = request.args.get(
-        "module",
-        ""
-    ).strip()
+    module = (
+        request.args.get(
+            "module",
+            ""
+        )
+        .strip()
+        .lower()
+    )
 
+    category = normalize_category(
+        request.args.get("category", ""),
+        module
+    )
 
-    category = request.args.get(
-        "category",
-        ""
-    ).strip()
+    # -----------------------------------------------------
+    # VALIDATE MODULE
+    # -----------------------------------------------------
 
+    if module and module not in MODULES:
+
+        return Response(
+            "Invalid module selected.",
+            status=400,
+            mimetype="text/plain"
+        )
+
+    # -----------------------------------------------------
+    # VALIDATE CATEGORY
+    # -----------------------------------------------------
+
+    if category:
+
+        if not module:
+
+            return Response(
+                "A module is required for a submodule report.",
+                status=400,
+                mimetype="text/plain"
+            )
+
+        if category not in (
+            MODULES[module]
+            .get(
+                "categories",
+                {}
+            )
+        ):
+
+            return Response(
+                "Invalid submodule selected.",
+                status=400,
+                mimetype="text/plain"
+            )
+
+    # -----------------------------------------------------
+    # GET EXACT RECORDS
+    # -----------------------------------------------------
 
     rows = get_all_rows(
         module=module or None,
-        category=category or None,
+        category=category or None
     )
 
+    # -----------------------------------------------------
+    # STRICT FILTER
+    # -----------------------------------------------------
 
-    columns = []
+    rows = _filter_admin_records(
+        rows,
+        module=module or None,
+        category=category or None
+    )
 
+    # -----------------------------------------------------
+    # SORT BY SUBMODULE ORDER
+    # -----------------------------------------------------
 
-    for row in rows:
+    if module:
 
-        data = row.get(
-            "data",
-            {}
+        category_order = list(
+            MODULES[module]
+            .get(
+                "categories",
+                {}
+            )
+            .keys()
         )
 
+        category_position = {
 
-        if not isinstance(
-            data,
-            dict
-        ):
+            key: index
 
-            continue
+            for index, key
+            in enumerate(
+                category_order
+            )
+        }
 
+        rows.sort(
 
-        for column in data:
+            key=lambda row: (
 
-            if column not in columns:
+                category_position.get(
+                    row.get(
+                        "category",
+                        ""
+                    ),
+                    9999
+                ),
 
-                columns.append(
-                    column
-                )
+                str(
+                    row.get(
+                        "sheet_name",
+                        ""
+                    )
+                ),
 
+                int(
+                    row.get(
+                        "row_number",
+                        0
+                    )
+                    or 0
+                ),
+            )
+        )
+
+    # -----------------------------------------------------
+    # COLUMNS
+    # -----------------------------------------------------
+
+    columns = _clean_data_columns(
+        rows
+    )
+
+    # -----------------------------------------------------
+    # CSV
+    # -----------------------------------------------------
 
     output = io.StringIO()
 
-
     fields = [
+
+        "Record ID",
+
+        "Module",
+
+        "Sub-Module",
 
         "Dataset",
 
         "Uploader",
-
-        "Module",
-
-        "Category",
 
         "Sheet",
 
         "Row Number",
 
     ] + columns
-
 
     writer = csv.DictWriter(
 
@@ -1248,13 +2042,65 @@ def admin_report_csv():
         extrasaction="ignore",
     )
 
-
     writer.writeheader()
 
+    # -----------------------------------------------------
+    # WRITE ROWS
+    # -----------------------------------------------------
 
     for row in rows:
 
+        row_module = row.get(
+            "module",
+            ""
+        )
+
+        row_category = row.get(
+            "category",
+            ""
+        )
+
+        module_name = (
+            MODULES
+            .get(
+                row_module,
+                {}
+            )
+            .get(
+                "name",
+                row_module
+            )
+        )
+
+        submodule_name = (
+            MODULES
+            .get(
+                row_module,
+                {}
+            )
+            .get(
+                "categories",
+                {}
+            )
+            .get(
+                row_category,
+                row_category
+            )
+        )
+
         record = {
+
+            "Record ID":
+                row.get(
+                    "id",
+                    ""
+                ),
+
+            "Module":
+                module_name,
+
+            "Sub-Module":
+                submodule_name,
 
             "Dataset":
                 row.get(
@@ -1265,18 +2111,6 @@ def admin_report_csv():
             "Uploader":
                 row.get(
                     "uploader_name",
-                    ""
-                ),
-
-            "Module":
-                row.get(
-                    "module",
-                    ""
-                ),
-
-            "Category":
-                row.get(
-                    "category",
                     ""
                 ),
 
@@ -1293,40 +2127,77 @@ def admin_report_csv():
                 ),
         }
 
-
         data = row.get(
             "data",
             {}
         )
-
 
         if isinstance(
             data,
             dict
         ):
 
-            record.update(
-                data
-            )
+            for key, value in data.items():
 
+                normalized = str(
+                    key
+                ).strip().lower()
+
+                normalized = normalized.replace(
+                    " ",
+                    "_"
+                )
+
+                normalized = normalized.replace(
+                    "-",
+                    "_"
+                )
+
+                if normalized in _RESERVED_DATA_FIELDS:
+                    continue
+
+                record[key] = value
 
         writer.writerow(
             record
         )
 
+    # -----------------------------------------------------
+    # FILE NAME
+    # -----------------------------------------------------
+
+    if category:
+
+        filename = (
+            f"uce_{module}_{category}_report.csv"
+        )
+
+    elif module:
+
+        filename = (
+            f"uce_{module}_report.csv"
+        )
+
+    else:
+
+        filename = (
+            "uce_university_report.csv"
+        )
+
+    # -----------------------------------------------------
+    # DOWNLOAD
+    # -----------------------------------------------------
 
     return Response(
 
         output.getvalue(),
 
-        mimetype="text/csv",
+        mimetype="text/csv; charset=utf-8",
 
         headers={
-
             "Content-Disposition":
-                "attachment; "
-                "filename=uce_report.csv"
-
+                "attachment; filename=" +
+                filename
         },
     )
 
@@ -1341,15 +2212,29 @@ def admin_report_csv():
 @admin_required
 def admin_report_pdf():
 
+    # -----------------------------------------------------
+    # REPORTLAB
+    # -----------------------------------------------------
+
     try:
 
         from reportlab.lib import colors
 
-        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.enums import (
+            TA_CENTER
+        )
+
+        from reportlab.lib.pagesizes import (
+            A4,
+            landscape
+        )
 
         from reportlab.lib.styles import (
+            ParagraphStyle,
             getSampleStyleSheet
         )
+
+        from reportlab.lib.units import mm
 
         from reportlab.platypus import (
 
@@ -1363,6 +2248,7 @@ def admin_report_pdf():
 
             TableStyle,
 
+            PageBreak,
         )
 
     except ImportError:
@@ -1374,167 +2260,898 @@ def admin_report_pdf():
 
             status=500,
 
-            mimetype="text/plain",
+            mimetype="text/plain"
         )
 
+    # -----------------------------------------------------
+    # PARAMETERS
+    # -----------------------------------------------------
 
-    report = get_report()
+    module = (
+        request.args.get(
+            "module",
+            ""
+        )
+        .strip()
+        .lower()
+    )
 
+    category = normalize_category(
+        request.args.get("category", ""),
+        module
+    )
+
+    # -----------------------------------------------------
+    # VALIDATION
+    # -----------------------------------------------------
+
+    if module and module not in MODULES:
+
+        return Response(
+            "Invalid module selected.",
+            status=400,
+            mimetype="text/plain"
+        )
+
+    if category:
+
+        if not module:
+
+            return Response(
+                "A module is required for a submodule report.",
+                status=400,
+                mimetype="text/plain"
+            )
+
+        if category not in (
+            MODULES[module]
+            .get(
+                "categories",
+                {}
+            )
+        ):
+
+            return Response(
+                "Invalid submodule selected.",
+                status=400,
+                mimetype="text/plain"
+            )
+
+    # -----------------------------------------------------
+    # GET DATA
+    # -----------------------------------------------------
+
+    rows = get_all_rows(
+        module=module or None,
+        category=category or None
+    )
+
+    rows = _filter_admin_records(
+        rows,
+        module=module or None,
+        category=category or None
+    )
+
+    # -----------------------------------------------------
+    # SORT
+    # -----------------------------------------------------
+
+    if module:
+
+        category_order = list(
+            MODULES[module]
+            .get(
+                "categories",
+                {}
+            )
+            .keys()
+        )
+
+        category_position = {
+
+            key: index
+
+            for index, key
+            in enumerate(
+                category_order
+            )
+        }
+
+        rows.sort(
+
+            key=lambda row: (
+
+                category_position.get(
+                    row.get(
+                        "category",
+                        ""
+                    ),
+                    9999
+                ),
+
+                str(
+                    row.get(
+                        "sheet_name",
+                        ""
+                    )
+                ),
+
+                int(
+                    row.get(
+                        "row_number",
+                        0
+                    )
+                    or 0
+                ),
+            )
+        )
+
+    # -----------------------------------------------------
+    # TITLE
+    # -----------------------------------------------------
+
+    if module:
+
+        module_name = MODULES[module].get(
+            "name",
+            module
+        )
+
+    else:
+
+        module_name = (
+            "All University Modules"
+        )
+
+    if category:
+
+        title = (
+
+            module_name
+            + " - "
+            + MODULES[module]
+            ["categories"]
+            [category]
+        )
+
+    else:
+
+        title = module_name
+
+    # -----------------------------------------------------
+    # PDF BUFFER
+    # -----------------------------------------------------
 
     buffer = io.BytesIO()
-
 
     document = SimpleDocTemplate(
 
         buffer,
 
-        pagesize=A4,
+        pagesize=landscape(A4),
 
-        rightMargin=30,
+        rightMargin=10 * mm,
 
-        leftMargin=30,
+        leftMargin=10 * mm,
 
-        topMargin=30,
+        topMargin=12 * mm,
 
-        bottomMargin=30,
+        bottomMargin=12 * mm,
+
+        title=(
+            "UCE Connect - "
+            + title
+        ),
+
+        author="UCE Connect",
     )
 
+    # -----------------------------------------------------
+    # STYLES
+    # -----------------------------------------------------
 
     styles = getSampleStyleSheet()
 
+    title_style = ParagraphStyle(
+
+        "UCEReportTitle",
+
+        parent=styles["Title"],
+
+        fontSize=22,
+
+        leading=26,
+
+        textColor=colors.HexColor(
+            "#14213d"
+        ),
+
+        alignment=TA_CENTER,
+
+        spaceAfter=8,
+    )
+
+    heading_style = ParagraphStyle(
+
+        "UCEReportHeading",
+
+        parent=styles["Heading2"],
+
+        fontSize=14,
+
+        leading=18,
+
+        textColor=colors.HexColor(
+            "#14213d"
+        ),
+
+        spaceBefore=8,
+
+        spaceAfter=6,
+    )
+
+    cell_style = ParagraphStyle(
+
+        "UCEReportCell",
+
+        parent=styles["BodyText"],
+
+        fontSize=7,
+
+        leading=9,
+
+        textColor=colors.HexColor(
+            "#334155"
+        ),
+    )
+
+    header_style = ParagraphStyle(
+
+        "UCEReportHeader",
+
+        parent=cell_style,
+
+        fontSize=7,
+
+        leading=9,
+
+        textColor=colors.white,
+
+        fontName="Helvetica-Bold",
+    )
+
+    # -----------------------------------------------------
+    # STORY
+    # -----------------------------------------------------
 
     story = [
 
         Paragraph(
-            "UCE Connect - University Data Report",
-            styles["Title"]
-        ),
-
-        Spacer(
-            1,
-            12
+            "UCE Connect",
+            title_style
         ),
 
         Paragraph(
-
-            f"Total records: "
-            f"{report['total_records']}",
-
-            styles["Normal"]
+            title,
+            heading_style
         ),
 
         Paragraph(
-
-            f"Total submissions: "
-            f"{report['total_uploads']}",
-
+            f"Total records: {len(rows):,}",
             styles["Normal"]
         ),
 
         Spacer(
             1,
-            15
+            8
         ),
     ]
 
+    # -----------------------------------------------------
+    # SAFE PDF TEXT
+    # -----------------------------------------------------
 
-    data = [
+    def paragraph_text(value):
 
-        [
-            "Module",
-            "Records",
-            "Active Categories"
+        text = (
+            ""
+            if value is None
+            else str(value)
+        )
+
+        return (
+            text
+            .replace(
+                "&",
+                "&amp;"
+            )
+            .replace(
+                "<",
+                "&lt;"
+            )
+            .replace(
+                ">",
+                "&gt;"
+            )
+        )
+
+    # -----------------------------------------------------
+    # BUILD TABLE
+    # -----------------------------------------------------
+
+    def build_table(
+        table_rows,
+        table_columns
+    ):
+
+        header = [
+
+            Paragraph(
+                paragraph_text(
+                    column
+                ),
+
+                header_style
+            )
+
+            for column
+            in table_columns
         ]
 
-    ]
+        data = [
+            header
+        ]
 
+        for item in table_rows:
 
-    for module in report["modules"]:
+            data.append([
 
-        active = sum(
+                Paragraph(
 
-            1
+                    paragraph_text(
+                        item.get(
+                            column,
+                            ""
+                        )
+                    ),
 
-            for category
-            in module["categories"]
+                    cell_style
+                )
 
-            if category["count"] > 0
+                for column
+                in table_columns
+            ])
 
+        page_width = (
+            landscape(A4)[0]
+            - 20 * mm
         )
 
+        fixed_width = 70 * mm
 
-        data.append(
+        data_width = max(
 
-            [
+            45 * mm,
 
-                module["name"],
-
-                str(
-                    module["total_records"]
-                ),
-
-                str(active),
-
-            ]
-
+            page_width
+            - fixed_width
         )
 
+        extra_count = max(
 
-    table = Table(
+            1,
 
-        data,
+            len(table_columns)
+            - 4
+        )
 
-        repeatRows=1
-    )
+        extra_width = (
+            data_width
+            / extra_count
+        )
 
+        widths = []
 
-    table.setStyle(
+        for column in table_columns:
 
-        TableStyle(
+            if column in {
+                "Record ID",
+                "Row Number"
+            }:
 
-            [
+                widths.append(
+                    18 * mm
+                )
 
-                (
-                    "GRID",
-                    (0, 0),
-                    (-1, -1),
-                    0.5,
-                    colors.grey
-                ),
+            elif column in {
+                "Module",
+                "Sub-Module"
+            }:
+
+                widths.append(
+                    28 * mm
+                )
+
+            else:
+
+                widths.append(
+                    extra_width
+                )
+
+        table = Table(
+
+            data,
+
+            repeatRows=1,
+
+            colWidths=widths,
+
+            hAlign="LEFT",
+        )
+
+        table.setStyle(
+
+            TableStyle([
 
                 (
                     "BACKGROUND",
                     (0, 0),
                     (-1, 0),
-                    colors.lightgrey
+                    colors.HexColor(
+                        "#14213d"
+                    )
                 ),
 
                 (
-                    "FONTNAME",
+                    "TEXTCOLOR",
                     (0, 0),
                     (-1, 0),
-                    "Helvetica-Bold"
+                    colors.white
                 ),
 
-            ]
+                (
+                    "GRID",
+                    (0, 0),
+                    (-1, -1),
+                    0.35,
+                    colors.HexColor(
+                        "#d9e0e8"
+                    )
+                ),
 
+                (
+                    "VALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "TOP"
+                ),
+
+                (
+                    "LEFTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    5
+                ),
+
+                (
+                    "RIGHTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    5
+                ),
+
+                (
+                    "TOPPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    4
+                ),
+
+                (
+                    "BOTTOMPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    4
+                ),
+            ])
         )
 
-    )
+        return table
 
+    # -----------------------------------------------------
+    # EXACT SUBMODULE PDF
+    # -----------------------------------------------------
 
-    story.append(
-        table
-    )
+    if category:
 
+        category_name = (
+            MODULES[module]
+            ["categories"]
+            [category]
+        )
+
+        category_rows = [
+
+            row
+
+            for row in rows
+
+            if row.get(
+                "category",
+                ""
+            ) == category
+        ]
+
+        columns = _clean_data_columns(
+            category_rows
+        )
+
+        table_columns = [
+
+            "Record ID",
+
+            "Module",
+
+            "Sub-Module",
+
+        ] + columns
+
+        display_rows = [
+
+            _display_row(
+                row,
+                module,
+                category
+            )
+
+            for row
+            in category_rows
+        ]
+
+        story.append(
+
+            Paragraph(
+
+                f"Submodule: "
+                f"{category_name} "
+                f"({len(category_rows):,} records)",
+
+                heading_style
+            )
+        )
+
+        if display_rows:
+
+            story.append(
+
+                build_table(
+                    display_rows,
+                    table_columns
+                )
+            )
+
+        else:
+
+            story.append(
+
+                Paragraph(
+                    "No records have been imported for this submodule.",
+                    styles["Normal"]
+                )
+            )
+
+    # -----------------------------------------------------
+    # MODULE PDF
+    # -----------------------------------------------------
+
+    elif module:
+
+        module_info = MODULES[
+            module
+        ]
+
+        for index, (
+            category_key,
+            category_name
+        ) in enumerate(
+
+            module_info
+            .get(
+                "categories",
+                {}
+            )
+            .items()
+        ):
+
+            category_rows = [
+
+                row
+
+                for row in rows
+
+                if row.get(
+                    "category",
+                    ""
+                ) == category_key
+            ]
+
+            story.append(
+
+                Paragraph(
+
+                    f"{category_name} "
+                    f"— "
+                    f"{len(category_rows):,} records",
+
+                    heading_style
+                )
+            )
+
+            if category_rows:
+
+                columns = _clean_data_columns(
+                    category_rows
+                )
+
+                table_columns = [
+
+                    "Record ID",
+
+                    "Module",
+
+                    "Sub-Module",
+
+                ] + columns
+
+                display_rows = [
+
+                    _display_row(
+                        row,
+                        module,
+                        category_key
+                    )
+
+                    for row
+                    in category_rows
+                ]
+
+                story.append(
+
+                    build_table(
+                        display_rows,
+                        table_columns
+                    )
+                )
+
+            else:
+
+                story.append(
+
+                    Paragraph(
+
+                        "No data available for this submodule.",
+
+                        styles["Normal"]
+                    )
+                )
+
+            if index < (
+                len(
+                    module_info
+                    .get(
+                        "categories",
+                        {}
+                    )
+                ) - 1
+            ):
+
+                story.append(
+                    Spacer(
+                        1,
+                        8
+                    )
+                )
+
+    # -----------------------------------------------------
+    # OVERALL UNIVERSITY PDF
+    # -----------------------------------------------------
+
+    else:
+
+        overall_report = get_report()
+
+        table_data = [[
+
+            Paragraph(
+                "Module",
+                header_style
+            ),
+
+            Paragraph(
+                "Sub-Module",
+                header_style
+            ),
+
+            Paragraph(
+                "Records",
+                header_style
+            ),
+        ]]
+
+        for module_item in (
+            overall_report
+            .get(
+                "modules",
+                []
+            )
+        ):
+
+            for category_item in (
+                module_item
+                .get(
+                    "categories",
+                    []
+                )
+            ):
+
+                table_data.append([
+
+                    Paragraph(
+
+                        paragraph_text(
+                            module_item.get(
+                                "name",
+                                ""
+                            )
+                        ),
+
+                        cell_style
+                    ),
+
+                    Paragraph(
+
+                        paragraph_text(
+                            category_item.get(
+                                "name",
+                                ""
+                            )
+                        ),
+
+                        cell_style
+                    ),
+
+                    Paragraph(
+
+                        paragraph_text(
+                            category_item.get(
+                                "count",
+                                0
+                            )
+                        ),
+
+                        cell_style
+                    ),
+                ])
+
+        table = Table(
+
+            table_data,
+
+            repeatRows=1,
+
+            colWidths=[
+                65 * mm,
+                170 * mm,
+                25 * mm
+            ],
+        )
+
+        table.setStyle(
+
+            TableStyle([
+
+                (
+                    "BACKGROUND",
+                    (0, 0),
+                    (-1, 0),
+                    colors.HexColor(
+                        "#14213d"
+                    )
+                ),
+
+                (
+                    "TEXTCOLOR",
+                    (0, 0),
+                    (-1, 0),
+                    colors.white
+                ),
+
+                (
+                    "GRID",
+                    (0, 0),
+                    (-1, -1),
+                    0.35,
+                    colors.HexColor(
+                        "#d9e0e8"
+                    )
+                ),
+
+                (
+                    "VALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "TOP"
+                ),
+
+                (
+                    "LEFTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    5
+                ),
+
+                (
+                    "RIGHTPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    5
+                ),
+
+                (
+                    "TOPPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    4
+                ),
+
+                (
+                    "BOTTOMPADDING",
+                    (0, 0),
+                    (-1, -1),
+                    4
+                ),
+            ])
+        )
+
+        story.append(
+            table
+        )
+
+    # -----------------------------------------------------
+    # GENERATE PDF
+    # -----------------------------------------------------
 
     document.build(
         story
     )
 
-
     buffer.seek(0)
 
+    # -----------------------------------------------------
+    # FILE NAME
+    # -----------------------------------------------------
+
+    if category:
+
+        filename = (
+            f"uce_{module}_{category}_report.pdf"
+        )
+
+    elif module:
+
+        filename = (
+            f"uce_{module}_report.pdf"
+        )
+
+    else:
+
+        filename = (
+            "uce_university_report.pdf"
+        )
+
+    # -----------------------------------------------------
+    # DOWNLOAD
+    # -----------------------------------------------------
 
     return send_file(
 
@@ -1544,11 +3161,8 @@ def admin_report_pdf():
 
         as_attachment=True,
 
-        download_name=
-            "uce_university_report.pdf",
+        download_name=filename,
     )
-
-
 # =========================================================
 # ADMIN - FILE UPLOAD
 #
@@ -1588,9 +3202,20 @@ def upload():
 @admin_required
 def remove_upload(upload_id):
 
-    deleted = delete_upload(
-        upload_id
-    )
+    try:
+        deleted = delete_upload(
+            upload_id
+        )
+    except Exception as error:
+        flash(
+            f"Delete failed: {error}",
+            "danger"
+        )
+        return redirect(
+            request.referrer
+            or
+            url_for("main.admin")
+        )
 
 
     if deleted:
@@ -1769,11 +3394,10 @@ def api_data(
     ).strip().lower()
 
 
-    subtopic = (
-        subtopic
-        or
-        ""
-    ).strip()
+    subtopic = normalize_category(
+        subtopic,
+        module
+    )
 
 
     if module not in MODULES:
@@ -2012,14 +3636,12 @@ def api_data(
         mimetype="application/json",
     )
 
-
 # =========================================================
-# 404
+# 404 - PAGE NOT FOUND
 # =========================================================
 
 @main_bp.app_errorhandler(404)
 def page_not_found(error):
-
     return render_template(
         "404.html"
     ), 404

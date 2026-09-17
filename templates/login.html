@@ -1,119 +1,1468 @@
-{% extends "base.html" %}
 
-{% block title %}
-Login | UCE Connect
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Login | UCE Connect</title>
 
-{% block content %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<section class="auth-page">
+        :root {
+            --navy: #17233d;
+            --navy-dark: #101a31;
+            --blue: #3157a4;
+            --text: #17233d;
+            --muted: #71809a;
+            --icon: #8492a8;
+            --border: #dce3ed;
+            --background: #f6f8fb;
+            --white: #ffffff;
+        }
 
-    <div class="container auth-wrap">
+        body {
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: var(--text);
+            background: var(--background);
+        }
 
-        <div class="auth-card">
+        /* =====================================================
+           NAVBAR
+        ===================================================== */
 
-            <span class="eyebrow">
-                UCE CONNECT
-            </span>
+        .navbar {
+            height: 82px;
+            width: 100%;
 
+            background: #ffffff;
+            border-bottom: 1px solid #e1e6ee;
 
-            <h1>
-                Welcome back.
-            </h1>
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
 
+            padding: 0 13%;
 
-            <p>
-                Login to access the University Information Portal.
-            </p>
+            position: relative;
+            z-index: 10;
+        }
 
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
 
-            <form
-                method="POST"
-                action="{{ url_for('main.login') }}"
-                class="auth-form"
-                autocomplete="on"
-            >
+            text-decoration: none;
+            color: var(--navy);
+        }
 
+        .brand-logo {
+            width: 49px;
+            height: 49px;
 
-                <input
-                    type="hidden"
-                    name="next"
-                    value="{{ request.args.get('next', '') }}"
-                >
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
+            background: var(--navy);
+            border-radius: 12px;
 
-                <!-- EMAIL -->
+            color: white;
 
-                <label>
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
 
-                    Email
+        .brand-content {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
 
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        required
-                        autocomplete="email"
-                    >
+        .brand-name {
+            font-size: 16px;
+            font-weight: 750;
+            letter-spacing: -0.2px;
+        }
 
-                </label>
+        .brand-subtitle {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            color: #7c8aa2;
+        }
 
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 29px;
+        }
 
-                <!-- PASSWORD -->
+        .nav-links a {
+            text-decoration: none;
+            color: #65748e;
 
-                <label>
+            font-size: 13px;
+            font-weight: 650;
 
-                    Password
+            transition: 0.2s ease;
+        }
 
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        required
-                        autocomplete="current-password"
-                    >
+        .nav-links a:hover {
+            color: var(--navy);
+        }
 
-                </label>
+        .nav-links .login-link {
+            color: var(--navy);
+        }
 
+        .register-nav {
+            padding: 14px 19px;
 
-                <!-- LOGIN -->
+            background: var(--navy);
 
-                <button
-                    type="submit"
-                    class="primary-button auth-submit"
-                >
+            border-radius: 9px;
 
-                    Login
+            color: white !important;
 
-                    <i class="fa-solid fa-arrow-right"></i>
+            font-weight: 700 !important;
+        }
 
-                </button>
+        .register-nav:hover {
+            background: #223252;
+        }
 
-            </form>
+        .theme-button {
+            width: 48px;
+            height: 48px;
 
+            border-radius: 50%;
 
-            <!-- REGISTER -->
+            border: 1px solid #dfe5ed;
 
-            <div class="auth-footer">
+            background: white;
 
-                <span>
-                    Don't have an account?
-                </span>
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
+            font-size: 17px;
 
-                <a
-                    href="{{ url_for('main.register') }}"
-                >
-                    Create account
-                </a>
+            cursor: pointer;
+
+            transition: 0.2s ease;
+        }
+
+        .theme-button:hover {
+            background: #f4f6f9;
+            transform: rotate(10deg);
+        }
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main {
+            min-height: calc(100vh - 82px);
+
+            display: flex;
+            justify-content: center;
+
+            padding: 55px 20px 70px;
+
+            position: relative;
+            overflow: hidden;
+        }
+
+        .background-circle {
+            position: absolute;
+
+            width: 420px;
+            height: 420px;
+
+            border-radius: 50%;
+
+            background: rgba(49, 87, 164, 0.035);
+
+            top: -170px;
+            right: -140px;
+
+            pointer-events: none;
+        }
+
+        .background-circle-two {
+            position: absolute;
+
+            width: 300px;
+            height: 300px;
+
+            border-radius: 50%;
+
+            border: 1px solid rgba(49, 87, 164, 0.06);
+
+            bottom: -120px;
+            left: -100px;
+
+            pointer-events: none;
+        }
+
+        /* =====================================================
+           LOGIN CONTAINER
+        ===================================================== */
+
+        .login-container {
+            width: 100%;
+            max-width: 560px;
+
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-card {
+            background: white;
+
+            border: 1px solid #e0e6ef;
+
+            border-radius: 18px;
+
+            padding: 44px 48px 42px;
+
+            box-shadow:
+                0 16px 45px rgba(23, 35, 61, 0.07);
+
+            position: relative;
+        }
+
+        .login-card::before {
+            content: "";
+
+            position: absolute;
+
+            top: 0;
+            left: 45px;
+            right: 45px;
+
+            height: 3px;
+
+            background: var(--navy);
+
+            border-radius: 0 0 5px 5px;
+        }
+
+        /* =====================================================
+           HEADING
+        ===================================================== */
+
+        .heading-area {
+            margin-bottom: 32px;
+        }
+
+        .eyebrow {
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing: 2px;
+
+            color: #6079a5;
+
+            text-transform: uppercase;
+
+            margin-bottom: 11px;
+        }
+
+        .heading-area h1 {
+            font-family: Georgia, "Times New Roman", serif;
+
+            font-size: 42px;
+
+            line-height: 1.08;
+
+            font-weight: 500;
+
+            letter-spacing: -1.3px;
+
+            color: var(--navy);
+
+            margin-bottom: 10px;
+        }
+
+        .heading-area p {
+            font-size: 14px;
+
+            line-height: 1.6;
+
+            color: #6e7d96;
+
+            max-width: 430px;
+        }
+
+        /* =====================================================
+           FLASH MESSAGES
+        ===================================================== */
+
+        .flash-container {
+            margin-bottom: 22px;
+        }
+
+        .alert {
+            padding: 12px 14px;
+
+            border-radius: 9px;
+
+            margin-bottom: 8px;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+
+            border: 1px solid transparent;
+        }
+
+        .alert-success {
+            color: #17633f;
+            background: #edf8f2;
+            border-color: #c9ead8;
+        }
+
+        .alert-danger,
+        .alert-error {
+            color: #9b2c2c;
+            background: #fff1f1;
+            border-color: #f5cccc;
+        }
+
+        .alert-warning {
+            color: #8a6210;
+            background: #fff9e9;
+            border-color: #f1dfac;
+        }
+
+        .alert-info {
+            color: #315b91;
+            background: #eef5fc;
+            border-color: #cfdef0;
+        }
+
+        /* =====================================================
+           FORM
+        ===================================================== */
+
+        .form-group {
+            margin-bottom: 21px;
+        }
+
+        .form-group label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 12px;
+
+            font-weight: 750;
+
+            color: var(--navy);
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        /* =====================================================
+           ICONS
+        ===================================================== */
+
+        .input-icon {
+            position: absolute;
+
+            left: 15px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 17px;
+            height: 17px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: var(--icon);
+
+            pointer-events: none;
+
+            z-index: 2;
+        }
+
+        .input-icon svg {
+            width: 16px;
+            height: 16px;
+
+            fill: none;
+
+            stroke: currentColor;
+
+            stroke-width: 1.7;
+
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* =====================================================
+           INPUT
+        ===================================================== */
+
+        .form-input {
+            width: 100%;
+            height: 52px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 10px;
+
+            background: #ffffff;
+
+            padding: 0 16px 0 43px;
+
+            color: var(--navy);
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            outline: none;
+
+            transition:
+                border-color 0.2s ease,
+                box-shadow 0.2s ease,
+                background 0.2s ease;
+        }
+
+        .form-input::placeholder {
+            color: #a0aabd;
+        }
+
+        .form-input:hover {
+            border-color: #c8d1de;
+        }
+
+        .form-input:focus {
+            border-color: #6079a5;
+
+            background: #ffffff;
+
+            box-shadow:
+                0 0 0 3px rgba(96, 121, 165, 0.09);
+        }
+
+        .password-input {
+            padding-right: 50px;
+        }
+
+        /* =====================================================
+           PASSWORD TOGGLE
+        ===================================================== */
+
+        .password-toggle {
+            position: absolute;
+
+            right: 10px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 34px;
+            height: 34px;
+
+            border: none;
+
+            background: transparent;
+
+            color: #8794a8;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+            transition: 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            background: #f2f5f9;
+
+            color: var(--navy);
+        }
+
+        /* =====================================================
+           OPTIONS
+        ===================================================== */
+
+        .form-options {
+            display: flex;
+
+            align-items: center;
+            justify-content: space-between;
+
+            margin-top: 2px;
+
+            margin-bottom: 25px;
+        }
+
+        .remember {
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            color: #71809a;
+
+            font-size: 12px;
+
+            cursor: pointer;
+        }
+
+        .remember input {
+            width: 15px;
+            height: 15px;
+
+            margin: 0;
+
+            accent-color: var(--navy);
+
+            cursor: pointer;
+        }
+
+        .help-text {
+            color: #71809a;
+
+            font-size: 12px;
+        }
+
+        /* =====================================================
+           FORGOT PASSWORD
+        ===================================================== */
+
+        .forgot-password-link {
+            color: #3157a4;
+
+            font-size: 12px;
+
+            font-weight: 650;
+
+            text-decoration: none;
+
+            transition: 0.2s ease;
+        }
+
+        .forgot-password-link:hover {
+            color: var(--navy);
+
+            text-decoration: underline;
+        }
+
+        /* =====================================================
+           LOGIN BUTTON
+        ===================================================== */
+
+        .login-button {
+            width: 100%;
+            height: 53px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: var(--navy);
+
+            color: white;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 750;
+
+            cursor: pointer;
+
+            position: relative;
+
+            overflow: hidden;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .login-button::after {
+            content: "→";
+
+            position: absolute;
+
+            right: 19px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%)
+                translateX(-5px);
+
+            opacity: 0;
+
+            transition: 0.2s ease;
+
+            font-size: 18px;
+        }
+
+        .login-button:hover {
+            background: #223252;
+
+            transform: translateY(-1px);
+
+            box-shadow:
+                0 8px 20px rgba(23, 35, 61, 0.15);
+        }
+
+        .login-button:hover::after {
+            opacity: 1;
+
+            transform:
+                translateY(-50%)
+                translateX(0);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        /* =====================================================
+           DIVIDER
+        ===================================================== */
+
+        .divider {
+            display: flex;
+
+            align-items: center;
+
+            gap: 14px;
+
+            margin: 27px 0 23px;
+
+            color: #a0aabd;
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            letter-spacing: 1px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+
+            flex: 1;
+
+            height: 1px;
+
+            background: #e5e9ef;
+        }
+
+        /* =====================================================
+           REGISTER
+        ===================================================== */
+
+        .register-area {
+            text-align: center;
+        }
+
+        .register-area p {
+            color: #71809a;
+
+            font-size: 13px;
+        }
+
+        .register-area a {
+            color: var(--navy);
+
+            font-weight: 750;
+
+            text-decoration: none;
+
+            margin-left: 4px;
+
+            border-bottom: 1px solid transparent;
+
+            transition: 0.2s ease;
+        }
+
+        .register-area a:hover {
+            border-bottom-color: var(--navy);
+        }
+
+        /* =====================================================
+           SECURITY
+        ===================================================== */
+
+        .security-note {
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 7px;
+
+            margin-top: 24px;
+
+            color: #9aa5b6;
+
+            font-size: 10px;
+        }
+
+        .security-icon {
+            width: 17px;
+            height: 17px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid #d8dee7;
+
+            border-radius: 50%;
+
+            font-size: 9px;
+        }
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        .footer {
+            text-align: center;
+
+            margin-top: 23px;
+
+            color: #8b98aa;
+
+            font-size: 10px;
+
+            letter-spacing: 0.2px;
+        }
+
+        /* =====================================================
+           RESPONSIVE NAVBAR
+        ===================================================== */
+
+        @media (max-width: 900px) {
+
+            .navbar {
+                padding: 0 5%;
+            }
+
+            .nav-links {
+                gap: 16px;
+            }
+
+            .nav-links a:not(.login-link):not(.register-nav) {
+                display: none;
+            }
+        }
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 600px) {
+
+            .navbar {
+                height: 70px;
+            }
+
+            .brand-logo {
+                width: 43px;
+                height: 43px;
+            }
+
+            .brand-subtitle {
+                display: none;
+            }
+
+            .theme-button {
+                display: none;
+            }
+
+            .nav-links {
+                gap: 10px;
+            }
+
+            .nav-links a {
+                font-size: 12px;
+            }
+
+            .register-nav {
+                padding: 11px 14px;
+            }
+
+            .main {
+                min-height: calc(100vh - 70px);
+
+                padding:
+                    32px 15px 45px;
+            }
+
+            .login-card {
+                padding:
+                    38px 24px 32px;
+
+                border-radius: 15px;
+            }
+
+            .login-card::before {
+                left: 30px;
+                right: 30px;
+            }
+
+            .heading-area h1 {
+                font-size: 36px;
+            }
+
+            .heading-area p {
+                font-size: 13px;
+            }
+
+            .form-input {
+                height: 50px;
+            }
+
+            .login-button {
+                height: 51px;
+            }
+        }
+
+        /* =====================================================
+           SMALL MOBILE
+        ===================================================== */
+
+        @media (max-width: 380px) {
+
+            .brand-content {
+                display: none;
+            }
+
+            .nav-links .login-link {
+                display: none;
+            }
+
+            .login-card {
+                padding:
+                    34px 20px 28px;
+            }
+
+            .heading-area h1 {
+                font-size: 32px;
+            }
+        }
+
+        /* =====================================================
+           DARK THEME
+        ===================================================== */
+
+        body[data-theme="dark"] {
+            background: #111a2d;
+            color: #f5f7fb;
+        }
+
+        body[data-theme="dark"] .navbar {
+            background: #151f34;
+            border-bottom-color: #27334b;
+        }
+
+        body[data-theme="dark"] .brand,
+        body[data-theme="dark"] .brand-name {
+            color: #f5f7fb;
+        }
+
+        body[data-theme="dark"] .nav-links a {
+            color: #aab6c9;
+        }
+
+        body[data-theme="dark"] .nav-links .login-link {
+            color: #ffffff;
+        }
+
+        body[data-theme="dark"] .theme-button {
+            background: #1c2941;
+            border-color: #354158;
+            color: white;
+        }
+
+        body[data-theme="dark"] .login-card {
+            background: #151f34;
+            border-color: #29364e;
+
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        body[data-theme="dark"] .heading-area h1,
+        body[data-theme="dark"] .form-group label {
+            color: #f5f7fb;
+        }
+
+        body[data-theme="dark"] .heading-area p,
+        body[data-theme="dark"] .help-text,
+        body[data-theme="dark"] .remember,
+        body[data-theme="dark"] .register-area p {
+            color: #aab6c9;
+        }
+
+        body[data-theme="dark"] .form-input {
+            background: #111a2d;
+
+            border-color: #354158;
+
+            color: #ffffff;
+        }
+
+        body[data-theme="dark"] .form-input:focus {
+            border-color: #718bb8;
+
+            background: #111a2d;
+        }
+
+        body[data-theme="dark"] .divider::before,
+        body[data-theme="dark"] .divider::after {
+            background: #344057;
+        }
+
+        body[data-theme="dark"] .password-toggle:hover {
+            background: #202c44;
+        }
+
+        body[data-theme="dark"] .security-note,
+        body[data-theme="dark"] .footer {
+            color: #7f8ca3;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- =====================================================
+         NAVBAR
+    ====================================================== -->
+
+    <header class="navbar">
+
+        <a
+            href="{{ url_for('main.home') }}"
+            class="brand"
+        >
+
+            <div class="brand-logo">
+                UCE
+            </div>
+
+            <div class="brand-content">
+
+                <div class="brand-name">
+                    UCE Connect
+                </div>
+
+                <div class="brand-subtitle">
+                    UNIVERSITY INFORMATION PORTAL
+                </div>
 
             </div>
 
-        </div>
+        </a>
 
-    </div>
 
-</section>
+        <nav class="nav-links">
 
-{% endblock %}
+            <a href="{{ url_for('main.home') }}">
+                Home
+            </a>
+
+            <a href="{{ url_for('main.home') }}">
+                Modules
+            </a>
+
+            <a href="{{ url_for('main.home') }}">
+                Updates
+            </a>
+
+            <a href="{{ url_for('main.about') }}">
+                About
+            </a>
+
+            <button
+                type="button"
+                class="theme-button"
+                onclick="toggleTheme()"
+                title="Toggle theme"
+            >
+                ◐
+            </button>
+
+            <a
+                href="{{ url_for('main.login') }}"
+                class="login-link"
+            >
+                Login
+            </a>
+
+            <a
+                href="{{ url_for('main.register') }}"
+                class="register-nav"
+            >
+                Register
+            </a>
+
+        </nav>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main">
+
+        <div class="background-circle"></div>
+
+        <div class="background-circle-two"></div>
+
+
+        <section class="login-container">
+
+            <div class="login-card">
+
+                <!-- =================================================
+                     HEADING
+                ================================================== -->
+
+                <div class="heading-area">
+
+                    <div class="eyebrow">
+                        UCE CONNECT
+                    </div>
+
+                    <h1>
+                        Welcome back.
+                    </h1>
+
+                    <p>
+                        Sign in to access your university information
+                        and continue where you left off.
+                    </p>
+
+                </div>
+
+
+                <!-- =================================================
+                     FLASH MESSAGES
+                ================================================== -->
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+
+                    {% if messages %}
+
+                        <div class="flash-container">
+
+                            {% for category, message in messages %}
+
+                                <div class="alert alert-{{ category }}">
+                                    {{ message }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                {% endwith %}
+
+
+                <!-- =================================================
+                     LOGIN FORM
+                ================================================== -->
+
+                <form
+                    method="POST"
+                    action="{{ url_for('main.login') }}"
+                    autocomplete="on"
+                >
+
+                    <!-- EMAIL -->
+
+                    <div class="form-group">
+
+                        <label for="email">
+                            Email
+                        </label>
+
+                        <div class="input-container">
+
+                            <span class="input-icon">
+
+                                <!-- Email icon -->
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
+                                    <rect
+                                        x="3"
+                                        y="5"
+                                        width="18"
+                                        height="14"
+                                        rx="2"
+                                    ></rect>
+
+                                    <path
+                                        d="M3 7l9 6 9-6"
+                                    ></path>
+
+                                </svg>
+
+                            </span>
+
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="form-input"
+                                placeholder="Enter your email"
+                                autocomplete="email"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PASSWORD -->
+
+                    <div class="form-group">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <div class="input-container">
+
+                            <span class="input-icon">
+
+                                <!-- LOCK ICON
+                                     Same color as email icon -->
+
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    aria-hidden="true"
+                                >
+
+                                    <rect
+                                        x="5"
+                                        y="10"
+                                        width="14"
+                                        height="10"
+                                        rx="2"
+                                    ></rect>
+
+                                    <path
+                                        d="M8 10V7a4 4 0 0 1 8 0v3"
+                                    ></path>
+
+                                </svg>
+
+                            </span>
+
+
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="form-input password-input"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+
+                            <button
+                                type="button"
+                                id="passwordToggle"
+                                class="password-toggle"
+                                onclick="togglePassword()"
+                                aria-label="Show password"
+                                title="Show password"
+                            >
+                                ◉
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- OPTIONS -->
+
+                    <div class="form-options">
+
+                        <label class="remember">
+
+                            <input
+                                type="checkbox"
+                                name="remember"
+                                value="1"
+                            >
+
+                            <span>
+                                Remember me
+                            </span>
+
+                        </label>
+
+                        <div style="display: flex; align-items: center; gap: 18px;">
+
+                            <a
+                                href="/forgot-password"
+                                class="forgot-password-link"
+                            >
+                                Forgot password?
+                            </a>
+
+                            <span class="help-text">
+                                Secure sign in
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- LOGIN BUTTON -->
+
+                    <button
+                        type="submit"
+                        class="login-button"
+                    >
+                        Sign In
+                    </button>
+
+                </form>
+
+
+                <!-- =================================================
+                     DIVIDER
+                ================================================== -->
+
+                <div class="divider">
+                    ACCOUNT
+                </div>
+
+
+                <!-- =================================================
+                     REGISTER
+                ================================================== -->
+
+                <div class="register-area">
+
+                    <p>
+
+                        Don't have an account?
+
+                        <a
+                            href="{{ url_for('main.register') }}"
+                        >
+                            Create an account
+                        </a>
+
+                    </p>
+
+                </div>
+
+
+                <!-- =================================================
+                     SECURITY NOTE
+                ================================================== -->
+
+                <div class="security-note">
+
+                    <span class="security-icon">
+                        ✓
+                    </span>
+
+                    <span>
+                        Your account information is securely protected.
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 FOOTER
+            ================================================== -->
+
+            <div class="footer">
+
+                © 2026 UCE Connect · University Information Portal
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script>
+
+        /* =====================================================
+           PASSWORD SHOW / HIDE
+        ===================================================== */
+
+        function togglePassword() {
+
+            const password =
+                document.getElementById("password");
+
+            const button =
+                document.getElementById("passwordToggle");
+
+            if (password.type === "password") {
+
+                password.type = "text";
+
+                button.textContent = "◉";
+
+                button.setAttribute(
+                    "aria-label",
+                    "Hide password"
+                );
+
+                button.setAttribute(
+                    "title",
+                    "Hide password"
+                );
+
+            } else {
+
+                password.type = "password";
+
+                button.textContent = "◉";
+
+                button.setAttribute(
+                    "aria-label",
+                    "Show password"
+                );
+
+                button.setAttribute(
+                    "title",
+                    "Show password"
+                );
+
+            }
+
+        }
+
+
+        /* =====================================================
+           THEME TOGGLE
+        ===================================================== */
+
+        function toggleTheme() {
+
+            const body =
+                document.body;
+
+            if (
+                body.getAttribute("data-theme")
+                === "dark"
+            ) {
+
+                body.removeAttribute("data-theme");
+
+                localStorage.removeItem(
+                    "uce-theme"
+                );
+
+            } else {
+
+                body.setAttribute(
+                    "data-theme",
+                    "dark"
+                );
+
+                localStorage.setItem(
+                    "uce-theme",
+                    "dark"
+                );
+
+            }
+
+        }
+
+
+        /* =====================================================
+           PAGE LOAD
+        ===================================================== */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                /* Restore theme */
+
+                if (
+                    localStorage.getItem("uce-theme")
+                    === "dark"
+                ) {
+
+                    document.body.setAttribute(
+                        "data-theme",
+                        "dark"
+                    );
+
+                }
+
+                /* Focus email */
+
+                const email =
+                    document.getElementById("email");
+
+                if (email) {
+                    email.focus();
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+</html>

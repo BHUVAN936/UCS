@@ -5733,3 +5733,2460 @@ html {
         grid-template-columns: 1fr !important;
     }
 }
+/* ============================================================
+   UCE CONNECT - FINAL ADMIN / REPORT UI OVERRIDES
+   ============================================================ */
+
+
+/* ============================================================
+   SOURCE LINKS
+   ============================================================ */
+
+.source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    color: #2563eb !important;
+
+    font-weight: 700;
+    text-decoration: none;
+
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.source-link:hover {
+    color: #1d4ed8 !important;
+    text-decoration: underline;
+    transform: translateX(1px);
+}
+
+.source-link i {
+    font-size: 10px;
+}
+
+
+/* ============================================================
+   404 PAGE
+   ============================================================ */
+
+.error-page {
+    min-height: calc(100vh - 82px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 70px 24px;
+
+    background: var(--bg);
+}
+
+.error-card {
+    width: min(650px, 100%);
+
+    padding: 55px 45px;
+
+    text-align: center;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 24px;
+
+    box-shadow: var(--shadow);
+}
+
+.error-icon {
+    width: 72px;
+    height: 72px;
+
+    margin: 0 auto 25px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 20px;
+
+    background: var(--surface-2);
+
+    color: var(--accent);
+
+    font-size: 28px;
+}
+
+.error-card h1 {
+    margin-bottom: 15px;
+
+    font-family:
+        "Playfair Display",
+        Georgia,
+        serif;
+
+    font-size: clamp(42px, 6vw, 64px);
+
+    line-height: 1;
+
+    letter-spacing: -1.5px;
+
+    color: var(--text);
+}
+
+.error-description {
+    max-width: 520px;
+
+    margin: 0 auto 30px;
+
+    color: var(--muted);
+
+    font-size: 14px;
+
+    line-height: 1.7;
+}
+
+.error-actions {
+    display: flex;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+}
+
+
+/* ============================================================
+   ADMIN REPORT PAGE
+   ============================================================ */
+
+.report-page {
+    padding: 65px 0 90px;
+
+    background: var(--bg);
+}
+
+.report-page-header {
+    display: flex;
+
+    align-items: flex-end;
+
+    justify-content: space-between;
+
+    gap: 30px;
+
+    margin-bottom: 35px;
+
+    padding-bottom: 30px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.report-page-header h1 {
+    margin: 5px 0 10px;
+
+    font-family:
+        "Playfair Display",
+        Georgia,
+        serif;
+
+    font-size: clamp(40px, 5vw, 62px);
+
+    line-height: 1;
+
+    letter-spacing: -1.5px;
+
+    color: var(--text);
+}
+
+.report-page-header p:last-child {
+    max-width: 650px;
+
+    color: var(--muted);
+
+    line-height: 1.7;
+}
+
+.report-actions {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    flex-wrap: wrap;
+
+    gap: 9px;
+}
+
+
+/* ============================================================
+   REPORT KPI CARDS
+   ============================================================ */
+
+.report-kpi-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 16px;
+
+    margin-bottom: 25px;
+}
+
+.report-kpi-card {
+    min-height: 145px;
+
+    padding: 24px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 18px;
+
+    box-shadow: var(--shadow);
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.report-kpi-card:hover {
+    transform: translateY(-3px);
+
+    border-color: var(--accent);
+
+    box-shadow:
+        0 18px 40px rgba(23, 35, 59, 0.10);
+}
+
+.report-kpi-card span {
+    color: var(--muted);
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+
+    text-transform: uppercase;
+}
+
+.report-kpi-card strong {
+    display: block;
+
+    color: var(--text);
+
+    font-size: clamp(28px, 4vw, 42px);
+
+    line-height: 1;
+
+    font-weight: 800;
+}
+
+
+/* ============================================================
+   REPORT PANELS
+   ============================================================ */
+
+.report-page .upload-panel {
+    margin-bottom: 25px;
+
+    padding: 28px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 22px;
+
+    box-shadow: var(--shadow);
+}
+
+.report-page .section-heading {
+    margin-bottom: 25px;
+}
+
+
+/* ============================================================
+   MODULE REPORT LIST
+   ============================================================ */
+
+.report-module-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.report-module-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(280px, 1fr)
+        auto
+        auto;
+
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 18px 20px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 15px;
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+.report-module-row:hover {
+    transform: translateY(-2px);
+
+    border-color: var(--accent);
+
+    background: var(--surface-2);
+}
+
+.module-number {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    width: 38px;
+    height: 38px;
+
+    margin-right: 12px;
+
+    border-radius: 10px;
+
+    background: var(--surface-2);
+
+    color: var(--accent);
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
+
+.report-module-row strong {
+    color: var(--text);
+
+    font-size: 14px;
+}
+
+.report-module-records {
+    white-space: nowrap;
+
+    color: var(--muted);
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+.module-report-actions {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    flex-wrap: wrap;
+
+    gap: 7px;
+}
+
+.module-report-actions .outline-button {
+    min-height: 36px;
+
+    padding: 0 12px;
+
+    font-size: 10px;
+}
+
+
+/* ============================================================
+   CATEGORY REPORT
+   ============================================================ */
+
+.report-category-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 15px;
+}
+
+.report-category-card {
+    overflow: hidden;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: 16px;
+}
+
+.report-category-header {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 15px 17px;
+
+    background: var(--surface-2);
+
+    border-bottom: 1px solid var(--border);
+}
+
+.report-category-header strong {
+    color: var(--text);
+
+    font-size: 12px;
+}
+
+.report-category-header span {
+    color: var(--accent);
+
+    font-size: 12px;
+
+    font-weight: 800;
+}
+
+.report-category-list {
+    padding: 8px 17px 12px;
+}
+
+.report-category-item {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding: 10px 0;
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+.report-category-item:last-child {
+    border-bottom: none;
+}
+
+.report-category-item strong {
+    color: var(--text);
+}
+
+
+/* ============================================================
+   ADMIN DATA TABLE IMPROVEMENT
+   ============================================================ */
+
+.history-table-wrapper {
+    border-radius: 16px !important;
+
+    box-shadow:
+        0 8px 25px rgba(23, 35, 59, 0.05);
+}
+
+.history-table th {
+    position: sticky;
+
+    top: 0;
+
+    z-index: 2;
+
+    white-space: nowrap;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.5px;
+
+    text-transform: uppercase;
+}
+
+.history-table td {
+    font-size: 11px;
+}
+
+.history-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.history-table tbody tr:hover {
+    background: var(--surface-2);
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 1050px) {
+
+    .report-kpi-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .report-category-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 800px) {
+
+    .report-page-header {
+        flex-direction: column;
+
+        align-items: flex-start;
+    }
+
+    .report-actions {
+        justify-content: flex-start;
+    }
+
+    .report-module-row {
+        grid-template-columns: 1fr;
+
+        align-items: flex-start;
+    }
+
+    .module-report-actions {
+        justify-content: flex-start;
+    }
+
+    .report-category-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+@media (max-width: 620px) {
+
+    .report-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .report-page {
+        padding-top: 40px;
+    }
+
+    .report-page .upload-panel {
+        padding: 20px;
+
+        border-radius: 17px;
+    }
+
+    .error-card {
+        padding: 40px 25px;
+    }
+
+}
+.source-link {
+    color: #2563eb !important;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.source-link:hover {
+    color: #1d4ed8 !important;
+    text-decoration: underline;
+}
+/* ============================================================
+   UCE CONNECT — ADMIN DASHBOARD FINAL UI
+   ------------------------------------------------------------
+   Add this block at the VERY END of style_aligned.css
+   No HTML / Flask / database changes required.
+   ============================================================ */
+
+
+/* ============================================================
+   ADMIN PAGE BASE
+   ============================================================ */
+
+.admin-page {
+    min-height: calc(100vh - 82px);
+    padding: 42px 0 80px;
+    background: var(--bg);
+}
+
+.admin-page > .container {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+}
+
+
+/* ============================================================
+   ADMIN HEADER
+   ============================================================ */
+
+.admin-page .module-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 28px;
+}
+
+.admin-page .module-page-header > div:first-child {
+    min-width: 0;
+}
+
+.admin-page .module-page-header .eyebrow {
+    margin-bottom: 8px;
+}
+
+.admin-page .module-page-header h1 {
+    margin: 0;
+    color: var(--text);
+    font-family: inherit;
+    font-size: clamp(34px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+}
+
+.admin-page .module-page-header > div:first-child > p:last-child {
+    max-width: 650px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+
+/* ============================================================
+   ADMIN ACTIONS
+   ============================================================ */
+
+.admin-page .admin-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.admin-page .admin-header-actions a,
+.admin-page .admin-header-actions .header-button,
+.admin-page .admin-header-actions .outline-button {
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 9px;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: none;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.admin-page .admin-header-actions .header-button {
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    color: #ffffff;
+}
+
+.admin-page .admin-header-actions .header-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.12);
+}
+
+.admin-page .admin-header-actions .outline-button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.admin-page .admin-header-actions .outline-button:hover {
+    background: var(--surface-2);
+    border-color: var(--accent);
+    color: var(--text);
+    transform: translateY(-1px);
+}
+
+.admin-page .admin-badge {
+    min-height: 32px;
+    padding: 0 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    background: rgba(25, 198, 200, 0.12);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+
+/* ============================================================
+   STATISTICS
+   ============================================================ */
+
+.admin-page .stats {
+    width: 100%;
+    margin: 0 0 26px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
+.admin-page .stats > .container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.admin-page .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.admin-page .stats-grid > div {
+    min-width: 0;
+    min-height: 94px;
+    padding: 20px 21px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.035);
+    transition:
+        border-color 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.admin-page .stats-grid > div:hover {
+    border-color: rgba(25, 198, 200, 0.45);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+}
+
+.admin-page .stats-grid strong {
+    display: block;
+    margin: 0;
+    color: var(--text);
+    font-size: 25px;
+    font-weight: 850;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+}
+
+.admin-page .stats-grid span {
+    display: block;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   MODULE PROGRESS PANEL
+   ============================================================ */
+
+.admin-page .upload-panel {
+    margin: 0;
+    padding: 30px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 5px 22px rgba(15, 23, 42, 0.045);
+}
+
+.admin-page .upload-panel > .section-heading {
+    display: block;
+    margin: 0 0 25px;
+}
+
+.admin-page .upload-panel .section-heading > div {
+    width: 100%;
+}
+
+.admin-page .upload-panel .section-heading .eyebrow {
+    margin: 0 0 6px;
+}
+
+.admin-page .upload-panel .section-heading h2 {
+    margin: 0;
+    color: var(--text);
+    font-family: inherit;
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+}
+
+.admin-page .upload-panel .section-heading h2::after {
+    display: none;
+}
+
+
+/* ============================================================
+   MODULE GRID
+   ------------------------------------------------------------
+   2 columns = much cleaner for 20 modules.
+   ============================================================ */
+
+.admin-page .specific-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+
+
+/* ============================================================
+   MODULE CARD
+   ============================================================ */
+
+.admin-page .specific-upload-card {
+    min-width: 0;
+    min-height: 310px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    box-shadow: none;
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.admin-page .specific-upload-card:hover {
+    border-color: rgba(25, 198, 200, 0.45);
+    transform: translateY(-2px);
+    box-shadow: 0 9px 25px rgba(15, 23, 42, 0.07);
+}
+
+
+/* ============================================================
+   MODULE HEADER
+   ============================================================ */
+
+.admin-page .specific-heading {
+    min-height: 50px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.admin-page .specific-heading .module-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--accent);
+    font-size: 17px;
+}
+
+.admin-page .specific-heading > div {
+    min-width: 0;
+}
+
+.admin-page .specific-heading small {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.admin-page .specific-heading h3 {
+    margin: 0;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+
+/* ============================================================
+   MODULE DESCRIPTION
+   ============================================================ */
+
+.admin-page .specific-upload-card > p {
+    min-height: 42px;
+    margin: 0 0 13px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+
+/* ============================================================
+   MODULE RECORD COUNT
+   ============================================================ */
+
+.admin-page .specific-upload-card > h3 {
+    margin: 0 0 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+
+/* ============================================================
+   CATEGORY ROWS
+   ------------------------------------------------------------
+   Your current HTML uses inline styles here, so !important
+   is intentionally used to make the dashboard consistent.
+   ============================================================ */
+
+.admin-page .specific-upload-card > div[style] {
+    min-height: 42px;
+    margin: 0 !important;
+    padding: 10px 12px;
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: 9px;
+}
+
+.admin-page .specific-upload-card > div[style] + div[style] {
+    margin-top: 7px !important;
+}
+
+.admin-page .specific-upload-card > div[style] span {
+    min-width: 0;
+    color: var(--text);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.admin-page .specific-upload-card > div[style] strong {
+    flex: 0 0 auto;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 850;
+}
+
+
+/* ============================================================
+   VIEW MODULE DATA BUTTON
+   ============================================================ */
+
+.admin-page .specific-upload-card > .outline-button {
+    width: 100%;
+    min-height: 40px;
+    margin-top: auto;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 800;
+    text-decoration: none;
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.admin-page .specific-upload-card > .outline-button:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+
+/* ============================================================
+   FOCUS ACCESSIBILITY
+   ============================================================ */
+
+.admin-page a:focus-visible,
+.admin-page button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+html[data-theme="dark"] .admin-page .stats-grid > div,
+html[data-theme="dark"] .admin-page .upload-panel,
+html[data-theme="dark"] .admin-page .specific-upload-card {
+    box-shadow: none;
+}
+
+html[data-theme="dark"] .admin-page .specific-upload-card > div[style] {
+    background: var(--surface-2);
+}
+
+
+/* ============================================================
+   1050px
+   ============================================================ */
+
+@media (max-width: 1050px) {
+
+    .admin-page .module-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-page .admin-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .admin-page .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+/* ============================================================
+   760px
+   ============================================================ */
+
+@media (max-width: 760px) {
+
+    .admin-page {
+        padding: 30px 0 60px;
+    }
+
+    .admin-page > .container {
+        width: min(100% - 30px, 1180px);
+    }
+
+    .admin-page .module-page-header h1 {
+        font-size: 34px;
+    }
+
+    .admin-page .specific-upload-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-page .upload-panel {
+        padding: 22px;
+    }
+
+}
+
+
+/* ============================================================
+   560px
+   ============================================================ */
+
+@media (max-width: 560px) {
+
+    .admin-page .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-page .admin-header-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+    }
+
+    .admin-page .admin-header-actions .admin-badge {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+
+    .admin-page .admin-header-actions a {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .admin-page .upload-panel .section-heading h2 {
+        font-size: 29px;
+    }
+
+}
+
+
+/* ============================================================
+   420px
+   ============================================================ */
+
+@media (max-width: 420px) {
+
+    .admin-page > .container {
+        width: calc(100% - 22px);
+    }
+
+    .admin-page .upload-panel {
+        padding: 17px;
+        border-radius: 14px;
+    }
+
+    .admin-page .specific-upload-card {
+        padding: 17px;
+    }
+
+    .admin-page .admin-header-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-page .admin-header-actions .admin-badge {
+        grid-column: auto;
+    }
+
+}
+/* ============================================================
+   UCE CONNECT — ADMIN DATA PAGE
+   FINAL PROFESSIONAL UI
+   ------------------------------------------------------------
+   UI ONLY
+   Backend / routes / database / functionality unchanged.
+   ============================================================ */
+
+
+/* ============================================================
+   PAGE
+   ============================================================ */
+
+.admin-data-page {
+    min-height: calc(100vh - 82px);
+    padding: 48px 0 80px;
+    background: var(--bg);
+}
+
+.admin-data-page > .container {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.admin-data-header {
+    margin-bottom: 26px;
+}
+
+.admin-data-header h1 {
+    margin: 0;
+    color: var(--text);
+    font-family: inherit;
+    font-size: clamp(36px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+}
+
+.admin-data-description {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* ============================================================
+   MAIN DATA PANEL
+   ============================================================ */
+
+.admin-data-panel {
+    width: 100%;
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow:
+        0 8px 28px rgba(15, 23, 42, 0.045);
+}
+
+
+/* ============================================================
+   SEARCH TOOLBAR
+   ============================================================ */
+
+.admin-data-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+
+/* ============================================================
+   PROFESSIONAL SEARCH BOX
+   ============================================================ */
+
+.admin-search-box {
+    position: relative;
+    width: min(560px, 100%);
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.admin-search-box:hover {
+    border-color: color-mix(
+        in srgb,
+        var(--border) 65%,
+        var(--accent)
+    );
+}
+
+.admin-search-box:focus-within {
+    background: var(--surface);
+    border-color: var(--accent);
+
+    box-shadow:
+        0 0 0 3px rgba(25, 198, 200, 0.10);
+}
+
+
+/* Search icon */
+
+.admin-search-box > i {
+    flex: 0 0 auto;
+    margin-left: 16px;
+
+    color: var(--muted);
+    font-size: 14px;
+
+    pointer-events: none;
+}
+
+
+/* Input */
+
+.admin-search-box input {
+    width: 100%;
+    height: 100%;
+
+    padding: 0 44px 0 12px;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+    color: var(--text);
+
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.admin-search-box input::placeholder {
+    color: var(--muted);
+    opacity: 0.85;
+}
+
+
+/* Clear button */
+
+.admin-search-clear {
+    position: absolute;
+    right: 10px;
+
+    width: 28px;
+    height: 28px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 7px;
+
+    background: transparent;
+    color: var(--muted);
+
+    cursor: pointer;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition:
+        opacity 0.18s ease,
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+.admin-search-clear.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.admin-search-clear:hover {
+    background: var(--surface);
+    color: var(--text);
+}
+
+
+/* ============================================================
+   RECORD COUNT
+   ============================================================ */
+
+.admin-record-count,
+.admin-submission-count {
+    flex-shrink: 0;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    min-height: 38px;
+    padding: 0 13px;
+
+    border: 1px solid var(--border);
+    border-radius: 999px;
+
+    background: var(--surface-2);
+}
+
+.admin-record-count strong,
+.admin-submission-count strong {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.admin-record-count span,
+.admin-submission-count span {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+
+.admin-data-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: var(--surface);
+}
+
+
+/* Scrollbar */
+
+.admin-data-table-wrapper::-webkit-scrollbar {
+    height: 9px;
+}
+
+.admin-data-table-wrapper::-webkit-scrollbar-track {
+    background: var(--surface-2);
+    border-radius: 20px;
+}
+
+.admin-data-table-wrapper::-webkit-scrollbar-thumb {
+    background: #aeb8c6;
+    border-radius: 20px;
+}
+
+.admin-data-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #8793a3;
+}
+
+
+/* Table */
+
+.admin-data-table {
+    width: max-content;
+    min-width: 100%;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    font-size: 11px;
+}
+
+
+/* Header */
+
+.admin-data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+
+    padding: 13px 14px;
+
+    background: var(--surface-2);
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+    text-align: left;
+
+    white-space: nowrap;
+}
+
+
+/* Cells */
+
+.admin-data-table tbody td {
+    padding: 13px 14px;
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--muted);
+
+    vertical-align: top;
+    line-height: 1.55;
+
+    max-width: 300px;
+}
+
+
+/* Last row */
+
+.admin-data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* Hover */
+
+.admin-data-table tbody tr {
+    transition:
+        background 0.15s ease;
+}
+
+.admin-data-table tbody tr:hover {
+    background: color-mix(
+        in srgb,
+        var(--accent) 4%,
+        var(--surface)
+    );
+}
+
+
+/* ============================================================
+   TABLE CELL TYPES
+   ============================================================ */
+
+.record-number {
+    width: 42px;
+
+    color: var(--muted) !important;
+    font-weight: 700;
+    text-align: center;
+}
+
+.module-cell {
+    color: var(--text) !important;
+    font-weight: 700;
+}
+
+.category-cell {
+    color: var(--muted) !important;
+}
+
+.date-cell {
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   USER CELL
+   ============================================================ */
+
+.user-cell {
+    min-width: 150px;
+}
+
+.user-name {
+    display: block;
+
+    color: var(--text);
+    font-weight: 700;
+}
+
+.user-cell small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+
+/* ============================================================
+   SOURCE LINK
+   ============================================================ */
+
+.source-cell {
+    min-width: 105px;
+}
+
+.source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    color: #2563eb !important;
+
+    font-size: 11px;
+    font-weight: 750;
+
+    text-decoration: none;
+
+    white-space: nowrap;
+
+    transition:
+        color 0.15s ease,
+        transform 0.15s ease;
+}
+
+.source-link i {
+    font-size: 10px;
+}
+
+.source-link:hover {
+    color: #1d4ed8 !important;
+    text-decoration: underline;
+    transform: translateY(-1px);
+}
+
+.source-text {
+    color: var(--muted);
+}
+
+
+/* ============================================================
+   SEARCH EMPTY STATE
+   ============================================================ */
+
+.admin-search-empty {
+    margin-top: 14px;
+    padding: 45px 25px;
+
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+
+    background: var(--surface-2);
+
+    text-align: center;
+}
+
+.admin-search-empty[hidden] {
+    display: none;
+}
+
+.admin-search-empty h3 {
+    margin: 13px 0 5px;
+
+    color: var(--text);
+    font-size: 15px;
+}
+
+.admin-search-empty p {
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 11px;
+}
+
+
+/* ============================================================
+   EMPTY DATA STATE
+   ============================================================ */
+
+.admin-empty-state {
+    min-height: 230px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 35px;
+
+    border: 1px dashed var(--border);
+    border-radius: 13px;
+
+    background: var(--surface-2);
+
+    text-align: center;
+}
+
+.admin-empty-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: rgba(25, 198, 200, 0.10);
+    color: var(--accent);
+
+    font-size: 19px;
+}
+
+.admin-empty-state h3 {
+    margin: 14px 0 5px;
+
+    color: var(--text);
+    font-size: 15px;
+}
+
+.admin-empty-state p {
+    max-width: 440px;
+
+    margin: 0;
+
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+
+/* ============================================================
+   SOURCE HISTORY
+   ============================================================ */
+
+.admin-history-panel {
+    margin-top: 22px;
+    padding: 25px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: 18px;
+
+    box-shadow:
+        0 8px 28px rgba(15, 23, 42, 0.035);
+}
+
+.admin-history-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    margin-bottom: 20px;
+}
+
+.admin-history-header .eyebrow {
+    margin-bottom: 7px;
+}
+
+.admin-history-header h2 {
+    margin: 0;
+
+    color: var(--text);
+
+    font-family: inherit;
+    font-size: 25px;
+    font-weight: 800;
+
+    letter-spacing: -0.025em;
+}
+
+.admin-history-header p:not(.eyebrow) {
+    margin-top: 7px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+
+/* ============================================================
+   HISTORY TABLE
+   ============================================================ */
+
+.history-table-container {
+    width: 100%;
+}
+
+.admin-history-table {
+    width: 100%;
+    min-width: 760px;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    overflow: hidden;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    font-size: 11px;
+}
+
+
+/* History header */
+
+.admin-history-table thead th {
+    padding: 13px 14px;
+
+    background: var(--surface-2);
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+
+    text-align: left;
+    white-space: nowrap;
+}
+
+
+/* History cells */
+
+.admin-history-table tbody td {
+    padding: 14px;
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--muted);
+
+    vertical-align: middle;
+}
+
+.admin-history-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-history-table tbody tr {
+    transition:
+        background 0.15s ease;
+}
+
+.admin-history-table tbody tr:hover {
+    background: color-mix(
+        in srgb,
+        var(--accent) 4%,
+        var(--surface)
+    );
+}
+
+
+/* ============================================================
+   HISTORY USER
+   ============================================================ */
+
+.history-user span {
+    display: block;
+
+    color: var(--text);
+    font-weight: 700;
+}
+
+.history-user small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--muted);
+    font-size: 10px;
+}
+
+
+/* ============================================================
+   HISTORY FILE
+   ============================================================ */
+
+.history-file {
+    min-width: 140px;
+
+    color: var(--text) !important;
+    font-weight: 650;
+}
+
+
+/* ============================================================
+   ROW COUNT
+   ============================================================ */
+
+.row-count {
+    display: inline-flex;
+
+    min-width: 30px;
+    height: 26px;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 8px;
+
+    border-radius: 7px;
+
+    background: var(--surface-2);
+
+    color: var(--text);
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+
+/* ============================================================
+   HISTORY DATE
+   ============================================================ */
+
+.history-date {
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   NO SOURCE
+   ============================================================ */
+
+.source-unavailable {
+    color: var(--muted);
+}
+
+
+/* ============================================================
+   HISTORY EMPTY
+   ============================================================ */
+
+.admin-history-empty {
+    min-height: 130px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+
+    background: var(--surface-2);
+
+    color: var(--muted);
+
+    font-size: 11px;
+}
+
+.admin-history-empty i {
+    color: var(--accent);
+    font-size: 19px;
+}
+
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+html[data-theme="dark"] .admin-search-box {
+    background: var(--surface-2);
+}
+
+html[data-theme="dark"] .admin-search-box:focus-within {
+    background: var(--surface);
+}
+
+html[data-theme="dark"] .source-link {
+    color: #60a5fa !important;
+}
+
+html[data-theme="dark"] .source-link:hover {
+    color: #93c5fd !important;
+}
+
+html[data-theme="dark"] .admin-data-table-wrapper::-webkit-scrollbar-thumb {
+    background: #46546a;
+}
+
+html[data-theme="dark"] .admin-data-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #5d6b80;
+}
+
+
+/* ============================================================
+   RESPONSIVE — 900px
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .admin-data-page {
+        padding-top: 38px;
+    }
+
+    .admin-data-toolbar {
+        align-items: stretch;
+    }
+
+    .admin-search-box {
+        flex: 1;
+        width: auto;
+    }
+
+}
+
+
+/* ============================================================
+   RESPONSIVE — 700px
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+    .admin-data-page > .container {
+        width: min(
+            100% - 28px,
+            1180px
+        );
+    }
+
+    .admin-data-panel,
+    .admin-history-panel {
+        padding: 17px;
+        border-radius: 15px;
+    }
+
+    .admin-data-toolbar {
+        flex-direction: column;
+    }
+
+    .admin-search-box {
+        width: 100%;
+    }
+
+    .admin-record-count {
+        align-self: flex-start;
+    }
+
+    .admin-history-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-submission-count {
+        align-self: flex-start;
+    }
+
+    .admin-data-header h1 {
+        font-size: 36px;
+    }
+
+}
+
+
+/* ============================================================
+   RESPONSIVE — 480px
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+    .admin-data-page {
+        padding: 30px 0 55px;
+    }
+
+    .admin-data-page > .container {
+        width: calc(100% - 20px);
+    }
+
+    .admin-data-panel,
+    .admin-history-panel {
+        padding: 14px;
+    }
+
+    .admin-history-header h2 {
+        font-size: 22px;
+    }
+
+    .admin-search-box {
+        height: 46px;
+    }
+
+}
+
+/* ==========================================================================
+   UCE CONNECT — FINAL ADMIN UI OVERRIDES
+   This is intentionally scoped to admin pages so existing public/user pages
+   are not affected by the large legacy stylesheet above.
+   ========================================================================== */
+
+.admin-page,
+.admin-page *,
+.admin-data-page,
+.admin-data-page *,
+.module-report-page,
+.module-report-page * {
+    box-sizing: border-box;
+}
+
+.admin-data-page,
+.module-report-page {
+    overflow-x: clip;
+}
+
+.admin-data-container,
+.module-report-container {
+    min-width: 0;
+}
+
+/* Admin module actions: report + raw data remain aligned and responsive. */
+.admin-page .admin-header-actions,
+.admin-page .report-preview-actions,
+.admin-page .submodule-data-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Dynamic admin data tables. */
+.admin-data-page .submodule-data-section,
+.module-report-page .report-submodule {
+    min-width: 0;
+    overflow: visible !important;
+}
+
+.admin-data-page .submodule-data-header,
+.module-report-page .report-submodule-header {
+    position: sticky !important;
+    top: 82px !important;
+    z-index: 40 !important;
+    background: rgba(251, 252, 253, 0.98) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.admin-data-page .submodule-table-wrapper,
+.module-report-page .report-table-wrapper {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    max-height: min(60vh, 520px);
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    isolation: isolate;
+}
+
+.admin-data-page .submodule-table,
+.module-report-page .report-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-data-page .submodule-table thead th,
+.module-report-page .report-table thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    background: #f1f4f7 !important;
+    background-clip: padding-box;
+    box-shadow: inset 0 -1px 0 #dfe5ec;
+    white-space: nowrap;
+}
+
+.admin-data-page .submodule-table tbody td,
+.module-report-page .report-table tbody td {
+    background: #fff;
+}
+
+.admin-data-page .all-data-table-wrapper {
+    position: relative;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-data-page .all-data-table-wrapper table th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    background: #f1f4f7 !important;
+}
+
+@media (max-width: 700px) {
+    .admin-data-page .submodule-table-wrapper,
+    .module-report-page .report-table-wrapper {
+        max-height: 55vh;
+    }
+
+    .admin-data-page .submodule-data-header,
+    .module-report-page .report-submodule-header {
+        top: 68px !important;
+    }
+}
+
+
+/* ============================================================
+   UCE CONNECT — CLEAN UPDATES SECTION
+   Final override
+   ------------------------------------------------------------
+   This section intentionally comes LAST so older/duplicate
+   update styles cannot override these rules.
+   ============================================================ */
+
+.updates-section {
+    position: relative;
+    padding: 82px 0 88px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+}
+
+
+/* Heading */
+
+.updates-section .section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 40px;
+    margin-bottom: 32px;
+}
+
+.updates-section .section-heading > div {
+    min-width: 0;
+}
+
+.updates-section .section-heading > p {
+    width: min(360px, 100%);
+    margin: 0 0 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+
+/* Three clean cards */
+
+.updates-section .updates-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    width: 100%;
+}
+
+
+/* Individual update card */
+
+.updates-section .update-card {
+    min-width: 0;
+    min-height: 218px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+
+    padding: 24px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+
+    box-shadow: 0 8px 24px rgba(23, 35, 59, 0.045);
+
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.updates-section .update-card:hover {
+    transform: translateY(-3px);
+
+    border-color: rgba(25, 198, 200, 0.35);
+
+    box-shadow:
+        0 16px 34px rgba(23, 35, 59, 0.09);
+}
+
+
+/* Icon + label row */
+
+.updates-section .update-icon {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 11px;
+
+    background: var(--surface-2);
+    color: var(--accent);
+
+    font-size: 15px;
+}
+
+.updates-section .update-label {
+    display: block;
+    margin-bottom: 8px;
+
+    color: var(--muted);
+
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    line-height: 1.3;
+}
+
+
+/* Content */
+
+.updates-section .update-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.updates-section .update-card h3 {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.updates-section .update-card p {
+    margin: 9px 0 0;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+
+/* Arrow */
+
+.updates-section .update-arrow {
+    width: 32px;
+    height: 32px;
+
+    margin-top: 20px;
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border);
+    border-radius: 50%;
+
+    background: var(--surface);
+    color: var(--text);
+
+    font-size: 11px;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.updates-section .update-card:hover .update-arrow {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+    transform: translateX(2px);
+}
+
+
+/* Keep text from creating uneven overflow */
+
+.updates-section .update-content h3,
+.updates-section .update-content p {
+    overflow-wrap: anywhere;
+}
+
+
+/* ============================================================
+   RESPONSIVE — TABLET
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+    .updates-section {
+        padding: 68px 0 74px;
+    }
+
+    .updates-section .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .updates-section .section-heading > p {
+        width: min(520px, 100%);
+        margin: 0;
+    }
+
+    .updates-section .updates-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .updates-section .update-card:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE — MOBILE
+   ============================================================ */
+
+@media (max-width: 620px) {
+
+    .updates-section {
+        padding: 55px 0 62px;
+    }
+
+    .updates-section .section-heading {
+        margin-bottom: 24px;
+    }
+
+    .updates-section .section-heading h2 {
+        font-size: 34px;
+        line-height: 1.12;
+    }
+
+    .updates-section .updates-list {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    .updates-section .update-card:last-child {
+        grid-column: auto;
+    }
+
+    .updates-section .update-card {
+        min-height: 0;
+        padding: 21px;
+    }
+}
+
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+
+body[data-theme="dark"] .updates-section .update-card {
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+body[data-theme="dark"] .updates-section .update-card:hover {
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .updates-section .update-card,
+    .updates-section .update-arrow {
+        transition: none;
+    }
+
+}
+

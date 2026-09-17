@@ -1,65 +1,493 @@
 {% extends "base.html" %}
 
-
 {% block title %}
-University Report | UCE Connect
+{{ report.module_name }} Report | UCE Connect
 {% endblock %}
-
 
 {% block content %}
 
-<section class="admin-page report-page">
+<style>
+/* =========================================================
+   MODULE REPORT
+   ========================================================= */
 
-    <div class="container">
+.module-report-page {
+    background: #f5f7fa;
+    min-height: calc(100vh - 80px);
+    padding: 42px 0 80px;
+}
 
-        <!-- ==================================================
-             REPORT HEADER
-        =================================================== -->
+.module-report-container {
+    width: min(1200px, calc(100% - 40px));
+    margin: 0 auto;
+}
 
-        <div class="report-page-header">
+/* HEADER */
 
-            <div>
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    margin-bottom: 28px;
+}
 
-                <p class="eyebrow">
-                    ADMINISTRATOR · LIVE REPORT
+.report-header-left {
+    flex: 1;
+}
+
+.report-eyebrow {
+    margin: 0 0 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+}
+
+.report-header h1 {
+    margin: 0;
+    color: #14213d;
+    font-size: 42px;
+    line-height: 1.1;
+    font-weight: 800;
+}
+
+.report-description {
+    margin: 12px 0 0;
+    color: #64748b;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.report-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* BUTTONS */
+
+.report-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 42px;
+    padding: 0 17px;
+
+    border-radius: 10px;
+    text-decoration: none;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    transition: 0.2s ease;
+}
+
+.report-btn-primary {
+    background: #14213d;
+    color: #fff !important;
+    border: 1px solid #14213d;
+}
+
+.report-btn-primary:hover {
+    background: #0d172b;
+}
+
+.report-btn-outline {
+    background: #fff;
+    color: #14213d !important;
+    border: 1px solid #d8e0e8;
+}
+
+.report-btn-outline:hover {
+    border-color: #18c3c8;
+    color: #087f83 !important;
+}
+
+/* SUMMARY */
+
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 25px;
+}
+
+.summary-card {
+    background: #fff;
+    border: 1px solid #dfe5ec;
+    border-radius: 14px;
+    padding: 22px;
+}
+
+.summary-card-number {
+    display: block;
+    color: #14213d;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.summary-card-label {
+    display: block;
+    margin-top: 6px;
+    color: #718096;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+}
+
+/* MAIN PANEL */
+
+.report-panel {
+    background: #fff;
+    border: 1px solid #dfe5ec;
+    border-radius: 18px;
+    overflow: hidden;
+    margin-bottom: 25px;
+}
+
+.report-panel-header {
+    padding: 25px 28px;
+    border-bottom: 1px solid #e7ebf0;
+}
+
+.report-panel-header h2 {
+    margin: 0;
+    color: #14213d;
+    font-size: 24px;
+}
+
+.report-panel-header p {
+    margin: 7px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* =========================================================
+   SUBMODULE
+   ========================================================= */
+
+.submodule-section {
+    border-bottom: 1px solid #e7ebf0;
+}
+
+.submodule-section:last-child {
+    border-bottom: none;
+}
+
+.submodule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    padding: 20px 28px;
+
+    background: #fbfcfd;
+}
+
+.submodule-title {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.submodule-icon {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+    background: #eef7f8;
+    color: #12b9be;
+}
+
+.submodule-title h3 {
+    margin: 0;
+    color: #14213d;
+    font-size: 17px;
+}
+
+.submodule-key {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.submodule-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.submodule-count {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    background: #e8f8f9;
+    color: #087f83;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+/* TABLE */
+
+.report-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    padding: 0 28px 25px;
+}
+
+.report-table {
+    width: 100%;
+    min-width: 700px;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    border: 1px solid #e1e7ed;
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    font-size: 13px;
+}
+
+.report-table th {
+    background: #f1f4f7;
+    color: #334155;
+
+    text-align: left;
+
+    padding: 12px 14px;
+
+    border-bottom: 1px solid #dfe5ec;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+.report-table td {
+    padding: 12px 14px;
+
+    color: #334155;
+
+    border-bottom: 1px solid #edf0f3;
+
+    vertical-align: top;
+}
+
+.report-table tbody tr:hover {
+    background: #fbfdfe;
+}
+
+.report-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* NO DATA */
+
+.no-data {
+    margin: 0 28px 25px;
+
+    padding: 35px 20px;
+
+    border: 1px dashed #d7e0e8;
+    border-radius: 12px;
+
+    text-align: center;
+
+    background: #fafcfd;
+}
+
+.no-data i {
+    font-size: 28px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+}
+
+.no-data h4 {
+    margin: 0;
+    color: #334155;
+    font-size: 15px;
+}
+
+.no-data p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* NUMERIC SUMMARY */
+
+.numeric-section {
+    padding: 28px;
+}
+
+.numeric-section h2 {
+    margin: 0 0 17px;
+    color: #14213d;
+    font-size: 22px;
+}
+
+.numeric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.numeric-card {
+    padding: 16px;
+
+    background: #f8fafb;
+    border: 1px solid #e3e8ee;
+    border-radius: 10px;
+}
+
+.numeric-field {
+    display: block;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.numeric-value {
+    display: block;
+    margin-top: 6px;
+    color: #14213d;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+/* FOOTER ACTIONS */
+
+.report-footer-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+
+    .report-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .numeric-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .report-header {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .module-report-container {
+        width: min(100% - 24px, 1200px);
+    }
+
+    .report-header h1 {
+        font-size: 32px;
+    }
+
+    .report-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .numeric-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .submodule-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .report-table-wrapper {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+</style>
+
+
+<section class="module-report-page">
+
+    <div class="module-report-container">
+
+        <!-- HEADER -->
+
+        <div class="report-header">
+
+            <div class="report-header-left">
+
+                <p class="report-eyebrow">
+                    ADMINISTRATOR · MODULE REPORT
                 </p>
 
                 <h1>
-                    University Data Report
+                    {{ report.module_name }}
                 </h1>
 
-                <p>
-                    A live summary generated from the
-                    information currently stored in
-                    UCE Connect.
+                <p class="report-description">
+                    Complete module report organized separately
+                    by each configured submodule.
                 </p>
 
             </div>
 
 
-            <div class="report-actions">
+            <div class="report-header-actions">
 
                 <a
-                    class="outline-button"
                     href="{{ url_for('main.admin') }}"
+                    class="report-btn report-btn-outline"
                 >
-
                     <i class="fa-solid fa-arrow-left"></i>
-
-                    Back to Admin
-
+                    Admin Portal
                 </a>
 
+                <a
+                    href="{{ url_for(
+                        'main.admin_data',
+                        module=module_key
+                    ) }}"
+                    class="report-btn report-btn-primary"
+                >
+                    <i class="fa-solid fa-table"></i>
+                    View Module Data
+                </a>
 
                 <a
-                    class="header-button"
-                    href="{{ url_for('main.admin_report_pdf') }}"
+                    href="{{ url_for(
+                        'main.admin_report_csv',
+                        module=module_key
+                    ) }}"
+                    class="report-btn report-btn-outline"
                 >
-
-                    <i class="fa-solid fa-file-pdf"></i>
-
-                    Download PDF
-
+                    <i class="fa-solid fa-file-csv"></i>
+                    Full CSV
                 </a>
 
             </div>
@@ -67,575 +495,323 @@ University Report | UCE Connect
         </div>
 
 
-        <!-- ==================================================
-             KPI CARDS
-        =================================================== -->
+        <!-- SUMMARY -->
 
-        <div class="report-kpi-grid">
+        <div class="report-summary">
 
-            <article class="report-kpi">
+            <div class="summary-card">
 
-                <span>
+                <span class="summary-card-number">
+                    {{ records|length }}
+                </span>
+
+                <span class="summary-card-label">
                     Total Records
                 </span>
 
-                <strong>
-                    {{ "{:,}".format(
-                        report.total_records
-                    ) }}
-                </strong>
-
-                <small>
-                    Across all modules
-                </small>
-
-            </article>
+            </div>
 
 
-            <article class="report-kpi">
+            <div class="summary-card">
 
-                <span>
-                    Uploaded Files
+                <span class="summary-card-number">
+                    {{ columns|length }}
                 </span>
 
-                <strong>
-                    {{ "{:,}".format(
-                        report.total_uploads
-                    ) }}
-                </strong>
-
-                <small>
-                    Processed successfully
-                </small>
-
-            </article>
-
-
-            <article class="report-kpi">
-
-                <span>
-                    Active Modules
+                <span class="summary-card-label">
+                    Data Columns
                 </span>
 
-                <strong>
-                    {{ report.populated_modules }}
-                    /
-                    {{ report.total_modules }}
-                </strong>
-
-                <small>
-                    Modules containing data
-                </small>
-
-            </article>
+            </div>
 
 
-            <article class="report-kpi">
+            <div class="summary-card">
 
-                <span>
-                    Active Categories
+                <span class="summary-card-number">
+                    {{ module_info.categories|length }}
                 </span>
 
-                <strong>
-                    {{ report.populated_categories }}
-                    /
-                    {{ report.total_categories }}
-                </strong>
+                <span class="summary-card-label">
+                    Submodules
+                </span>
 
-                <small>
-                    Categories containing data
-                </small>
+            </div>
 
-            </article>
+
+            <div class="summary-card">
+
+                <span class="summary-card-number">
+                    {{ report.numeric_averages|length }}
+                </span>
+
+                <span class="summary-card-label">
+                    Numeric Fields
+                </span>
+
+            </div>
 
         </div>
 
 
-        <!-- ==================================================
-             MODULE OVERVIEW
-        =================================================== -->
+        <!-- SUBMODULE REPORTS -->
 
         <section class="report-panel">
 
-            <div class="panel-heading">
+            <div class="report-panel-header">
 
-                <div>
+                <h2>
+                    Submodule Reports
+                </h2>
 
-                    <span class="panel-label">
-                        01 · UNIVERSITY OVERVIEW
-                    </span>
-
-                    <h2>
-                        Information by module
-                    </h2>
-
-                </div>
-
-
-                <span class="report-generated">
-
-                    Generated
-                    {{ report.generated_at }}
-
-                </span>
+                <p>
+                    Every record is displayed only under the
+                    submodule assigned to it.
+                </p>
 
             </div>
 
 
-            <div class="module-report-list">
+            {% for category_key, category_name
+                in module_info.categories.items() %}
 
-                {% for module in report.modules %}
 
-                    {% set percentage =
-                        (
-                            module.total_records
-                            / report.total_records
-                            * 100
-                        )
-                        if report.total_records
-                        else 0
-                    %}
+                <!-- =================================================
+                     ONE SUBMODULE
+                     ================================================= -->
 
+                {% set category_rows = [] %}
 
-                    <article
-                        class="module-report-row"
-                    >
+                {% for row in records %}
 
-                        <div
-                            class="module-report-title"
-                        >
+                    {% if row.category == category_key %}
 
-                            <span
-                                class="module-report-icon"
-                            >
-
-                                <i
-                                    class="fa-solid {{ module.icon }}"
-                                ></i>
-
-                            </span>
-
-
-                            <div>
-
-                                <strong>
-                                    {{ module.name }}
-                                </strong>
-
-                                <small>
-                                    {{ module.description }}
-                                </small>
-
-                            </div>
-
-                        </div>
-
-
-                        <div
-                            class="module-report-bar-area"
-                        >
-
-                            <div
-                                class="module-report-bar-track"
-                            >
-
-                                <div
-                                    class="module-report-bar"
-                                    style="
-                                        width:
-                                        {{
-                                            '%.2f'
-                                            |format(
-                                                percentage
-                                            )
-                                        }}%;
-                                    "
-                                ></div>
-
-                            </div>
-
-
-                            <span>
-
-                                {{
-                                    "{:,}".format(
-                                        module.total_records
-                                    )
-                                }}
-
-                                records
-
-                            </span>
-
-                        </div>
-
-                    </article>
-
-                {% endfor %}
-
-            </div>
-
-        </section>
-
-
-        <!-- ==================================================
-             CATEGORY BREAKDOWN
-        =================================================== -->
-
-        <section class="report-panel">
-
-            <div class="panel-heading">
-
-                <div>
-
-                    <span class="panel-label">
-                        02 · CATEGORY BREAKDOWN
-                    </span>
-
-                    <h2>
-                        Data available in each module
-                    </h2>
-
-                </div>
-
-            </div>
-
-
-            <div class="report-category-grid">
-
-                {% for module in report.modules %}
-
-                    <article
-                        class="report-category-card"
-                    >
-
-                        <div
-                            class="report-category-header"
-                        >
-
-                            <strong>
-                                {{ module.name }}
-                            </strong>
-
-                            <span>
-
-                                {{
-                                    "{:,}".format(
-                                        module.total_records
-                                    )
-                                }}
-
-                            </span>
-
-                        </div>
-
-
-                        <div
-                            class="report-category-list"
-                        >
-
-                            {% for category in module.categories %}
-
-                                <div
-                                    class="
-                                        report-category-item
-                                        {% if category.count == 0 %}
-                                            is-empty
-                                        {% endif %}
-                                    "
-                                >
-
-                                    <span>
-                                        {{ category.name }}
-                                    </span>
-
-                                    <strong>
-                                        {{
-                                            "{:,}".format(
-                                                category.count
-                                            )
-                                        }}
-                                    </strong>
-
-                                </div>
-
-                            {% endfor %}
-
-                        </div>
-
-                    </article>
-
-                {% endfor %}
-
-            </div>
-
-        </section>
-
-
-        <!-- ==================================================
-             AUTOMATIC ANALYSIS
-        =================================================== -->
-
-        <section class="report-panel">
-
-            <div class="panel-heading">
-
-                <div>
-
-                    <span class="panel-label">
-                        03 · AUTOMATIC ANALYSIS
-                    </span>
-
-                    <h2>
-                        Numeric indicators found
-                        in uploaded data
-                    </h2>
-
-                </div>
-
-            </div>
-
-
-            <div class="report-analysis-grid">
-
-                {% for module in report.modules %}
-
-                    {% if module.numeric_averages %}
-
-                        <article
-                            class="analysis-module-card"
-                        >
-
-                            <h3>
-                                {{ module.name }}
-                            </h3>
-
-
-                            <div
-                                class="
-                                    analysis-module-values
-                                "
-                            >
-
-                                {% for item
-                                    in module.numeric_averages %}
-
-                                    <div>
-
-                                        <span>
-
-                                            {{
-                                                item.field
-                                                |replace(
-                                                    "_",
-                                                    " "
-                                                )
-                                                |title
-                                            }}
-
-                                        </span>
-
-                                        <strong>
-                                            {{ item.value }}
-                                        </strong>
-
-                                        <small>
-                                            Average
-                                        </small>
-
-                                    </div>
-
-                                {% endfor %}
-
-                            </div>
-
-                        </article>
+                        {% set ignored = category_rows.append(row) %}
 
                     {% endif %}
 
                 {% endfor %}
 
 
-                {% if report.total_records == 0 %}
+                <div class="submodule-section">
 
-                    <div class="empty-state">
+                    <!-- SUBMODULE HEADER -->
 
-                        <i
-                            class="fa-regular fa-chart-bar"
-                        ></i>
+                    <div class="submodule-header">
 
-                        <p>
-                            Upload university data to
-                            generate automatic analysis.
-                        </p>
+                        <div class="submodule-title">
+
+                            <span class="submodule-icon">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </span>
+
+                            <div>
+
+                                <h3>
+                                    {{ category_name }}
+                                </h3>
+
+                                <div class="submodule-key">
+                                    {{ category_key }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="submodule-actions">
+
+                            <span class="submodule-count">
+                                {{ category_rows|length }}
+                                record{% if category_rows|length != 1 %}s{% endif %}
+                            </span>
+
+
+                            <a
+                                href="{{ url_for(
+                                    'main.admin_report_csv',
+                                    module=module_key,
+                                    category=category_key
+                                ) }}"
+                                class="report-btn report-btn-outline"
+                            >
+                                <i class="fa-solid fa-download"></i>
+                                CSV
+                            </a>
+
+                        </div>
 
                     </div>
 
-                {% endif %}
 
-            </div>
+                    <!-- SUBMODULE DATA -->
 
-        </section>
+                    {% if category_rows %}
 
+                        {% set category_columns = [] %}
 
-        <!-- ==================================================
-             RECENT ACTIVITY
-        =================================================== -->
+                        {% for row in category_rows %}
 
-        <section class="report-panel">
+                            {% for column in row.data.keys() %}
 
-            <div class="panel-heading">
+                                {% if column not in category_columns %}
 
-                <div>
+                                    {% set ignored =
+                                        category_columns.append(column)
+                                    %}
 
-                    <span class="panel-label">
-                        04 · RECENT ACTIVITY
-                    </span>
-
-                    <h2>
-                        Latest uploads
-                    </h2>
-
-                </div>
-
-            </div>
-
-
-            {% if report.recent_uploads %}
-
-                <div class="history-table-wrapper">
-
-                    <table class="history-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    File
-                                </th>
-
-                                <th>
-                                    Mode
-                                </th>
-
-                                <th>
-                                    Target
-                                </th>
-
-                                <th>
-                                    Records
-                                </th>
-
-                                <th>
-                                    Uploaded By
-                                </th>
-
-                                <th>
-                                    Date
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            {% for upload
-                                in report.recent_uploads %}
-
-                                <tr>
-
-                                    <td>
-
-                                        <strong>
-                                            {{ upload.filename }}
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-                                        {{ upload.upload_mode|title }}
-                                    </td>
-
-
-                                    <td>
-
-                                        {% if upload.target_module %}
-
-                                            {{
-                                                modules[
-                                                    upload.target_module
-                                                ].name
-                                            }}
-
-                                            {% if upload.target_category %}
-
-                                                /
-
-                                                {{
-                                                    modules[
-                                                        upload.target_module
-                                                    ].categories.get(
-                                                        upload.target_category,
-                                                        upload.target_category
-                                                    )
-                                                }}
-
-                                            {% endif %}
-
-                                        {% else %}
-
-                                            Automatic classification
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td>
-
-                                        {{
-                                            "{:,}".format(
-                                                upload.row_count
-                                            )
-                                        }}
-
-                                    </td>
-
-
-                                    <td>
-                                        {{ upload.uploader }}
-                                    </td>
-
-
-                                    <td>
-                                        {{ upload.created_at }}
-                                    </td>
-
-                                </tr>
+                                {% endif %}
 
                             {% endfor %}
 
-                        </tbody>
+                        {% endfor %}
 
-                    </table>
+
+                        <div class="report-table-wrapper">
+
+                            <table class="report-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>#</th>
+
+                                        {% for column in category_columns %}
+
+                                            <th>
+                                                {{ column }}
+                                            </th>
+
+                                        {% endfor %}
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    {% for row in category_rows %}
+
+                                        <tr>
+
+                                            <td>
+                                                {{ loop.index }}
+                                            </td>
+
+                                            {% for column in category_columns %}
+
+                                                <td>
+                                                    {{ row.data.get(
+                                                        column,
+                                                        ""
+                                                    )
+                                                    }}
+                                                </td>
+
+                                            {% endfor %}
+
+                                        </tr>
+
+                                    {% endfor %}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="no-data">
+
+                            <i class="fa-regular fa-folder-open"></i>
+
+                            <h4>
+                                No data in this submodule
+                            </h4>
+
+                            <p>
+                                No records have been assigned to
+                                "{{ category_name }}" yet.
+                            </p>
+
+                        </div>
+
+                    {% endif %}
 
                 </div>
 
-            {% else %}
+            {% endfor %}
 
-                <div class="empty-state">
 
-                    <i
-                        class="fa-regular fa-folder-open"
-                    ></i>
+            <!-- UNCLASSIFIED -->
 
-                    <p>
-                        No uploads yet.
-                    </p>
+            {% set unclassified_rows = [] %}
+
+            {% for row in records %}
+
+                {% if row.category == "unclassified" %}
+
+                    {% set ignored =
+                        unclassified_rows.append(row)
+                    %}
+
+                {% endif %}
+
+            {% endfor %}
+
+
+            {% if unclassified_rows %}
+
+                <div class="submodule-section">
+
+                    <div class="submodule-header">
+
+                        <div class="submodule-title">
+
+                            <span class="submodule-icon">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </span>
+
+                            <div>
+
+                                <h3>
+                                    Unclassified Data
+                                </h3>
+
+                                <div class="submodule-key">
+                                    unclassified
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <span class="submodule-count">
+                            {{ unclassified_rows|length }}
+                            records
+                        </span>
+
+                    </div>
+
+
+                    <div class="no-data">
+
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+
+                        <h4>
+                            These records need classification
+                        </h4>
+
+                        <p>
+                            They belong to this module but could
+                            not be matched to a configured submodule.
+                        </p>
+
+                    </div>
 
                 </div>
 
@@ -644,23 +820,68 @@ University Report | UCE Connect
         </section>
 
 
-        <!-- ==================================================
-             REPORT FOOTER
-        =================================================== -->
+        <!-- NUMERIC ANALYSIS -->
 
-        <div class="report-footer-note">
+        {% if report.numeric_averages %}
 
-            <i class="fa-solid fa-circle-info"></i>
+            <section class="report-panel">
 
-            <span>
+                <div class="numeric-section">
 
-                This report is generated dynamically from
-                the current UCE Connect database.
-                If an administrator uploads or deletes
-                data, regenerate the report to see the
-                updated values.
+                    <h2>
+                        Numeric Data Summary
+                    </h2>
 
-            </span>
+                    <div class="numeric-grid">
+
+                        {% for field, value
+                            in report.numeric_averages.items() %}
+
+                            <div class="numeric-card">
+
+                                <span class="numeric-field">
+                                    {{ field }}
+                                </span>
+
+                                <span class="numeric-value">
+                                    {{ value }}
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- FOOTER -->
+
+        <div class="report-footer-actions">
+
+            <a
+                href="{{ url_for('main.admin') }}"
+                class="report-btn report-btn-outline"
+            >
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Admin
+            </a>
+
+            <a
+                href="{{ url_for(
+                    'main.admin_report',
+                    module=module_key
+                ) }}"
+                class="report-btn report-btn-primary"
+            >
+                <i class="fa-solid fa-chart-pie"></i>
+                Standard Report
+            </a>
 
         </div>
 

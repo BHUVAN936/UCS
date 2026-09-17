@@ -2,12 +2,13 @@
 
 {% block title %}
 {{ report.module_name }} Report | UCE Connect
+
+
 {% endblock %}
 
 {% block content %}
 
 <style>
-
 /* =========================================================
    MODULE REPORT PAGE
    ========================================================= */
@@ -19,13 +20,12 @@
 }
 
 .module-report-container {
-    width: min(1180px, calc(100% - 40px));
+    width: min(1200px, calc(100% - 40px));
     margin: 0 auto;
 }
 
-
 /* =========================================================
-   TOP HEADER
+   PAGE HEADER
    ========================================================= */
 
 .report-header {
@@ -36,22 +36,23 @@
     margin-bottom: 28px;
 }
 
-.report-header-left {
-    flex: 1;
-}
-
 .report-eyebrow {
     margin: 0 0 8px;
+
     color: #64748b;
+
     font-size: 12px;
     font-weight: 800;
+
     letter-spacing: 1.6px;
     text-transform: uppercase;
 }
 
 .report-header h1 {
     margin: 0;
+
     color: #14213d;
+
     font-size: 42px;
     line-height: 1.1;
     font-weight: 800;
@@ -59,17 +60,18 @@
 
 .report-description {
     margin: 12px 0 0;
+
     color: #64748b;
-    font-size: 16px;
+
+    font-size: 15px;
     line-height: 1.6;
 }
 
 .report-header-actions {
     display: flex;
-    gap: 10px;
+    gap: 9px;
     flex-wrap: wrap;
 }
-
 
 /* =========================================================
    BUTTONS
@@ -79,44 +81,36 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 7px;
 
-    min-height: 42px;
-    padding: 0 17px;
+    min-height: 40px;
+    padding: 0 14px;
 
-    border-radius: 10px;
+    border: 1px solid #d8e0e8;
+    border-radius: 9px;
+
+    background: #fff;
+    color: #14213d !important;
 
     text-decoration: none;
-    font-size: 13px;
+
+    font-size: 12px;
     font-weight: 700;
-
-    transition: 0.2s ease;
 }
 
-.report-btn-primary {
-    background: #14213d;
-    color: #ffffff !important;
-    border: 1px solid #14213d;
-}
-
-.report-btn-primary:hover {
-    background: #0d172b;
-}
-
-.report-btn-outline {
-    background: #ffffff;
-    color: #14213d !important;
-    border: 1px solid #d8e0e8;
-}
-
-.report-btn-outline:hover {
+.report-btn:hover {
     border-color: #18c3c8;
     color: #087f83 !important;
 }
 
+.report-btn-primary {
+    background: #14213d;
+    border-color: #14213d;
+    color: #fff !important;
+}
 
 /* =========================================================
-   SUMMARY CARDS
+   SUMMARY
    ========================================================= */
 
 .report-summary {
@@ -127,89 +121,193 @@
 }
 
 .summary-card {
-    background: #ffffff;
+    background: #fff;
+
     border: 1px solid #dfe5ec;
     border-radius: 14px;
-    padding: 22px;
+
+    padding: 21px;
 }
 
 .summary-card-number {
     display: block;
+
     color: #14213d;
-    font-size: 28px;
+
+    font-size: 27px;
     font-weight: 800;
-    line-height: 1.2;
 }
 
 .summary-card-label {
     display: block;
-    margin-top: 6px;
+
+    margin-top: 5px;
+
     color: #718096;
-    font-size: 11px;
+
+    font-size: 10px;
     font-weight: 800;
-    letter-spacing: 1.1px;
+
+    letter-spacing: 1px;
     text-transform: uppercase;
 }
 
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.report-data-toolbar {
+    margin: 0 0 18px;
+}
+
+.report-search-box {
+    position: relative;
+    width: min(600px, 100%);
+}
+
+.report-search-box > i {
+    position: absolute;
+
+    left: 15px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: #64748b;
+}
+
+.report-search-box input {
+    width: 100%;
+    height: 46px;
+
+    padding: 0 44px;
+
+    border: 1px solid #d8e0e8;
+    border-radius: 12px;
+
+    background: #fff;
+    color: #14213d;
+
+    outline: none;
+
+    font-size: 14px;
+}
+
+.report-search-box input:focus {
+    border-color: #18c3c8;
+}
+
+.report-search-clear {
+    position: absolute;
+
+    right: 10px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 34px;
+    height: 34px;
+
+    border: 0;
+    background: transparent;
+
+    color: #64748b;
+
+    cursor: pointer;
+
+    display: none;
+}
+
+.report-search-clear.visible {
+    display: block;
+}
 
 /* =========================================================
-   MAIN REPORT PANEL
+   REPORT PANEL
    ========================================================= */
 
 .report-panel {
-    background: #ffffff;
+    background: #fff;
+
     border: 1px solid #dfe5ec;
     border-radius: 18px;
-    overflow: hidden;
-    margin-bottom: 25px;
+
+    overflow: visible;
 }
 
 .report-panel-header {
     padding: 25px 28px;
+
     border-bottom: 1px solid #e7ebf0;
 }
 
 .report-panel-header h2 {
     margin: 0;
+
     color: #14213d;
     font-size: 24px;
 }
 
 .report-panel-header p {
     margin: 7px 0 0;
+
     color: #64748b;
     font-size: 14px;
 }
 
-
 /* =========================================================
-   SUBMODULE
+   REPORT SUBMODULE
    ========================================================= */
 
-.submodule-section {
+.report-submodule {
+    position: relative;
+
     border-bottom: 1px solid #e7ebf0;
 }
 
-.submodule-section:last-child {
+.report-submodule:last-child {
     border-bottom: none;
 }
 
-.submodule-header {
+/*
+=========================================================
+IMPORTANT FIX
+
+SUBMODULE REPORT HEADER STAYS VISIBLE.
+=========================================================
+*/
+
+.report-submodule-header {
+    position: sticky;
+    top: 82px;
+    z-index: 20;
+
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+
     gap: 15px;
-    padding: 20px 28px;
-    background: #fbfcfd;
+
+    min-height: 78px;
+    padding: 19px 28px;
+
+    background: rgba(251, 252, 253, 0.98);
+
+    border-top: 1px solid #e7ebf0;
+    border-bottom: 1px solid #dfe5ec;
+
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
 }
 
-.submodule-title {
+.report-submodule-title {
     display: flex;
     align-items: center;
-    gap: 13px;
+    gap: 12px;
+
+    min-width: 0;
 }
 
-.submodule-icon {
+.report-submodule-number {
     width: 40px;
     height: 40px;
 
@@ -217,46 +315,102 @@
     align-items: center;
     justify-content: center;
 
+    flex-shrink: 0;
+
     border-radius: 10px;
+
     background: #eef7f8;
-    color: #12b9be;
-}
-
-.submodule-title h3 {
-    margin: 0;
-    color: #14213d;
-    font-size: 17px;
-}
-
-.submodule-count {
-    display: inline-flex;
-    align-items: center;
-
-    padding: 6px 10px;
-
-    border-radius: 20px;
-
-    background: #e8f8f9;
     color: #087f83;
 
     font-size: 12px;
     font-weight: 800;
 }
 
+.report-submodule-title h3 {
+    margin: 0;
+
+    color: #14213d;
+
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.report-submodule-key {
+    margin-top: 3px;
+
+    color: #94a3b8;
+
+    font-size: 10px;
+}
+
+.report-submodule-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.report-count {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 31px;
+    padding: 0 10px;
+
+    border-radius: 18px;
+
+    background: #e8f8f9;
+    color: #087f83;
+
+    font-size: 11px;
+    font-weight: 800;
+}
 
 /* =========================================================
    TABLE
+
+   ONLY DATA AREA SCROLLS
    ========================================================= */
 
 .report-table-wrapper {
     width: 100%;
+
+    max-height: 360px;
+
     overflow-x: auto;
-    padding: 0 28px 25px;
+    overflow-y: auto;
+
+    padding: 0 28px 24px;
+
+    scrollbar-width: auto;
+    scrollbar-color: #94a3b8 #eef2f6;
+    scrollbar-gutter: stable;
+}
+
+.report-table-wrapper::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.report-table-wrapper::-webkit-scrollbar-track {
+    background: #eef2f6;
+}
+
+.report-table-wrapper::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+
+    border-radius: 8px;
+
+    border: 3px solid #eef2f6;
+}
+
+.report-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
 }
 
 .report-table {
     width: 100%;
-    min-width: 700px;
+    min-width: 800px;
 
     border-collapse: separate;
     border-spacing: 0;
@@ -264,95 +418,125 @@
     border: 1px solid #e1e7ed;
     border-radius: 10px;
 
-    overflow: hidden;
-
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .report-table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    padding: 11px 13px;
+
     background: #f1f4f7;
     color: #334155;
 
-    text-align: left;
-
-    padding: 12px 14px;
-
     border-bottom: 1px solid #dfe5ec;
 
-    font-size: 11px;
+    text-align: left;
+
+    font-size: 10px;
     font-weight: 800;
 
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+
+    white-space: nowrap;
 }
 
 .report-table td {
-    padding: 12px 14px;
+    padding: 11px 13px;
 
     color: #334155;
+    background: #fff;
 
     border-bottom: 1px solid #edf0f3;
 
     vertical-align: top;
 }
 
+.report-table tbody tr:hover td {
+    background: #fbfdfe;
+}
+
 .report-table tr:last-child td {
     border-bottom: none;
 }
 
-.report-table tbody tr:hover {
-    background: #fbfdfe;
-}
-
-
 /* =========================================================
-   NO DATA
+   EMPTY
    ========================================================= */
 
-.no-data {
-    margin: 0 28px 25px;
+.report-empty {
+    margin: 0 28px 24px;
 
-    padding: 35px 20px;
+    padding: 32px 20px;
 
     border: 1px dashed #d7e0e8;
     border-radius: 12px;
 
-    text-align: center;
-
     background: #fafcfd;
+
+    text-align: center;
 }
 
-.no-data i {
-    font-size: 28px;
+.report-empty i {
     color: #94a3b8;
-    margin-bottom: 10px;
+    font-size: 27px;
 }
 
-.no-data h4 {
-    margin: 0;
+.report-empty h4 {
+    margin: 9px 0 4px;
+
     color: #334155;
     font-size: 15px;
 }
 
-.no-data p {
-    margin: 6px 0 0;
+.report-empty p {
+    margin: 0;
+
     color: #64748b;
     font-size: 13px;
 }
 
+/* =========================================================
+   NO RESULTS
+   ========================================================= */
+
+.report-submodule-no-results {
+    display: none;
+
+    padding: 20px;
+
+    color: #64748b;
+
+    text-align: center;
+    font-size: 13px;
+}
+
+.report-submodule-no-results.visible {
+    display: block;
+}
 
 /* =========================================================
    NUMERIC SUMMARY
    ========================================================= */
 
 .numeric-section {
+    margin-top: 25px;
+
     padding: 28px;
+
+    background: #fff;
+
+    border: 1px solid #dfe5ec;
+    border-radius: 18px;
 }
 
 .numeric-section h2 {
     margin: 0 0 17px;
+
     color: #14213d;
-    font-size: 22px;
+    font-size: 21px;
 }
 
 .numeric-grid {
@@ -362,9 +546,10 @@
 }
 
 .numeric-card {
-    padding: 16px;
+    padding: 15px;
 
     background: #f8fafb;
+
     border: 1px solid #e3e8ee;
     border-radius: 10px;
 }
@@ -374,21 +559,32 @@
 
     color: #64748b;
 
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
 }
 
 .numeric-value {
     display: block;
 
-    margin-top: 6px;
+    margin-top: 5px;
 
     color: #14213d;
 
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 800;
 }
 
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.report-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+
+    margin-top: 20px;
+}
 
 /* =========================================================
    RESPONSIVE
@@ -408,12 +604,22 @@
         flex-direction: column;
     }
 
+    .report-submodule-header {
+        top: 70px;
+
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .report-submodule-actions {
+        width: 100%;
+    }
 }
 
 @media (max-width: 600px) {
 
     .module-report-container {
-        width: min(100% - 24px, 1180px);
+        width: min(100% - 24px, 1200px);
     }
 
     .report-header h1 {
@@ -428,13 +634,21 @@
         grid-template-columns: 1fr;
     }
 
-    .submodule-header {
-        align-items: flex-start;
-        flex-direction: column;
+    .report-submodule-header {
+        top: 64px;
+        padding: 18px;
     }
 
-}
+    .report-table-wrapper {
+        padding-left: 18px;
+        padding-right: 18px;
+    }
 
+    .report-empty {
+        margin-left: 18px;
+        margin-right: 18px;
+    }
+}
 </style>
 
 
@@ -442,14 +656,13 @@
 
     <div class="module-report-container">
 
-
         <!-- =====================================================
-             HEADER
+             PAGE HEADER
              ===================================================== -->
 
         <div class="report-header">
 
-            <div class="report-header-left">
+            <div>
 
                 <p class="report-eyebrow">
                     ADMINISTRATOR · MODULE REPORT
@@ -460,8 +673,9 @@
                 </h1>
 
                 <p class="report-description">
-                    Complete report containing all submodules,
-                    records and available data for this module.
+                    Complete report for
+                    {{ report.module_name }},
+                    organized separately by every submodule.
                 </p>
 
             </div>
@@ -471,43 +685,46 @@
 
                 <a
                     href="{{ url_for('main.admin') }}"
-                    class="report-btn report-btn-outline"
+                    class="report-btn"
                 >
                     <i class="fa-solid fa-arrow-left"></i>
-                    Admin Portal
+                    Admin
                 </a>
+
 
                 <a
                     href="{{ url_for(
                         'main.admin_data',
                         module=module_key
                     ) }}"
-                    class="report-btn report-btn-primary"
+                    class="report-btn"
                 >
                     <i class="fa-solid fa-table"></i>
-                    View Data
+                    View Module Data
                 </a>
+
 
                 <a
                     href="{{ url_for(
                         'main.admin_report_csv',
                         module=module_key
                     ) }}"
-                    class="report-btn report-btn-outline"
+                    class="report-btn"
                 >
                     <i class="fa-solid fa-file-csv"></i>
-                    CSV
+                    Full CSV
                 </a>
+
 
                 <a
                     href="{{ url_for(
                         'main.admin_report_pdf',
                         module=module_key
                     ) }}"
-                    class="report-btn report-btn-outline"
+                    class="report-btn"
                 >
                     <i class="fa-solid fa-file-pdf"></i>
-                    PDF
+                    Full PDF
                 </a>
 
             </div>
@@ -524,7 +741,7 @@
             <div class="summary-card">
 
                 <span class="summary-card-number">
-                    {{ "{:,}".format(report.total_records or 0) }}
+                    {{ report.total_records or 0 }}
                 </span>
 
                 <span class="summary-card-label">
@@ -576,7 +793,38 @@
 
 
         <!-- =====================================================
-             SUBMODULE REPORTS
+             SEARCH
+             ===================================================== -->
+
+        <div class="report-data-toolbar">
+
+            <div class="report-search-box">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input
+                    type="search"
+                    id="reportDataSearch"
+                    placeholder="Search module data, names, IDs or fields..."
+                    autocomplete="off"
+                >
+
+                <button
+                    type="button"
+                    class="report-search-clear"
+                    id="clearReportDataSearch"
+                    aria-label="Clear search"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             REPORT PANEL
              ===================================================== -->
 
         <section class="report-panel">
@@ -588,188 +836,230 @@
                 </h2>
 
                 <p>
-                    Detailed data for every submodule under
-                    {{ report.module_name }}.
+                    Every record is displayed only under its exact
+                    module and submodule.
                 </p>
 
             </div>
 
 
-            {% if report.categories %}
+            <!-- =================================================
+                 SUBMODULES
+                 ================================================= -->
 
-                {% for category_key, category in report.categories.items() %}
+            {% for category_key, category
+                in report.categories.items() %}
 
-                <div class="submodule-section">
+            <section
+                class="report-submodule"
+                data-submodule="{{ category.name|lower }}"
+            >
 
+                <!-- =============================================
+                     STICKY SUBMODULE HEADER
+                     ============================================= -->
 
-                    <!-- SUBMODULE HEADER -->
+                <div class="report-submodule-header">
 
-                    <div class="submodule-header">
+                    <div class="report-submodule-title">
 
-                        <div class="submodule-title">
+                        <div class="report-submodule-number">
+                            {{ "%02d"|format(loop.index) }}
+                        </div>
 
-                            <span class="submodule-icon">
-                                <i class="fa-solid fa-chart-column"></i>
-                            </span>
+                        <div>
 
-                            <div>
+                            <h3>
+                                {{ category.name }}
+                            </h3>
 
-                                <h3>
-                                    {{ category.name }}
-                                </h3>
-
+                            <div class="report-submodule-key">
+                                {{ category_key }}
                             </div>
 
                         </div>
 
+                    </div>
 
-                        <span class="submodule-count">
 
-                            {{ "{:,}".format(category.count or 0) }}
+                    <div class="report-submodule-actions">
+
+                        <span class="report-count">
+
+                            {{ category.count or 0 }}
 
                             record{% if category.count != 1 %}s{% endif %}
 
                         </span>
 
+
+                        <a
+                            href="{{ url_for(
+                                'main.admin_data',
+                                module=module_key,
+                                category=category_key
+                            ) }}"
+                            class="report-btn"
+                        >
+                            <i class="fa-solid fa-table"></i>
+                            Data
+                        </a>
+
+
+                        <a
+                            href="{{ url_for(
+                                'main.admin_report_csv',
+                                module=module_key,
+                                category=category_key
+                            ) }}"
+                            class="report-btn"
+                        >
+                            <i class="fa-solid fa-file-csv"></i>
+                            CSV
+                        </a>
+
+
+                        <a
+                            href="{{ url_for(
+                                'main.admin_report_pdf',
+                                module=module_key,
+                                category=category_key
+                            ) }}"
+                            class="report-btn"
+                        >
+                            <i class="fa-solid fa-file-pdf"></i>
+                            PDF
+                        </a>
+
                     </div>
-
-
-                    <!-- SUBMODULE DATA -->
-
-                    {% if category.rows %}
-
-                        <div class="report-table-wrapper">
-
-                            <table class="report-table">
-
-                                <thead>
-
-                                    <tr>
-
-                                        <th>
-                                            #
-                                        </th>
-
-                                        {% for column in category.columns %}
-
-                                        <th>
-                                            {{ column }}
-                                        </th>
-
-                                        {% endfor %}
-
-                                    </tr>
-
-                                </thead>
-
-
-                                <tbody>
-
-                                    {% for row in category.rows %}
-
-                                    <tr>
-
-                                        <td>
-                                            {{ loop.index }}
-                                        </td>
-
-                                        {% for column in category.columns %}
-
-                                        <td>
-                                            {{ row.get(column, "") }}
-                                        </td>
-
-                                        {% endfor %}
-
-                                    </tr>
-
-                                    {% endfor %}
-
-                                </tbody>
-
-                            </table>
-
-                        </div>
-
-                    {% else %}
-
-                        <div class="no-data">
-
-                            <i class="fa-regular fa-folder-open"></i>
-
-                            <h4>
-                                No data available
-                            </h4>
-
-                            <p>
-                                No records have been imported
-                                for this submodule yet.
-                            </p>
-
-                        </div>
-
-                    {% endif %}
 
                 </div>
 
-                {% endfor %}
 
-            {% else %}
+                <!-- =============================================
+                     DATA TABLE
+                     ============================================= -->
 
-                <div class="no-data" style="margin-top:25px;">
+                {% if category.rows %}
+
+                <div class="report-table-wrapper">
+
+                    <table class="report-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>#</th>
+
+                                {% for column in category.columns %}
+
+                                    <th>
+                                        {{ column }}
+                                    </th>
+
+                                {% endfor %}
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for row in category.rows %}
+
+                            <tr>
+
+                                <td>
+                                    {{ loop.index }}
+                                </td>
+
+
+                                {% for column in category.columns %}
+
+                                    <td>
+                                        {{ row.get(column, "") }}
+                                    </td>
+
+                                {% endfor %}
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+
+                    <div class="report-submodule-no-results">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        No matching records found in this submodule.
+
+                    </div>
+
+                </div>
+
+                {% else %}
+
+                <div class="report-empty">
 
                     <i class="fa-regular fa-folder-open"></i>
 
                     <h4>
-                        No submodules available
+                        No data in this submodule
                     </h4>
 
                     <p>
-                        This module currently has no configured
-                        submodules.
+                        No records have been imported for
+                        "{{ category.name }}" yet.
                     </p>
 
                 </div>
 
-            {% endif %}
+                {% endif %}
+
+            </section>
+
+            {% endfor %}
 
         </section>
 
 
         <!-- =====================================================
-             NUMERIC ANALYSIS
+             NUMERIC SUMMARY
              ===================================================== -->
 
         {% if report.numeric_averages %}
 
-        <section class="report-panel">
+        <section class="numeric-section">
 
-            <div class="numeric-section">
-
-                <h2>
-                    Numeric Data Summary
-                </h2>
+            <h2>
+                Numeric Data Summary
+            </h2>
 
 
-                <div class="numeric-grid">
+            <div class="numeric-grid">
 
-                    {% for field, value in report.numeric_averages.items() %}
+                {% for field, value
+                    in report.numeric_averages.items() %}
 
-                    <div class="numeric-card">
+                <div class="numeric-card">
 
-                        <span class="numeric-field">
-                            {{ field }}
-                        </span>
+                    <span class="numeric-field">
+                        {{ field }}
+                    </span>
 
-                        <span class="numeric-value">
-                            {{ value }}
-                        </span>
-
-                    </div>
-
-                    {% endfor %}
+                    <span class="numeric-value">
+                        {{ value }}
+                    </span>
 
                 </div>
+
+                {% endfor %}
 
             </div>
 
@@ -779,43 +1069,231 @@
 
 
         <!-- =====================================================
-             FOOTER ACTIONS
+             FOOTER
              ===================================================== -->
 
-        <div
-            style="
-                display:flex;
-                justify-content:flex-end;
-                gap:10px;
-                flex-wrap:wrap;
-                margin-top:20px;
-            "
-        >
+        <div class="report-footer">
 
             <a
                 href="{{ url_for('main.admin') }}"
-                class="report-btn report-btn-outline"
+                class="report-btn"
             >
                 <i class="fa-solid fa-arrow-left"></i>
                 Back to Admin
             </a>
 
-            <a
-                href="{{ url_for(
-                    'main.admin_report',
-                    module=module_key
-                ) }}"
-                class="report-btn report-btn-primary"
-            >
-                <i class="fa-solid fa-chart-pie"></i>
-                Open Standard Report
-            </a>
-
         </div>
-
 
     </div>
 
 </section>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const search =
+        document.getElementById("reportDataSearch");
+
+    const clearButton =
+        document.getElementById("clearReportDataSearch");
+
+    if (!search) {
+        return;
+    }
+
+
+    function filterReportRows() {
+
+        const value =
+            search.value.toLowerCase().trim();
+
+
+        document
+            .querySelectorAll(".report-submodule")
+            .forEach(function (section) {
+
+                const rows =
+                    section.querySelectorAll(
+                        ".report-table tbody tr"
+                    );
+
+                const noResults =
+                    section.querySelector(
+                        ".report-submodule-no-results"
+                    );
+
+                let visible = 0;
+
+
+                rows.forEach(function (row) {
+
+                    const match =
+                        !value ||
+                        row.innerText
+                            .toLowerCase()
+                            .includes(value);
+
+                    row.style.display =
+                        match ? "" : "none";
+
+                    if (match) {
+                        visible++;
+                    }
+
+                });
+
+
+                if (rows.length > 0) {
+
+                    section.style.display =
+                        visible > 0 ? "" : "none";
+
+                    if (noResults) {
+
+                        noResults.classList.toggle(
+                            "visible",
+                            Boolean(value) &&
+                            visible === 0
+                        );
+
+                    }
+
+                } else {
+
+                    section.style.display = "";
+
+                }
+
+            });
+
+
+        if (clearButton) {
+
+            clearButton.classList.toggle(
+                "visible",
+                Boolean(value)
+            );
+
+        }
+
+    }
+
+
+    search.addEventListener(
+        "input",
+        filterReportRows
+    );
+
+
+    if (clearButton) {
+
+        clearButton.addEventListener(
+            "click",
+            function () {
+
+                search.value = "";
+
+                filterReportRows();
+
+                search.focus();
+
+            }
+        );
+
+    }
+
+});
+</script>
+
+<style>
+/* =========================================================
+   FINAL MODULE REPORT TABLE STABILITY LAYER
+   ========================================================= */
+
+.module-report-page,
+.module-report-page * {
+    box-sizing: border-box;
+}
+
+.module-report-page {
+    overflow-x: clip;
+}
+
+.module-report-container {
+    min-width: 0;
+}
+
+.report-panel,
+.report-submodule {
+    min-width: 0;
+    overflow: visible !important;
+}
+
+.report-submodule-header {
+    position: sticky !important;
+    top: 82px !important;
+    z-index: 40 !important;
+    background: rgba(251, 252, 253, 0.98) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.report-table-wrapper {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    max-height: min(60vh, 520px);
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    isolation: isolate;
+}
+
+.report-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.report-table thead th {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    background: #f1f4f7 !important;
+    background-clip: padding-box;
+    box-shadow: inset 0 -1px 0 #dfe5ec;
+    white-space: nowrap;
+}
+
+.report-table tbody td {
+    background: #fff;
+}
+
+.report-table thead th:first-child {
+    border-top-left-radius: 9px;
+}
+
+.report-table thead th:last-child {
+    border-top-right-radius: 9px;
+}
+
+@media (max-width: 700px) {
+    .report-table-wrapper {
+        max-height: 55vh;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .report-submodule-header {
+        top: 68px !important;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+</style>
 
 {% endblock %}
