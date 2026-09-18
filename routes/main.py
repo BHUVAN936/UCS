@@ -2,6 +2,8 @@ import csv
 import io
 import hashlib
 import secrets
+import smtplib
+from email.message import EmailMessage
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
@@ -549,6 +551,83 @@ def login():
     )
 
 
+def _send_password_reset_email(
+    recipient,
+    recipient_name,
+    reset_url,
+):
+    """Send the password-reset link using the configured SMTP server."""
+
+    host = Config.SMTP_HOST
+
+    if not host:
+        raise RuntimeError(
+            "Password reset email is not configured. "
+            "Set UCE_SMTP_HOST and the related SMTP settings."
+        )
+
+    message = EmailMessage()
+    message["Subject"] = "UCE Connect - Password Reset"
+    message["From"] = Config.SMTP_FROM_EMAIL
+    message["To"] = recipient
+
+    greeting = (
+        f"Hello {recipient_name},"
+        if recipient_name
+        else "Hello,"
+    )
+
+    message.set_content(
+        f"""{greeting}
+
+We received a request to reset your UCE Connect password.
+
+Use the link below to create a new password:
+{reset_url}
+
+This link expires in {Config.PASSWORD_RESET_MINUTES} minutes and can be used only once.
+
+If you did not request this, you can safely ignore this email.
+
+Regards,
+UCE Connect
+"""
+    )
+
+    if Config.SMTP_USE_SSL:
+        with smtplib.SMTP_SSL(
+            host,
+            Config.SMTP_PORT,
+            timeout=30,
+        ) as server:
+            if Config.SMTP_USERNAME:
+                server.login(
+                    Config.SMTP_USERNAME,
+                    Config.SMTP_PASSWORD,
+                )
+            server.send_message(message)
+        return
+
+    with smtplib.SMTP(
+        host,
+        Config.SMTP_PORT,
+        timeout=30,
+    ) as server:
+        server.ehlo()
+
+        if Config.SMTP_USE_TLS:
+            server.starttls()
+            server.ehlo()
+
+        if Config.SMTP_USERNAME:
+            server.login(
+                Config.SMTP_USERNAME,
+                Config.SMTP_PASSWORD,
+            )
+
+        server.send_message(message)
+
+
 # =========================================================
 # PASSWORD RESET
 # =========================================================
@@ -597,7 +676,7 @@ def forgot_password():
 
         raw_token = secrets.token_urlsafe(32)
         token_hash = _hash_reset_token(raw_token)
-        minutes = int(getattr(Config, "PASSWORD_RESET_MINUTES", 30))
+        minutes = Config.PASSWORD_RESET_MINUTES
         expires_at = (
             datetime.now(timezone.utc) + timedelta(minutes=minutes)
         ).isoformat()
@@ -618,16 +697,79 @@ def forgot_password():
             _external=True,
         )
 
-        # Local-development behavior: show the generated link on the page.
-        # This avoids requiring SMTP just to test password recovery locally.
-        return render_template(
-            "forgot_password.html",
-            reset_url=reset_url,
-            dev_mode=True,
+        try:
+            _send_password_reset_email(
+                user["email"],
+                user["name"],
+                reset_url,
+            )
+
+        except Exception as email_error:
+            # SMTP is optional during local development. If email is not
+            # configured, keep the token valid and expose the reset link
+            # only on localhost (or when explicitly enabled).
+            print(
+                "PASSWORD RESET EMAIL ERROR:",
+                repr(email_error),
+            )
+
+            host_only = request.host.split(":", 1)[0].lower()
+            is_localhost = host_only in {
+                "127.0.0.1",
+                "localhost",
+                "::1",
+            }
+
+            if Config.EXPOSE_RESET_LINKS or is_localhost:
+                flash(
+                    "Email delivery is not configured for this local "
+                    "development server. Use the reset link below.",
+                    "info",
+                )
+                flash(
+                    f"Development password reset link: {reset_url}",
+                    "info",
+                )
+                return render_template(
+                    "forgot_password.html",
+                    reset_url=reset_url,
+                    dev_mode=True,
+                )
+
+            # Production: invalidate the token when delivery fails.
+            connection.execute(
+                """
+                UPDATE password_reset_tokens
+                SET used_at = CURRENT_TIMESTAMP
+                WHERE token_hash = ?
+                  AND used_at IS NULL
+                """,
+                (token_hash,),
+            )
+            connection.commit()
+
+            raise RuntimeError(
+                "Password reset email could not be sent."
+            ) from email_error
+
+        flash(
+            "If an account exists for that email, a password reset link has "
+            "been sent to the registered email address.",
+            "success",
         )
+        return redirect(url_for("main.forgot_password"))
 
     except Exception as error:
-        connection.rollback()
+        try:
+            connection.rollback()
+        except Exception:
+            pass
+
+        print(
+            "PASSWORD RESET ERROR:",
+            repr(error),
+        )
+
         flash(
             "Unable to process the password reset request. "
             "Please try again.",
@@ -947,19 +1089,8 @@ def submit_dataset():
     category = category.strip().lower()
 
 
-    # Compatibility aliases
-
-    module = {
-        "faculty_exchange_abroad":
-            "faculty_exchange",
-
-        "placementa":
-            "placements",
-
-    }.get(
-        module,
-        module
-    )
+    # Use the single centralized module alias map.
+    module = normalize_module(module)
 
 
     if module not in MODULES:
@@ -1039,22 +1170,6 @@ def submit_dataset():
 # =========================================================
 # USER DASHBOARD
 # =========================================================
-
-@main_bp.route("/dashboard")
-@login_required
-def user_dashboard():
-
-    user = get_current_user()
-
-
-    return render_template(
-        "user_dashboard.html",
-        uploads=get_user_datasets(
-            user["id"]
-        ),
-        modules=MODULES,
-    )
-
 
 # =========================================================
 # MY DATA
@@ -1209,9 +1324,12 @@ def generate_registration_code():
 # =========================================================
 
 _RESERVED_DATA_FIELDS = {
+    # Application classification fields. These are used internally by the
+    # portal and must never be shown as imported university-data columns.
     "module",
     "module_key",
     "module_name",
+    "module_no",
     "category",
     "category_key",
     "category_name",
@@ -1221,6 +1339,16 @@ _RESERVED_DATA_FIELDS = {
     "subtopic",
     "sub_topic",
     "topic",
+
+    # Classification metadata that may exist in older imports or in
+    # generated/test spreadsheets.
+    "configured_category_key",
+    "configured_target_header",
+    "target_header",
+    "configured_module",
+    "configured_module_no",
+    "configured_submodule",
+    "configured_sub_module",
 }
 
 
@@ -1328,13 +1456,6 @@ def _display_row(record, module_key, category_key):
             "id",
             ""
         ),
-
-        "Module": module_info.get(
-            "name",
-            module_key
-        ),
-
-        "Sub-Module": category_name,
     }
 
     for key, value in data.items():
@@ -1423,11 +1544,7 @@ def _build_admin_module_report(
 
         for field, value in row.items():
 
-            if field in {
-                "Record ID",
-                "Module",
-                "Sub-Module"
-            }:
+            if field == "Record ID":
                 continue
 
             try:
@@ -1487,12 +1604,10 @@ def _build_admin_module_report(
             records
         ),
 
-        "total_columns": (
-            len(
-                _clean_data_columns(
-                    records
-                )
-            ) + 3
+        "total_columns": len(
+            _clean_data_columns(
+                records
+            )
             if records
             else 0
         ),
@@ -2059,10 +2174,6 @@ def admin_report_csv():
 
         "Record ID",
 
-        "Module",
-
-        "Sub-Module",
-
         "Dataset",
 
         "Uploader",
@@ -2100,34 +2211,6 @@ def admin_report_csv():
             ""
         )
 
-        module_name = (
-            MODULES
-            .get(
-                row_module,
-                {}
-            )
-            .get(
-                "name",
-                row_module
-            )
-        )
-
-        submodule_name = (
-            MODULES
-            .get(
-                row_module,
-                {}
-            )
-            .get(
-                "categories",
-                {}
-            )
-            .get(
-                row_category,
-                row_category
-            )
-        )
-
         record = {
 
             "Record ID":
@@ -2135,12 +2218,6 @@ def admin_report_csv():
                     "id",
                     ""
                 ),
-
-            "Module":
-                module_name,
-
-            "Sub-Module":
-                submodule_name,
 
             "Dataset":
                 row.get(
@@ -3335,8 +3412,14 @@ def module_page(module):
         "faculty_fdp_inhouse":
             "faculty_fdp_inhouse.index",
 
+        "alumni":
+            "extra_modules.alumni",
+
+        "finance":
+            "extra_modules.finance",
+
         "library":
-            "library.index",
+            "library.library",
 
         "moocs":
             "moocs.index",

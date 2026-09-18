@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ module_info.name }} - UCE Connect{% endblock %}
+
+{% block content %}
+<section class="module-page">
+    <div class="container">
+        <div class="page-heading">
+            <span class="eyebrow">UNIVERSITY MODULE</span>
+            <h1>{{ module_info.name }}</h1>
+            <p>{{ module_info.description }}</p>
+        </div>
+
+        <div class="module-layout">
+            <aside class="module-sidebar">
+                <div class="sidebar-title">{{ module_info.name }}</div>
+                {% for key, name in subtopics.items() %}
+                <button
+                    type="button"
+                    class="subtopic-button {% if loop.first %}active{% endif %}"
+                    data-section="section-{{ key }}"
+                >
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>{{ name }}</span>
+                </button>
+                {% endfor %}
+            </aside>
+
+            <div class="module-content">
+                {% for key, name in subtopics.items() %}
+                {% set table = tables[loop.index0] %}
+                <section
+                    class="subtopic-section {% if loop.first %}active{% endif %}"
+                    id="section-{{ key }}"
+                >
+                    <div class="subtopic-header">
+                        <div class="subtopic-icon">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </div>
+                        <div>
+                            <span class="eyebrow">{{ module_info.name|upper }}</span>
+                            <h2>{{ name }}</h2>
+                        </div>
+                    </div>
+
+                    {% set rows = grouped_data.get(key, []) %}
+                    {% if rows %}
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    {% for column in table.columns %}
+                                    <th>{{ column }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in rows %}
+                                <tr>
+                                    {% for column in table.columns %}
+                                    <td>{{ row.get('data', {}).get(column, '') }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fa-solid fa-database"></i>
+                        <h3>No Data Available</h3>
+                        <p>No records are currently available for this category.</p>
+                    </div>
+                    {% endif %}
+                </section>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const buttons = document.querySelectorAll(".subtopic-button");
+    const sections = document.querySelectorAll(".subtopic-section");
+
+    buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            const target = button.dataset.section;
+            buttons.forEach(function (item) {
+                item.classList.remove("active");
+            });
+            sections.forEach(function (section) {
+                section.classList.remove("active");
+            });
+            button.classList.add("active");
+            const section = document.getElementById(target);
+            if (section) {
+                section.classList.add("active");
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

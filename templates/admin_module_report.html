@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 
+{% set internal_columns = [
+    "module", "module_key", "module_name", "module_no",
+    "category", "category_key", "category_name",
+    "submodule", "sub_module", "sub-module", "subtopic", "sub_topic", "topic",
+    "configured_category_key", "configured_target_header",
+    "configured_module", "configured_module_no", "configured_submodule",
+    "configured_sub_module", "target_header"
+] %}
+
 {% block title %}
 {{ report.module_name }} Report | UCE Connect
 
@@ -954,9 +963,15 @@ SUBMODULE REPORT HEADER STAYS VISIBLE.
 
                                 {% for column in category.columns %}
 
-                                    <th>
-                                        {{ column }}
-                                    </th>
+                                    {% set normalized_column = column|string|lower|replace(" ", "_")|replace("-", "_") %}
+
+                                    {% if normalized_column not in internal_columns %}
+
+                                        <th>
+                                            {{ column }}
+                                        </th>
+
+                                    {% endif %}
 
                                 {% endfor %}
 
@@ -978,9 +993,15 @@ SUBMODULE REPORT HEADER STAYS VISIBLE.
 
                                 {% for column in category.columns %}
 
-                                    <td>
-                                        {{ row.get(column, "") }}
-                                    </td>
+                                    {% set normalized_column = column|string|lower|replace(" ", "_")|replace("-", "_") %}
+
+                                    {% if normalized_column not in internal_columns %}
+
+                                        <td>
+                                            {{ row.get(column, "") }}
+                                        </td>
+
+                                    {% endif %}
 
                                 {% endfor %}
 

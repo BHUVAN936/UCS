@@ -2,6 +2,7 @@ from flask import Flask
 
 from config import Config
 from database.db import init_database
+from services.data_service import reclassify_existing_records
 
 # =========================================================
 # MAIN ROUTE
@@ -34,6 +35,7 @@ from routes.sac import sac_bp
 from routes.p_and_d import p_and_d_bp
 from routes.registrar_office import registrar_office_bp
 from routes.library import library_bp
+from routes.extra_modules import extra_modules_bp
 
 
 # =========================================================
@@ -55,6 +57,10 @@ def create_app():
     # -----------------------------------------------------
 
     init_database()
+
+    # Reclassify existing mixed datasets with the current conservative rules.
+    # Specific-mode uploads remain unchanged by the reclassifier.
+    reclassify_existing_records()
 
     # -----------------------------------------------------
     # Register main blueprint
@@ -181,6 +187,12 @@ def create_app():
     # -----------------------------------------------------
 
     app.register_blueprint(library_bp)
+
+    # -----------------------------------------------------
+    # Existing MODULES entries without separate route files
+    # -----------------------------------------------------
+
+    app.register_blueprint(extra_modules_bp)
 
     return app
 

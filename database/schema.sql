@@ -1,3 +1,4 @@
+
 PRAGMA foreign_keys = ON;
 
 
@@ -40,6 +41,26 @@ CREATE TABLE IF NOT EXISTS users (
                 'admin'
             )
         ),
+
+    created_at TIMESTAMP NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP NOT NULL
+        DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- =========================================================
+-- APPLICATION SETTINGS
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS app_settings (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    setting_key TEXT NOT NULL UNIQUE,
+
+    setting_value TEXT,
 
     created_at TIMESTAMP NOT NULL
         DEFAULT CURRENT_TIMESTAMP,
@@ -289,6 +310,31 @@ CREATE TABLE IF NOT EXISTS dataset_refresh_logs (
 
 
 -- =========================================================
+-- PASSWORD RESET TOKENS
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    user_id INTEGER NOT NULL,
+
+    token_hash TEXT NOT NULL UNIQUE,
+
+    expires_at TIMESTAMP NOT NULL,
+
+    used_at TIMESTAMP,
+
+    created_at TIMESTAMP NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+
+-- =========================================================
 -- INDEXES
 -- =========================================================
 
@@ -397,6 +443,30 @@ CREATE INDEX IF NOT EXISTS idx_refresh_logs_created_at
 ON dataset_refresh_logs(created_at);
 
 
+-- ---------------------------------------------------------
+-- APPLICATION SETTINGS
+-- ---------------------------------------------------------
+
+CREATE INDEX IF NOT EXISTS idx_app_settings_key
+ON app_settings(setting_key);
+
+
+-- ---------------------------------------------------------
+-- PASSWORD RESET TOKENS
+-- ---------------------------------------------------------
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id
+ON password_reset_tokens(user_id);
+
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token_hash
+ON password_reset_tokens(token_hash);
+
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires_at
+ON password_reset_tokens(expires_at);
+
+
 -- =========================================================
 -- TIMESTAMP TRIGGERS
 -- =========================================================
@@ -445,6 +515,29 @@ WHEN NEW.updated_at = OLD.updated_at
 BEGIN
 
     UPDATE uploads
+
+    SET updated_at = CURRENT_TIMESTAMP
+
+    WHERE id = OLD.id;
+
+END;
+
+
+-- ---------------------------------------------------------
+-- APPLICATION SETTINGS UPDATED_AT
+-- ---------------------------------------------------------
+
+CREATE TRIGGER IF NOT EXISTS update_app_settings_timestamp
+
+AFTER UPDATE ON app_settings
+
+FOR EACH ROW
+
+WHEN NEW.updated_at = OLD.updated_at
+
+BEGIN
+
+    UPDATE app_settings
 
     SET updated_at = CURRENT_TIMESTAMP
 

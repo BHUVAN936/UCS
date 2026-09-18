@@ -8,24 +8,20 @@ from services.data_service import (
 )
 
 
-library_bp = Blueprint(
-    "library",
+extra_modules_bp = Blueprint(
+    "extra_modules",
     __name__,
-    url_prefix="/library",
 )
 
 
-@library_bp.route("/")
-def library():
-    module_key = "library"
+def _render_module(module_key):
     module_info = MODULES[module_key]
-
     grouped_data = get_module_data(module_key)
     report = build_module_report(module_key, grouped_data)
     tables = prepare_module_tables(grouped_data)
 
     return render_template(
-        "library/index.html",
+        "module_report/index.html",
         module_key=module_key,
         module_info=module_info,
         subtopics=module_info.get("categories", {}),
@@ -33,3 +29,13 @@ def library():
         report=report,
         tables=tables,
     )
+
+
+@extra_modules_bp.route("/alumni")
+def alumni():
+    return _render_module("alumni")
+
+
+@extra_modules_bp.route("/finance")
+def finance():
+    return _render_module("finance")

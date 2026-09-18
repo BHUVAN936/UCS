@@ -1,89 +1,39 @@
+import os
 import secrets
-import sqlite3
-from pathlib import Path
 
 from werkzeug.security import (
     generate_password_hash,
     check_password_hash,
 )
 
-
-# ============================================================
-# DATABASE LOCATION
-# ============================================================
-
-BASE_DIR = (
-    Path(__file__)
-    .resolve()
-    .parent
-    .parent
-)
-
-DATABASE_PATH = (
-    BASE_DIR
-    / "instance"
-    / "database.db"
-)
+from database.db import get_connection
 
 
 # ============================================================
-# DATABASE CONNECTION
+# DATABASE SETTINGS
 # ============================================================
-
-def get_connection():
-
-    DATABASE_PATH.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    connection = sqlite3.connect(
-        str(DATABASE_PATH)
-    )
-
-    connection.row_factory = sqlite3.Row
-
-    return connection
+# database/db.py is the single owner of the database connection
+# and database initialization.
+#
+# This file only reads/writes settings through get_connection().
+# It does NOT create app_settings again.
+# ============================================================
 
 
 # ============================================================
-# CREATE SETTINGS TABLE
+# INITIALIZE SETTINGS
 # ============================================================
 
 def initialize_settings():
+    """
+    Compatibility function for existing code that calls
+    initialize_settings().
 
-    connection = get_connection()
-
-    try:
-
-        cursor = connection.cursor()
-
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS app_settings (
-
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-                setting_key TEXT NOT NULL UNIQUE,
-
-                setting_value TEXT,
-
-                created_at TIMESTAMP
-                    NOT NULL
-                    DEFAULT CURRENT_TIMESTAMP,
-
-                updated_at TIMESTAMP
-                    NOT NULL
-                    DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-        )
-
-        connection.commit()
-
-    finally:
-
-        connection.close()
+    The app_settings table is created by database/db.py/schema.sql.
+    Keeping this function avoids breaking existing callers while
+    preventing duplicate table creation.
+    """
+    return None
 
 
 # ============================================================
@@ -91,8 +41,6 @@ def initialize_settings():
 # ============================================================
 
 def get_setting(key):
-
-    initialize_settings()
 
     connection = get_connection()
 
@@ -131,8 +79,6 @@ def save_setting(
     value,
 ):
 
-    initialize_settings()
-
     connection = get_connection()
 
     try:
@@ -167,19 +113,36 @@ def save_setting(
 
 
 # ============================================================
+# GENERATE RANDOM ADMIN REGISTRATION CODE
+# ============================================================
+
+def _generate_random_admin_code():
+
+    part_one = secrets.token_hex(
+        2
+    ).upper()
+
+    part_two = secrets.token_hex(
+        2
+    ).upper()
+
+    return (
+        f"UCE-{part_one}-{part_two}"
+    )
+
+
+# ============================================================
 # INITIAL ADMIN CODE
 # ============================================================
 
 def ensure_admin_registration_code():
-
-    initialize_settings()
 
     existing_hash = get_setting(
         "admin_registration_code"
     )
 
     # --------------------------------------------------------
-    # If code already exists, do nothing.
+    # If a code already exists, never replace it.
     # --------------------------------------------------------
 
     if existing_hash:
@@ -187,17 +150,49 @@ def ensure_admin_registration_code():
         return
 
     # --------------------------------------------------------
-    # First-time default code.
+    # First priority:
+    # Use administrator-provided environment variable.
     #
-    # IMPORTANT:
-    # This is used ONLY when the database does not yet have
-    # an admin registration code.
+    # PowerShell:
     #
-    # After the first generated/changed code, the database
-    # value is used.
+    # $env:UCE_ADMIN_REGISTRATION_CODE="YourCodeHere"
     # --------------------------------------------------------
 
-    initial_code = "Bhuvan@25"
+    configured_code = os.getenv(
+        "UCE_ADMIN_REGISTRATION_CODE"
+    )
+
+    if configured_code:
+
+        initial_code = configured_code
+
+        print(
+            "\nUCE Connect admin registration code "
+            "loaded from UCE_ADMIN_REGISTRATION_CODE."
+        )
+
+    else:
+
+        # ----------------------------------------------------
+        # No hardcoded secret.
+        # Generate a secure random first-time code.
+        # ----------------------------------------------------
+
+        initial_code = _generate_random_admin_code()
+
+        print(
+            "\n"
+            "====================================================\n"
+            "UCE CONNECT - INITIAL ADMIN REGISTRATION CODE\n"
+            "====================================================\n"
+            f"{initial_code}\n"
+            "Save this code securely. It will not be shown again.\n"
+            "====================================================\n"
+        )
+
+    # --------------------------------------------------------
+    # Store ONLY the hash in the database.
+    # --------------------------------------------------------
 
     hashed_code = generate_password_hash(
         initial_code
@@ -250,23 +245,13 @@ def verify_admin_registration_code(
 def generate_admin_registration_code():
 
     # --------------------------------------------------------
-    # Generate a random code.
+    # Generate a new random code.
     #
     # Example:
     # UCE-A3F2-91BC
     # --------------------------------------------------------
 
-    part_one = secrets.token_hex(
-        2
-    ).upper()
-
-    part_two = secrets.token_hex(
-        2
-    ).upper()
-
-    new_code = (
-        f"UCE-{part_one}-{part_two}"
-    )
+    new_code = _generate_random_admin_code()
 
     # --------------------------------------------------------
     # Store ONLY the hash.

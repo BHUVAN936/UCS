@@ -4,13 +4,13 @@
 About | UCE Connect
 {% endblock %}
 
-
 {% block content %}
 
 <section class="about-page">
 
     <div class="container">
 
+        <!-- BACK -->
         <a
             href="{{ url_for('main.home') }}"
             class="back-link"
@@ -20,6 +20,7 @@ About | UCE Connect
         </a>
 
 
+        <!-- HERO -->
         <div class="about-hero">
 
             <span class="eyebrow">
@@ -32,28 +33,28 @@ About | UCE Connect
             </h1>
 
             <p class="about-intro">
-
                 UCE Connect is a Flask-based university information
                 portal designed to make academic, placement,
                 counselling, examination, faculty, research,
                 international and institutional information easier
                 to discover.
-
             </p>
 
         </div>
 
 
+        <!-- ABOUT CONTENT -->
         <div class="about-content">
 
 
+            <!-- 01 -->
             <article class="about-card">
 
                 <div class="about-card-number">
                     01
                 </div>
 
-                <div>
+                <div class="about-card-body">
 
                     <span class="about-label">
                         THE GOAL
@@ -64,12 +65,10 @@ About | UCE Connect
                     </h2>
 
                     <p>
-
                         Instead of presenting users with disconnected
                         documents and long pages, UCE Connect organizes
                         information into focused modules and
                         subcategories.
-
                     </p>
 
                 </div>
@@ -77,13 +76,14 @@ About | UCE Connect
             </article>
 
 
+            <!-- 02 -->
             <article class="about-card">
 
                 <div class="about-card-number">
                     02
                 </div>
 
-                <div>
+                <div class="about-card-body">
 
                     <span class="about-label">
                         THE APPROACH
@@ -94,11 +94,9 @@ About | UCE Connect
                     </h2>
 
                     <p>
-
                         The interface remains consistent while
                         university information is organized according
                         to its corresponding module and category.
-
                     </p>
 
                 </div>
@@ -106,13 +104,14 @@ About | UCE Connect
             </article>
 
 
+            <!-- 03 -->
             <article class="about-card">
 
                 <div class="about-card-number">
                     03
                 </div>
 
-                <div>
+                <div class="about-card-body">
 
                     <span class="about-label">
                         THE STRUCTURE
@@ -123,14 +122,12 @@ About | UCE Connect
                     </h2>
 
                     <p>
-
                         University information is divided into
                         twenty focused modules covering academics,
                         placements, counselling, examinations,
                         faculty, research, international programs,
                         student development and institutional
                         facilities.
-
                     </p>
 
                 </div>
@@ -138,13 +135,14 @@ About | UCE Connect
             </article>
 
 
+            <!-- 04 -->
             <article class="about-card">
 
                 <div class="about-card-number">
                     04
                 </div>
 
-                <div>
+                <div class="about-card-body">
 
                     <span class="about-label">
                         THE SYSTEM
@@ -155,12 +153,10 @@ About | UCE Connect
                     </h2>
 
                     <p>
-
                         Administrators can upload university data
                         and associate it with the appropriate
                         module and category without changing the
                         portal interface.
-
                     </p>
 
                 </div>
@@ -171,6 +167,7 @@ About | UCE Connect
         </div>
 
 
+        <!-- MODULES -->
         <div class="about-modules">
 
             <div class="about-modules-heading">
@@ -187,123 +184,144 @@ About | UCE Connect
             </div>
 
 
+            <!-- MODULE GRID -->
             <div class="about-module-grid">
 
 
+                <!-- 01 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Academics</span>
                 </div>
 
 
+                <!-- 02 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-briefcase"></i>
                     <span>Placements</span>
                 </div>
 
 
+                <!-- 03 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-comments"></i>
                     <span>Counselling</span>
                 </div>
 
 
+                <!-- 04 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-file-lines"></i>
-                    <span>Exams & Evaluation</span>
+                    <span>Exams &amp; Evaluation</span>
                 </div>
 
 
+                <!-- 05 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-arrow-trend-up"></i>
                     <span>Progression</span>
                 </div>
 
 
+                <!-- 06 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Faculty FDP In-House</span>
                 </div>
 
 
+                <!-- 07 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-clock"></i>
                     <span>Workload of Students</span>
                 </div>
 
 
+                <!-- 08 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-globe"></i>
                     <span>MOOCs</span>
                 </div>
 
 
+                <!-- 09 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-handshake"></i>
                     <span>MOUs-International</span>
                 </div>
 
 
+                <!-- 10 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-plane"></i>
                     <span>Student Abroad Program</span>
                 </div>
 
 
+                <!-- 11 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-earth-americas"></i>
                     <span>Faculty Exchange Abroad</span>
                 </div>
 
 
+                <!-- 12 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-user-tie"></i>
                     <span>Faculty Affairs</span>
                 </div>
 
 
+                <!-- 13 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-person-chalkboard"></i>
                     <span>Visiting Faculty</span>
                 </div>
 
 
+                <!-- 14 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-flask"></i>
                     <span>Research</span>
                 </div>
 
 
+                <!-- 15 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-building"></i>
                     <span>Faculty FDP Corporate</span>
                 </div>
 
 
+                <!-- 16 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-lightbulb"></i>
                     <span>Student Entrepreneurship</span>
                 </div>
 
 
+                <!-- 17 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-users"></i>
                     <span>SAC</span>
                 </div>
 
 
+                <!-- 18 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-building-columns"></i>
                     <span>P&amp;D</span>
                 </div>
 
 
+                <!-- 19 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-id-card"></i>
                     <span>Registrar Office</span>
                 </div>
 
 
+                <!-- 20 -->
                 <div class="about-module-item">
                     <i class="fa-solid fa-book"></i>
                     <span>Library</span>
@@ -317,5 +335,319 @@ About | UCE Connect
     </div>
 
 </section>
+
+
+<style>
+
+/* =========================================================
+   ABOUT PAGE
+   SAME EXISTING THEME
+   ONLY ALIGNMENT / SPACING / GRID FIXES
+   ========================================================= */
+
+.about-page {
+    width: 100%;
+    padding: 32px 0 60px;
+}
+
+
+/* ---------------------------------------------------------
+   MAIN CONTAINER
+   Keeps About page aligned with the rest of the website
+   --------------------------------------------------------- */
+
+.about-page .container {
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+}
+
+
+/* ---------------------------------------------------------
+   BACK LINK
+   --------------------------------------------------------- */
+
+.about-page .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 22px;
+
+    text-decoration: none;
+}
+
+
+/* ---------------------------------------------------------
+   HERO
+   --------------------------------------------------------- */
+
+.about-page .about-hero {
+    width: 100%;
+
+    padding: 42px 44px;
+
+    margin-bottom: 28px;
+
+    border-radius: 20px;
+
+    box-sizing: border-box;
+}
+
+
+/* Keep hero text aligned */
+
+.about-page .about-hero h1 {
+    margin: 10px 0 16px;
+
+    max-width: 780px;
+}
+
+.about-page .about-intro {
+    max-width: 760px;
+
+    margin: 0;
+
+    line-height: 1.7;
+}
+
+
+/* ---------------------------------------------------------
+   ABOUT CARDS
+   --------------------------------------------------------- */
+
+.about-page .about-content {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+
+    margin-bottom: 55px;
+}
+
+
+/* Equal card height */
+
+.about-page .about-card {
+    min-height: 205px;
+
+    display: flex;
+    align-items: flex-start;
+
+    gap: 20px;
+
+    box-sizing: border-box;
+}
+
+
+/* Number alignment */
+
+.about-page .about-card-number {
+    flex: 0 0 auto;
+}
+
+
+/* Text area */
+
+.about-page .about-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.about-page .about-card h2 {
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+.about-page .about-card p {
+    margin: 0;
+
+    line-height: 1.7;
+}
+
+
+/* ---------------------------------------------------------
+   MODULE SECTION
+   --------------------------------------------------------- */
+
+.about-page .about-modules {
+    width: 100%;
+}
+
+
+/* Module heading aligned exactly with cards */
+
+.about-page .about-modules-heading {
+    width: 100%;
+
+    margin-bottom: 24px;
+}
+
+.about-page .about-modules-heading h2 {
+    margin-top: 8px;
+}
+
+
+/* ---------------------------------------------------------
+   MODULE GRID
+   --------------------------------------------------------- */
+
+/*
+   THIS IS THE IMPORTANT FIX.
+
+   Your screenshot shows the modules as a single vertical list.
+   They are now distributed evenly across the available width.
+*/
+
+.about-page .about-module-grid {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 14px 16px;
+
+    align-items: stretch;
+}
+
+
+/* ---------------------------------------------------------
+   MODULE ITEM
+   --------------------------------------------------------- */
+
+.about-page .about-module-item {
+    width: 100%;
+    min-width: 0;
+
+    min-height: 70px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 15px 16px;
+
+    box-sizing: border-box;
+
+    border-radius: 14px;
+
+    cursor: default;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* Icon */
+
+.about-page .about-module-item i {
+    width: 38px;
+    height: 38px;
+
+    flex: 0 0 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    font-size: 15px;
+}
+
+
+/* Text */
+
+.about-page .about-module-item span {
+    min-width: 0;
+
+    line-height: 1.35;
+
+    word-break: normal;
+}
+
+
+/* Hover */
+
+.about-page .about-module-item:hover {
+    transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1050px) {
+
+    .about-page .about-module-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 850px) {
+
+    .about-page .container {
+        width: min(100% - 30px, 700px);
+    }
+
+    .about-page .about-content {
+        grid-template-columns: 1fr;
+    }
+
+    .about-page .about-module-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .about-page {
+        padding-top: 22px;
+    }
+
+    .about-page .container {
+        width: calc(100% - 24px);
+    }
+
+    .about-page .about-hero {
+        padding: 30px 24px;
+    }
+
+    .about-page .about-module-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .about-page .about-card {
+        padding: 22px;
+    }
+
+}
+
+
+/* =========================================================
+   DARK MODE
+   Only inherits your existing website theme.
+   ========================================================= */
+
+[data-theme="dark"] .about-page .about-module-item,
+.dark .about-page .about-module-item {
+    /* intentionally left compatible with existing theme */
+}
+
+</style>
 
 {% endblock %}

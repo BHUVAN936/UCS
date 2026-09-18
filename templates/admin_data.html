@@ -1,5 +1,14 @@
 {% extends "base.html" %}
 
+{% set internal_columns = [
+    "module", "module_key", "module_name", "module_no",
+    "category", "category_key", "category_name",
+    "submodule", "sub_module", "sub-module", "subtopic", "sub_topic", "topic",
+    "configured_category_key", "configured_target_header",
+    "configured_module", "configured_module_no", "configured_submodule",
+    "configured_sub_module", "target_header"
+] %}
+
 {% block title %}
 {{ modules[selected_module].name if selected_module and modules.get(selected_module) else "All Data" }} — UCE Connect
 
@@ -932,14 +941,14 @@ Column header remains visible when the DATA AREA scrolls.
 
                                         <th>#</th>
                                         <th>Record ID</th>
-                                        <th>Module</th>
-                                        <th>Sub-Module</th>
 
                                         {% for column in category_columns %}
 
-                                            <th>
-                                                {{ column }}
-                                            </th>
+                                            {% set normalized_column = column|string|lower|replace(" ", "_")|replace("-", "_") %}
+
+                                            {% if normalized_column not in internal_columns %}
+                                                <th>{{ column }}</th>
+                                            {% endif %}
 
                                         {% endfor %}
 
@@ -967,25 +976,13 @@ Column header remains visible when the DATA AREA scrolls.
                                             {{ row.get("id", "") }}
                                         </td>
 
-                                        <td>
-                                            {{ modules[selected_module].name }}
-                                        </td>
-
-                                        <td>
-                                            {{ category_name }}
-                                        </td>
-
-
                                         {% for column in category_columns %}
 
-                                            <td>
-                                                {{ row.get(
-                                                    "data", {}
-                                                ).get(
-                                                    column,
-                                                    ""
-                                                ) }}
-                                            </td>
+                                            {% set normalized_column = column|string|lower|replace(" ", "_")|replace("-", "_") %}
+
+                                            {% if normalized_column not in internal_columns %}
+                                                <td>{{ row.get("data", {}).get(column, "") }}</td>
+                                            {% endif %}
 
                                         {% endfor %}
 
@@ -1111,16 +1108,16 @@ Column header remains visible when the DATA AREA scrolls.
                         <tr>
 
                             <th>#</th>
-                            <th>Module</th>
-                            <th>Sub-Module</th>
                             <th>Record ID</th>
                             <th>Uploader</th>
 
                             {% for column in columns %}
 
-                                <th>
-                                    {{ column }}
-                                </th>
+                                {% set normalized_column = column|string|lower|replace(" ", "_")|replace("-", "_") %}
+
+                                {% if normalized_column not in internal_columns %}
+                                    <th>{{ column }}</th>
+                                {% endif %}
 
                             {% endfor %}
 
@@ -1141,47 +1138,6 @@ Column header remains visible when the DATA AREA scrolls.
 
 
                             <td>
-
-                                {% set current_module =
-                                    modules.get(
-                                        row.get("module")
-                                    )
-                                %}
-
-                                {% if current_module %}
-
-                                    {{ current_module.name }}
-
-                                {% else %}
-
-                                    {{ row.get("module", "") }}
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                {% if current_module %}
-
-                                    {{
-                                        current_module.categories.get(
-                                            row.get("category"),
-                                            row.get("category", "")
-                                        )
-                                    }}
-
-                                {% else %}
-
-                                    {{ row.get("category", "") }}
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
                                 {{ row.get("id", "") }}
                             </td>
 
@@ -1193,17 +1149,11 @@ Column header remains visible when the DATA AREA scrolls.
 
                             {% for column in columns %}
 
-                                <td>
-                                    {{
-                                        row.get(
-                                            "data",
-                                            {}
-                                        ).get(
-                                            column,
-                                            ""
-                                        )
-                                    }}
-                                </td>
+                                {% set normalized_column = column|string|lower|replace(" ", "_")|replace("-", "_") %}
+
+                                {% if normalized_column not in internal_columns %}
+                                    <td>{{ row.get("data", {}).get(column, "") }}</td>
+                                {% endif %}
 
                             {% endfor %}
 

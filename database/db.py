@@ -421,6 +421,30 @@ def _create_tables(connection):
 
 
     # --------------------------------------------------------
+    # APPLICATION SETTINGS
+    # --------------------------------------------------------
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS app_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setting_key TEXT NOT NULL UNIQUE,
+            setting_value TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_app_settings_key
+        ON app_settings(setting_key)
+        """
+    )
+
+
+    # --------------------------------------------------------
     # PASSWORD RESET TOKENS
     # --------------------------------------------------------
 
@@ -465,6 +489,52 @@ def _create_tables(connection):
         )
         """
     )
+
+
+def _migrate_refresh_logs(connection):
+    """Migrate the previous refresh-log column names to the current schema."""
+    if not _table_exists(connection, "dataset_refresh_logs"):
+        return
+
+    columns = set(_columns(connection, "dataset_refresh_logs"))
+    if "row_count" in columns:
+        return
+
+    if not {"rows_imported", "columns_imported", "message"}.issubset(columns):
+        return
+
+    _rename_if_exists(
+        connection,
+        "dataset_refresh_logs",
+        "legacy_dataset_refresh_logs_v1",
+    )
+
+    connection.execute(
+        """
+        CREATE TABLE dataset_refresh_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            upload_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            row_count INTEGER DEFAULT 0,
+            column_count INTEGER DEFAULT 0,
+            error_message TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(upload_id) REFERENCES uploads(id) ON DELETE CASCADE
+        )
+        """
+    )
+
+    connection.execute(
+        """
+        INSERT INTO dataset_refresh_logs
+            (id, upload_id, status, row_count, column_count, error_message, created_at)
+        SELECT
+            id, upload_id, status, rows_imported, columns_imported, message, created_at
+        FROM legacy_dataset_refresh_logs_v1
+        """
+    )
+
+    _safe_drop(connection, "legacy_dataset_refresh_logs_v1")
 
 
 # ============================================================
@@ -872,6 +942,32 @@ def _migrate_legacy_data(connection):
         )
 
 
+def _cleanup_obsolete_tables(connection):
+    """Remove tables from the retired pre-records data model.
+
+    These tables are not referenced by the current application. Keeping them
+    creates two competing data models and makes database maintenance unsafe.
+    """
+    obsolete_tables = (
+        "courses",
+        "faculty",
+        "dataset_rows",
+        "dataset_submissions",
+        "portal_data",
+        "practice_school",
+        "projects",
+        "skills",
+        "students",
+        "training",
+        "placements",
+        "research",
+        "upload_history",
+    )
+
+    for table_name in obsolete_tables:
+        _safe_drop(connection, table_name)
+
+
 # ============================================================
 # INITIALIZE DATABASE
 # ============================================================
@@ -894,6 +990,10 @@ def init_database():
             connection
         )
 
+        _migrate_refresh_logs(
+            connection
+        )
+
         # ----------------------------------------------------
         # CREATE CURRENT TABLES
         # ----------------------------------------------------
@@ -907,6 +1007,14 @@ def init_database():
         # ----------------------------------------------------
 
         _migrate_legacy_data(
+            connection
+        )
+
+        # ----------------------------------------------------
+        # REMOVE RETIRED TABLES
+        # ----------------------------------------------------
+
+        _cleanup_obsolete_tables(
             connection
         )
 

@@ -602,7 +602,7 @@ def get_column_value(row, names):
 
 
 # =========================================================
-# EXPLICIT MODULE DETECTION
+# EXPLICIT MODULE / CATEGORY DETECTION
 # =========================================================
 
 def detect_explicit_module(row):
@@ -630,11 +630,6 @@ def detect_explicit_module(row):
     return None
 
 
-
-# =========================================================
-# EXPLICIT CATEGORY DETECTION
-# =========================================================
-
 def detect_explicit_category(module, row):
     module = normalize_module(module)
     if module not in MODULES:
@@ -652,185 +647,661 @@ def detect_explicit_category(module, row):
         return None
 
     target = normalize_text(value)
-    categories = MODULES[module].get("categories", {})
-
-    # Exact aliases first.
     aliases = CATEGORY_ALIASES.get(module, {})
     if target in aliases:
         return aliases[target]
 
-    # Then conservative phrase matching.
-    for key, label in categories.items():
-        label_text = normalize_text(label)
-        key_text = normalize_text(key)
-        if target == key_text or target == label_text:
+    for key, label in MODULES[module].get("categories", {}).items():
+        if target in {normalize_text(key), normalize_text(label)}:
             return key
 
     return None
 
 
+# =========================================================
+# SHEET-LEVEL MODULE DETECTION
+# =========================================================
+
+SHEET_MODULE_ALIASES = {
+    "academic performance": "academics",
+    "academic performance data": "academics",
+    "academics": "academics",
+    "placements": "placements",
+    "placement": "placements",
+    "research": "research",
+    "student activities": "sac",
+    "student activity": "sac",
+    "internships": "placements",
+    "internship": "placements",
+    "counselling": "counselling",
+    "counseling": "counselling",
+    "faculty": "faculty_affairs",
+    "faculty affairs": "faculty_affairs",
+    "scholarships": "registrar_office",
+    "scholarship": "registrar_office",
+}
+
 
 # =========================================================
-# MODULE DETECTION
+# PRECISE COLUMN -> SUBMODULE RULES
 # =========================================================
+# A mixed sheet can contain fields for several modules.  The old importer
+# forced the whole row into one module/category.  These rules instead inspect
+# the COLUMN NAMES and create a separate record for every clearly matched
+# submodule.  Values are never used as the primary evidence for classification.
+# If a row does not match a configured submodule, it stays unclassified.
+
+CATEGORY_COLUMN_HINTS = {
+    "academics": {
+        "syllabus_revision": ["syllabus_revision", "syllabus_revision_programmes", "no_of_programmes_syllabus_revision"],
+        "new_courses_introduced": ["new_courses_introduced", "new_courses", "courses_introduced"],
+        "value_added_courses": ["value_added_courses", "number_of_value_added_courses", "value_added_course_count"],
+        "co_attainment_all_courses": ["co_attainment_percentage", "co_attainment", "co_attainment_all_courses"],
+        "po_attainment_all_programs": ["po_attainment_percentage", "po_attainment", "po_attainment_all_programs"],
+    },
+    "placements": {
+        "internships_projects_practice_school": ["internship_status", "project_status", "internship", "internships", "practice_school", "practice_school_status", "project_type"],
+        "students_to_be_placed": ["placement_status", "students_to_be_placed", "to_be_placed"],
+        "students_to_go_higher_education": ["higher_education", "higher_education_status", "students_to_go_higher_education"],
+        "students_to_appear_competitive_exams": ["competitive_exam", "competitive_exams", "students_to_appear_competitive_exams"],
+        "students_qualified_competitive_exams": ["competitive_exam_status", "qualified_competitive_exam", "students_qualified_competitive_exams"],
+        "students_qualified_placed_international": ["international_placement", "international_placement_status", "students_qualified_placed_international"],
+    },
+    "counselling": {
+        "number_of_counsellors": ["counsellor_id", "counsellor", "counselor_id", "counselor", "number_of_counsellors", "counselling_id"],
+        "girl_students_mentoring": ["gender_mentoring", "girl_students_mentoring", "girl_students_mentored"],
+    },
+    "exams_evaluation": {
+        "result_declaration_days": ["result_declaration_days", "result_declaration", "days_to_declare_results", "result_days"],
+    },
+    "progression": {
+        "students_graduated_final_year": ["students_graduated_final_year", "graduated", "graduation_status"],
+    },
+    "faculty_fdp_inhouse": {
+        "professional_development_admin_training": ["professional_development", "administrative_training", "admin_training_programmes", "professional_development_admin_training"],
+        "teachers_fdp": ["fdp_inhouse", "fdp_in_house", "teachers_fdp", "faculty_development_programme", "faculty_development_programmes"],
+    },
+    "workload_of_students": {
+        "contact_hours_per_week": ["contact_hours_per_week", "contact_hours", "weekly_contact_hours"],
+    },
+    "moocs": {
+        "self_study_hours_timetable": ["self_study_hours", "self_study_hours_timetable", "timetable_self_study_hours"],
+    },
+    "mous_international": {
+        "active_mous_academics": ["active_mous", "active_mous_academics", "international_mous", "mou_count"],
+    },
+    "student_abroad_program": {
+        "summer_winter_overseas_internship": ["summer_winter_overseas_internship", "summer_school", "winter_school", "overseas_internship"],
+        "dual_degrees_international": ["dual_degree", "dual_degrees", "dual_degree_international", "dual_degrees_international"],
+        "semester_exchange_student_inbound": ["student_exchange_inbound", "semester_exchange_student_inbound"],
+        "semester_exchange_student_outbound": ["student_exchange_outbound", "semester_exchange_student_outbound"],
+        "student_exchange_inbound_2_weeks": ["student_exchange_inbound_2_weeks"],
+        "student_exchange_outbound_2_weeks": ["student_exchange_outbound_2_weeks"],
+    },
+    "faculty_exchange_abroad": {
+        "semester_exchange_faculty_inbound": ["faculty_exchange_inbound", "semester_exchange_faculty_inbound"],
+        "semester_exchange_faculty_outbound": ["faculty_exchange_outbound", "semester_exchange_faculty_outbound"],
+        "faculty_inbound_2_weeks": ["faculty_inbound_2_weeks"],
+        "faculty_outbound_2_weeks": ["faculty_outbound_2_weeks"],
+    },
+    "faculty_affairs": {
+        "full_time_teachers_sanctioned_posts": ["full_time_teachers", "sanctioned_posts", "teacher_sanctioned_posts"],
+        "women_faculty": ["women_faculty", "female_faculty"],
+        "foreign_faculty": ["foreign_faculty"],
+        "full_time_teachers_phd": ["phd_status", "ph_d_status", "full_time_teachers_phd", "teachers_with_phd"],
+        "faculty_experience": ["experience_years", "faculty_experience", "experience"],
+        "faculty_external_nonacademic_experience": ["industry_experience", "external_nonacademic_experience", "nonacademic_experience"],
+        "teachers_financial_support": ["teachers_financial_support", "conference_support", "financial_support"],
+        "retention_ratio": ["retention_status", "retention_ratio"],
+        "external_consultations": ["external_consultations", "parallel_appointment", "external_consultation"],
+        "faculty_entrepreneurship_experience": ["entrepreneurship_experience", "faculty_entrepreneurship_experience"],
+        "demand_ratio": ["demand_ratio"],
+    },
+    "visiting_faculty": {
+        "visiting_faculty_industry_academic": ["visiting_faculty", "visiting_faculty_industry_academic", "guest_faculty", "industry_academic_experts"],
+    },
+    "research": {
+        "seed_money": ["seed_money"],
+        "research_fellows_enrolled": ["research_fellows", "research_fellows_enrolled", "jrf", "srf", "post_doctoral_fellows", "research_associates"],
+        "sponsored_research_projects_govt": ["sponsored_research_projects_govt", "govt_research_funding", "government_research_funding"],
+        "sponsored_research_projects_non_govt": ["sponsored_research_projects_non_govt", "non_govt_research_funding", "non_government_research_funding"],
+        "consultancy_royalty_revenue": ["consultancy_revenue", "royalty_revenue", "consultancy_royalty_revenue", "consultancy"],
+        "executive_development_programs": ["executive_development_programs", "executive_development"],
+        "research_funding_proposals_submitted": ["research_funding_proposals_submitted", "funding_proposals_submitted"],
+        "research_funding_proposals_approved_active": ["research_funding_proposals_approved_active", "funding_proposals_approved", "active_research_proposals"],
+        "fellowships_national_international": ["fellowships", "fellowships_national_international"],
+        "ipr_workshops_seminars": ["ipr_workshops", "ipr_seminars", "ipr_workshops_seminars"],
+        "research_awards_recognitions": ["research_awards", "research_recognitions", "research_awards_recognitions"],
+        "patents_published": ["patents_published", "patent_published"],
+        "patents_granted": ["patents_granted", "patent_granted"],
+        "ip_commercialisation": ["ip_commercialisation", "ip_commercialization", "commercialisation", "commercialization"],
+        "h_index_scopus": ["h_index_scopus", "scopus_h_index"],
+        "h_index_wos": ["h_index_wos", "wos_h_index"],
+        "phds_awarded": ["phds_awarded", "phd_awarded", "ph_ds_awarded"],
+        "research_papers_published": ["research_papers", "research_papers_published", "papers_published"],
+        "books_chapters_published": ["books_and_chapters", "books_chapters_published", "books_and_chapters_published"],
+        "conference_papers_published": ["conference_papers", "conference_papers_published"],
+        "citations": ["citations", "citation_count"],
+        "full_time_phd_scholars": ["full_time_phd_scholars", "phd_scholars"],
+        "active_research_centres": ["active_research_centres", "research_centres"],
+        "international_conferences_research_reports": ["international_conferences_research_reports", "research_reports"],
+        "joint_research_international": ["joint_research", "joint_research_international", "international_collaboration"],
+        "joint_conferences_international": ["joint_conferences", "joint_conferences_international"],
+    },
+    "faculty_fdp_corporate": {
+        "corporate_training_programs": ["fdp_corporate", "corporate_training_programs", "corporate_training_programmes"],
+        "corporate_training_revenue": ["corporate_training_revenue", "corporate_training_income"],
+    },
+    "student_entrepreneurship": {
+        "entrepreneurship_training_25_hours": ["entrepreneurship_training_25_hours", "entrepreneurship_training", "25_hours_entrepreneurship"],
+        "students_willing_business": ["entrepreneurship_status", "students_willing_business", "willing_to_start_business"],
+        "startups_incubated": ["startups_incubated", "start_ups_incubated", "incubated_startups"],
+    },
+    "sac": {
+        "extension_outreach_programs": ["extension_outreach_programs", "outreach_programs", "nss", "ncc", "red_cross", "yrc"],
+        "students_extension_activities": ["extension_activity", "students_extension_activities"],
+        "sports_cultural_awards": ["sports_cultural_awards", "sports_awards", "cultural_awards"],
+        "clubs_technical_societies": ["technical_society", "technical_societies"],
+        "students_clubs_societies_associations": ["club", "student_club", "student_society", "student_association", "students_clubs_societies_associations", "club_membership"],
+        "gender_equity_activities": ["gender_equity_activity", "gender_equity_activities"],
+        "professional_ethics_events": ["professional_ethics_event", "professional_ethics_events", "ethics_event"],
+    },
+    "p_and_d": {
+        "extension_activity_awards": ["extension_activity_awards", "extension_awards"],
+        "classrooms_tutorial_rooms": ["classrooms", "tutorial_rooms", "classrooms_tutorial_rooms"],
+        "labs": ["labs", "laboratories"],
+        "ict_enabled_classrooms": ["ict_enabled_classrooms", "ict_classrooms"],
+        "student_computers": ["student_computers", "computers_students"],
+        "office_faculty_computers": ["office_faculty_computers", "faculty_computers", "office_computers"],
+    },
+    "registrar_office": {
+        "scholarships_freeships": ["scholarship_status", "scholarship_type", "scholarships", "freeships", "scholarships_freeships"],
+        "full_tuition_fee_reimbursement": ["full_tuition_fee_reimbursement", "tuition_fee_reimbursement"],
+        "girl_students_scholarships": ["girl_students_scholarships", "girl_scholarship", "female_scholarship"],
+        "career_counselling_competitive_exams": ["career_counselling", "career_guidance", "competitive_exam_counselling"],
+        "total_seats_filled": ["total_seats_filled", "seats_filled", "sanctioned_seats"],
+        "reserved_category_seats": ["reserved_category_seats", "reserved_seats", "reservation_category"],
+        "girl_students_enrolled": ["girl_students_enrolled", "female_students_enrolled"],
+        "students_other_states": ["students_other_states", "other_states_students"],
+        "students_other_countries": ["students_other_countries", "other_countries_students"],
+        "first_generation_students": ["first_generation", "first_generation_students"],
+        "first_generation_girl_students": ["first_generation_girl_students", "first_generation_girls"],
+    },
+    "alumni": {
+        "alumni_contribution": ["alumni_contribution"],
+        "alumni_entrepreneurship": ["alumni_entrepreneurship", "alumni_startup", "alumni_start_up"],
+    },
+    "finance": {
+        "median_salary_ug": ["median_salary_ug", "ug_median_salary"],
+        "median_salary_pg": ["median_salary_pg", "pg_median_salary"],
+        "government_infrastructure_grants": ["government_infrastructure_grants", "govt_infrastructure_grants"],
+        "non_government_infrastructure_grants": ["non_government_infrastructure_grants", "non_govt_infrastructure_grants"],
+    },
+    "library": {
+        "library_usage_teachers": ["library_usage_teachers", "teacher_library_usage"],
+        "library_usage_students": ["library_usage_students", "student_library_usage"],
+    },
+}
+
+
+def _normalized_headers(row):
+    if isinstance(row, pd.Series):
+        return {normalize_text(key) for key in row.index}
+    if isinstance(row, dict):
+        return {normalize_text(key) for key in row.keys()}
+    return set()
+
+
+def _has_nonempty_value(row, normalized_header_names):
+    if isinstance(row, pd.Series):
+        data = row.to_dict()
+    elif isinstance(row, dict):
+        data = row
+    else:
+        return False
+
+    wanted = {normalize_text(name) for name in normalized_header_names}
+    for key, value in data.items():
+        if normalize_text(key) not in wanted:
+            continue
+        try:
+            if pd.isna(value):
+                continue
+        except (TypeError, ValueError):
+            pass
+        if str(value).strip() != "":
+            return True
+    return False
+
+
+def _category_column_hits(module, row):
+    headers = _normalized_headers(row)
+    matches = []
+
+    for category, hints in CATEGORY_COLUMN_HINTS.get(module, {}).items():
+        normalized_hints = {normalize_text(hint) for hint in hints}
+        exact = headers.intersection(normalized_hints)
+        if exact:
+            # A header is useful only when the corresponding cell has data.
+            if _has_nonempty_value(row, exact):
+                matches.append((category, 100, exact))
+
+    return matches
+
+
+def _international_category_matches(row):
+    """Resolve the generic International sheet into student/faculty submodules."""
+    person_type = normalize_text(get_column_value(row, ["person_type"]))
+    activity = normalize_text(get_column_value(row, ["activity_type"]))
+    direction = normalize_text(get_column_value(row, ["direction"]))
+    duration = get_column_value(row, ["duration_weeks"])
+
+    try:
+        duration_weeks = float(duration) if duration else None
+    except ValueError:
+        duration_weeks = None
+
+    results = []
+    is_faculty = "faculty" in person_type or "teacher" in person_type
+    is_student = "student" in person_type or not is_faculty
+    is_inbound = direction in {"inbound", "in"}
+    is_outbound = direction in {"outbound", "out"}
+
+    if "summer" in activity or "winter" in activity or "internship" in activity:
+        if is_student:
+            results.append(("student_abroad_program", "summer_winter_overseas_internship"))
+        return results
+
+    if "dual degree" in activity or "dual degrees" in activity:
+        if is_student:
+            results.append(("student_abroad_program", "dual_degrees_international"))
+        return results
+
+    if "semester exchange" in activity:
+        if is_faculty:
+            if is_inbound:
+                results.append(("faculty_exchange_abroad", "semester_exchange_faculty_inbound"))
+            elif is_outbound:
+                results.append(("faculty_exchange_abroad", "semester_exchange_faculty_outbound"))
+        else:
+            if is_inbound:
+                results.append(("student_abroad_program", "semester_exchange_student_inbound"))
+            elif is_outbound:
+                results.append(("student_abroad_program", "semester_exchange_student_outbound"))
+        return results
+
+    if "exchange" in activity and duration_weeks is not None and duration_weeks <= 2:
+        if is_faculty:
+            if is_inbound:
+                results.append(("faculty_exchange_abroad", "faculty_inbound_2_weeks"))
+            elif is_outbound:
+                results.append(("faculty_exchange_abroad", "faculty_outbound_2_weeks"))
+        else:
+            if is_inbound:
+                results.append(("student_abroad_program", "student_exchange_inbound_2_weeks"))
+            elif is_outbound:
+                results.append(("student_abroad_program", "student_exchange_outbound_2_weeks"))
+
+    return results
+
+
+def _value_aware_matches(row, sheet_name):
+    """Handle sheets where the same column means different submodules by value."""
+    sheet = normalize_text(sheet_name)
+    results = []
+
+    if sheet in {"student activities", "student activity"}:
+        activity = normalize_text(get_column_value(row, ["activity_type"]))
+        if activity:
+            if "professional ethics" in activity:
+                results.append(("sac", "professional_ethics_events"))
+            elif "gender equity" in activity:
+                results.append(("sac", "gender_equity_activities"))
+            elif any(term in activity for term in ("extension", "nss", "ncc", "red cross", "yrc")):
+                results.append(("sac", "students_extension_activities"))
+            elif any(term in activity for term in ("club", "technical societ", "sac", "cultural", "sport")):
+                results.append(("sac", "students_clubs_societies_associations"))
+
+    if sheet in {"placements", "placement"}:
+        placement_status = normalize_text(get_column_value(row, ["placement_status"]))
+        international = normalize_text(get_column_value(row, ["international_placement"]))
+        competitive = normalize_text(get_column_value(row, ["competitive_exam"]))
+        competitive_status = normalize_text(get_column_value(row, ["competitive_exam_status"]))
+        higher_education = get_column_value(row, ["higher_education"])
+
+        if placement_status:
+            results.append(("placements", "students_to_be_placed"))
+        if higher_education.strip():
+            results.append(("placements", "students_to_go_higher_education"))
+        if competitive_status:
+            results.append(("placements", "students_to_appear_competitive_exams"))
+            if "qualif" in competitive_status:
+                results.append(("placements", "students_qualified_competitive_exams"))
+        elif competitive:
+            results.append(("placements", "students_to_appear_competitive_exams"))
+        if international in {"yes", "y", "true", "1"} and "placed" in placement_status:
+            results.append(("placements", "students_qualified_placed_international"))
+
+    if sheet in {"counselling", "counseling"}:
+        gender_mentoring = normalize_text(get_column_value(row, ["gender_mentoring"]))
+        if gender_mentoring in {"yes", "y", "true", "1"}:
+            results.append(("counselling", "girl_students_mentoring"))
+        elif _has_nonempty_value(row, {"counsellor_id", "counselor_id", "counsellor", "counselor"}):
+            results.append(("counselling", "number_of_counsellors"))
+
+    if sheet in {"students", "student"}:
+        internship_status = get_column_value(row, ["internship_status"])
+        project_status = get_column_value(row, ["project_status"])
+        placement_status = get_column_value(row, ["placement_status"])
+        higher_education = get_column_value(row, ["higher_education_status", "higher_education"])
+        competitive_exam = get_column_value(row, ["competitive_exam"])
+        competitive_status = normalize_text(get_column_value(row, ["competitive_exam_status"]))
+
+        if internship_status.strip() or project_status.strip():
+            results.append(("placements", "internships_projects_practice_school"))
+        if placement_status.strip():
+            results.append(("placements", "students_to_be_placed"))
+        if higher_education.strip():
+            results.append(("placements", "students_to_go_higher_education"))
+        if competitive_exam.strip() or competitive_status:
+            results.append(("placements", "students_to_appear_competitive_exams"))
+        if "qualif" in competitive_status and "not qualif" not in competitive_status:
+            results.append(("placements", "students_qualified_competitive_exams"))
+
+        year = normalize_text(get_column_value(row, ["year", "study_year", "current_year"]))
+        graduation_year = get_column_value(row, ["graduation_year"])
+        if graduation_year and year in {"4", "final year", "fourth year", "iv"}:
+            results.append(("progression", "students_graduated_final_year"))
+
+        international_program = normalize_text(get_column_value(row, ["international_program"]))
+        if "dual degree" in international_program or "dual degrees" in international_program:
+            results.append(("student_abroad_program", "dual_degrees_international"))
+        elif "summer" in international_program or "winter" in international_program or "internship" in international_program:
+            results.append(("student_abroad_program", "summer_winter_overseas_internship"))
+        elif "exchange" in international_program:
+            results.append(("student_abroad_program", "semester_exchange_student_outbound"))
+
+    return list(dict.fromkeys(results))
+
+
+def detect_category_matches(row, sheet_name="", forced_module=None):
+    """Return all confident (module, category) matches for one row.
+
+    A row may legitimately contain data for several modules.  The importer
+    therefore returns multiple matches instead of forcing the whole row into
+    one category.  Ambiguous or unmatched data returns an empty list and is
+    stored as module=unclassified/category=unclassified.
+    """
+    explicit_module = detect_explicit_module(row)
+    module_hint = normalize_module(forced_module) if forced_module else None
+
+    if forced_module and module_hint not in MODULES:
+        module_hint = None
+
+    value_matches = _value_aware_matches(row, sheet_name)
+    if module_hint:
+        value_matches = [item for item in value_matches if item[0] == module_hint]
+    if value_matches:
+        return value_matches
+
+    # Explicit category/submodule is the strongest possible signal.
+    if explicit_module or module_hint:
+        module = explicit_module or module_hint
+        explicit_category = detect_explicit_category(module, row)
+        if explicit_category:
+            return [(module, explicit_category)]
+
+    explicit_value = get_column_value(
+        row,
+        ["sub-module", "sub module", "submodule", "category", "category name", "subtopic", "topic", "metric", "indicator", "parameter"],
+    )
+    if explicit_value:
+        target = normalize_text(explicit_value)
+        global_category = GLOBAL_CATEGORY_ALIASES.get(target)
+        if global_category:
+            for module, info in MODULES.items():
+                if global_category in info.get("categories", {}):
+                    if module_hint and module != module_hint:
+                        return []
+                    return [(module, global_category)]
+
+    # International is intentionally value-aware because its Activity_Type,
+    # Person_Type and Direction together define the actual submodule.
+    if normalize_text(sheet_name) == "international":
+        international = _international_category_matches(row)
+        if module_hint:
+            international = [item for item in international if item[0] == module_hint]
+        if international:
+            return international
+
+    modules_to_check = [module_hint] if module_hint else list(MODULES.keys())
+    matches = []
+
+    for module in modules_to_check:
+        for category, score, _ in _category_column_hits(module, row):
+            matches.append((module, category, score))
+
+    # A sheet name is only a hint.  Mixed sheets such as Faculty and Students
+    # legitimately contain fields belonging to several modules, so never throw
+    # away a valid category merely because the sheet has a generic name.
+
+    # Remove duplicate category matches and return deterministic ordering.
+    unique = {}
+    for module, category, score in matches:
+        unique[(module, category)] = max(score, unique.get((module, category), 0))
+
+    return [
+        (module, category)
+        for (module, category), _score in sorted(
+            unique.items(),
+            key=lambda item: (item[0][0], item[0][1])
+        )
+    ]
+
 
 def detect_module(row, sheet_name="", extra_text=""):
-    """
-    Detect a module conservatively.
-
-    Priority:
-      1. Explicit Module column
-      2. Exact module name/alias in sheet name
-      3. Exact configured submodule label/key in the header/sheet
-      4. Strong module phrase in header/sheet
-      5. Otherwise unclassified
-
-    Row values are deliberately NOT used for weak module guessing; this avoids
-    putting generic student/faculty rows into the wrong module.
-    """
+    """Detect a module only when structural evidence is reliable."""
     explicit = detect_explicit_module(row)
     if explicit:
         return explicit
 
     sheet_text = normalize_text(sheet_name)
+    if sheet_text in SHEET_MODULE_ALIASES:
+        return SHEET_MODULE_ALIASES[sheet_text]
+
     header_text = normalize_text(extra_text)
     structural_text = f"{sheet_text} {header_text}".strip()
 
-    # Exact displayed module name or normalized key in the sheet/header.
-    for key, info in MODULES.items():
-        key_text = normalize_text(key)
-        name_text = normalize_text(info.get("name", key))
-        if name_text and name_text in sheet_text:
-            return key
-        if key_text and key_text in sheet_text:
-            return key
-
-    # If a header contains a complete configured category label, its parent
-    # module is unambiguous.
-    category_hits = []
-    for module_key, info in MODULES.items():
+    category_modules = set()
+    for module, info in MODULES.items():
         for category_key, label in info.get("categories", {}).items():
-            label_text = normalize_text(label)
-            key_text = normalize_text(category_key)
-            if (label_text and label_text in structural_text) or (key_text and key_text in structural_text):
-                category_hits.append(module_key)
+            if normalize_text(category_key) in structural_text or normalize_text(label) in structural_text:
+                category_modules.add(module)
                 break
 
-    category_hits = list(dict.fromkeys(category_hits))
-    if len(category_hits) == 1:
-        return category_hits[0]
+    if len(category_modules) == 1:
+        return next(iter(category_modules))
 
-    # If the metric/category label is stored as a row value rather than a
-    # header, accept only an exact configured label/key match.
-    row_text_value = normalize_text(row_text(row))
-    row_category_hits = []
-    for module_key, info in MODULES.items():
-        for category_key, label in info.get("categories", {}).items():
-            label_text = normalize_text(label)
-            key_text = normalize_text(category_key)
-            if (label_text and label_text in row_text_value) or (key_text and key_text in row_text_value):
-                row_category_hits.append(module_key)
-                break
-    row_category_hits = list(dict.fromkeys(row_category_hits))
-    if len(row_category_hits) == 1:
-        return row_category_hits[0]
-
-    # Strong phrase matching only against sheet/header text.
-    candidates = []
-    for module_key, keywords in MODULE_KEYWORDS.items():
-        score = 0
-        strong_hit = False
-        for keyword in keywords:
-            keyword_text = normalize_text(keyword)
-            if not keyword_text or keyword_text not in structural_text:
-                continue
-            if " " in keyword_text:
-                score += 5
-                strong_hit = True
-            else:
-                score += 1
-        if strong_hit and score >= 5:
-            candidates.append((score, module_key))
-
-    candidates.sort(key=lambda item: item[0], reverse=True)
-    if not candidates:
-        return None
-    if len(candidates) > 1 and candidates[0][0] == candidates[1][0]:
-        return None
-    return candidates[0][1]
+    return None
 
 
+def detect_sheet_category(module, row, sheet_name):
+    matches = detect_category_matches(row, sheet_name, forced_module=module)
+    if len(matches) == 1:
+        return matches[0][1]
+    return None
 
-# =========================================================
-# CATEGORY DETECTION
-# =========================================================
 
 def detect_category(module, row, sheet_name=""):
-    """Detect a category conservatively and return its exact configured key."""
-    module = normalize_module(module)
-    if module not in MODULES:
-        return None
+    matches = detect_category_matches(row, sheet_name, forced_module=module)
+    if len(matches) == 1:
+        return matches[0][1]
+    return None
 
-    explicit = detect_explicit_category(module, row)
-    if explicit:
-        return explicit
 
-    categories = MODULES[module].get("categories", {})
-    sheet_text = normalize_text(sheet_name)
-    row_values = normalize_text(row_text(row))
+# =========================================================
+# CATEGORY-SPECIFIC ROW EXTRACTION
+# =========================================================
 
-    # Header/structure matching is stronger than ordinary row values.
-    header_values = []
+COMMON_CONTEXT_COLUMNS = {
+    "id", "student_id", "faculty_id", "record_id", "name", "gender",
+    "department", "program", "year", "section", "semester", "academic_year",
+    "admission_year", "graduation_year", "person_id", "person_type",
+    "date_of_birth", "state", "category", "designation", "qualification",
+}
+
+
+def _category_relevant_headers(module, category):
+    hints = CATEGORY_COLUMN_HINTS.get(module, {}).get(category, [])
+    return {normalize_text(value) for value in hints}
+
+
+SHEET_CONTEXT_COLUMNS = {
+    "international": {
+        "international_id", "person_type", "person_id", "activity_type",
+        "direction", "country", "duration_weeks", "academic_year", "status",
+    },
+    "student activities": {
+        "activity_id", "student_id", "activity_type", "club", "event",
+        "role", "participation_status", "hours", "academic_year",
+    },
+    "student activity": {
+        "activity_id", "student_id", "activity_type", "club", "event",
+        "role", "participation_status", "hours", "academic_year",
+    },
+    "counselling": {
+        "counselling_id", "student_id", "counsellor_id", "counselling_type",
+        "sessions", "mentoring", "gender_mentoring", "status", "academic_year",
+    },
+    "counseling": {
+        "counselling_id", "student_id", "counsellor_id", "counselling_type",
+        "sessions", "mentoring", "gender_mentoring", "status", "academic_year",
+    },
+}
+
+# Internal classification fields must never be stored as user data.
+# They are used by the portal itself, not displayed as imported university fields.
+INTERNAL_DATA_FIELDS = {
+    "module",
+    "module_key",
+    "module_name",
+    "module_no",
+    "submodule",
+    "sub_module",
+    "sub-module",
+    "category",
+    "category_key",
+    "category_name",
+    "configured_category_key",
+    "configured_target_header",
+    "target_header",
+}
+
+
+SHEET_CATEGORY_EXTRA_COLUMNS = {
+    "placements": {
+        "students_to_be_placed": {"placement_id", "student_id", "company", "job_role", "package_lpa", "placement_status", "placement_year"},
+        "students_to_go_higher_education": {"placement_id", "student_id", "higher_education", "placement_year"},
+        "students_to_appear_competitive_exams": {"placement_id", "student_id", "competitive_exam", "placement_year"},
+        "students_qualified_competitive_exams": {"placement_id", "student_id", "competitive_exam", "competitive_exam_status", "placement_year"},
+        "students_qualified_placed_international": {"placement_id", "student_id", "company", "placement_status", "international_placement", "placement_year"},
+    },
+    "placement": {
+        "students_to_be_placed": {"placement_id", "student_id", "company", "job_role", "package_lpa", "placement_status", "placement_year"},
+        "students_to_go_higher_education": {"placement_id", "student_id", "higher_education", "placement_year"},
+        "students_to_appear_competitive_exams": {"placement_id", "student_id", "competitive_exam", "placement_year"},
+        "students_qualified_competitive_exams": {"placement_id", "student_id", "competitive_exam", "competitive_exam_status", "placement_year"},
+        "students_qualified_placed_international": {"placement_id", "student_id", "company", "placement_status", "international_placement", "placement_year"},
+    },
+}
+
+
+def build_category_row(row, module, category, sheet_name=""):
+    """Keep identity/context + fields belonging to this submodule only."""
     if isinstance(row, pd.Series):
-        header_values = [normalize_text(k) for k in row.index]
+        items = row.to_dict().items()
     elif isinstance(row, dict):
-        header_values = [normalize_text(k) for k in row.keys()]
-    header_text = " ".join(header_values)
-    structural_text = f"{sheet_text} {header_text}".strip()
+        items = row.items()
+    else:
+        return {}
 
-    exact_hits = []
-    for key, label in categories.items():
-        key_text = normalize_text(key)
-        label_text = normalize_text(label)
-        if (label_text and label_text in structural_text) or (key_text and key_text in structural_text):
-            exact_hits.append(key)
+    relevant = _category_relevant_headers(module, category)
+    normalized_sheet = normalize_text(sheet_name)
+    relevant.update(
+        normalize_text(value)
+        for value in SHEET_CONTEXT_COLUMNS.get(
+            normalized_sheet,
+            set(),
+        )
+    )
+    relevant.update(
+        normalize_text(value)
+        for value in SHEET_CATEGORY_EXTRA_COLUMNS.get(
+            normalized_sheet,
+            {},
+        ).get(category, set())
+    )
+    output = {}
 
-    if len(exact_hits) == 1:
-        return exact_hits[0]
+    for key, value in items:
+        normalized_key = normalize_text(key)
 
-    # Match a complete metric label in the actual row only when it is very
-    # specific. This supports sheets where the metric name is a cell value.
-    row_exact_hits = []
-    for key, label in categories.items():
-        key_text = normalize_text(key)
-        label_text = normalize_text(label)
-        if (label_text and label_text in row_values) or (key_text and key_text in row_values):
-            row_exact_hits.append(key)
-    if len(row_exact_hits) == 1:
-        return row_exact_hits[0]
-
-    # Finally use word overlap, but require at least three meaningful words
-    # and a unique winner. This prevents generic words like "students" from
-    # deciding the submodule.
-    candidates = []
-    for key, label in categories.items():
-        label_text = normalize_text(label)
-        words = [w for w in re.findall(r"[a-z0-9]+", label_text) if len(w) > 3]
-        if not words:
+        # Never carry portal classification metadata into the imported
+        # university-data payload. Module/submodule information remains in
+        # the records table for internal grouping, but these fields are not
+        # part of the actual dataset shown to users.
+        if normalized_key in INTERNAL_DATA_FIELDS:
             continue
-        structural_matches = sum(1 for word in words if word in structural_text)
-        row_matches = sum(1 for word in words if word in row_values)
-        score = structural_matches * 3 + row_matches
-        if structural_matches >= 2 or row_matches >= 3:
-            candidates.append((score, key))
 
-    candidates.sort(key=lambda item: item[0], reverse=True)
-    if not candidates:
-        return None
-    if len(candidates) > 1 and candidates[0][0] == candidates[1][0]:
-        return None
-    return candidates[0][1]
+        if normalized_key in relevant or normalized_key in COMMON_CONTEXT_COLUMNS:
+            try:
+                if pd.isna(value):
+                    continue
+            except (TypeError, ValueError):
+                pass
+            if str(value).strip() != "":
+                output[str(key)] = value
 
+    # Explicitly selected categories may use a generic Value column.  Keep the
+    # row rather than producing an empty category record in that case.
+    if not output:
+        return {}
+
+    return output
+
+
+def classify_row(row, sheet_name="", upload_mode="mixed", target_module=None, target_category=None):
+    """Classify one spreadsheet row without ever creating module/unclassified.
+
+    For mixed imports, every confident submodule gets its own record.  When no
+    submodule matches, the complete row is stored only as
+    unclassified/unclassified.  A module with an unknown submodule is never
+    stored as module/unclassified.
+    """
+    if upload_mode == "specific":
+        module = normalize_module(target_module)
+        category = normalize_category(target_category, module)
+        if module in MODULES and category in MODULES[module].get("categories", {}):
+            category_row = build_category_row(row, module, category, sheet_name)
+            if not category_row:
+                category_row = row.to_dict() if isinstance(row, pd.Series) else dict(row)
+            return [(module, category, category_row)]
+        return [("unclassified", "unclassified", row)]
+
+    matches = detect_category_matches(row, sheet_name)
+    if not matches:
+        return [("unclassified", "unclassified", row)]
+
+    classified = []
+    for module, category in matches:
+        category_row = build_category_row(row, module, category, sheet_name)
+        if category_row:
+            classified.append((module, category, category_row))
+
+    if not classified:
+        return [("unclassified", "unclassified", row)]
+
+    return classified
 
 
 # =========================================================
@@ -1027,7 +1498,7 @@ def create_dataset(
             (
                 upload_id,
                 status,
-                message
+                error_message
             )
             VALUES
             (?, 'started', ?)
@@ -1169,69 +1640,48 @@ def create_dataset(
                         start=2
                     ):
 
-                        if upload_mode == "specific":
-                            module = target_module
-
-                            category = (
-                                target_category
-                                or detect_category(
-                                    module,
-                                    row,
-                                    sheet_name
-                                )
-                            )
-
-                        else:
-
-                            module = detect_module(
-                                row,
-                                sheet_name,
-                                header_text
-                            )
-
-                            category = None
-
-                            if module:
-                                category = detect_category(
-                                    module,
-                                    row,
-                                    sheet_name
-                                )
-
-                        # Unknown data is explicitly stored as unclassified.
-                        # It is NOT silently put under Academics.
-                        if not module:
-                            module = "unclassified"
-
-                        if not category:
-                            category = "unclassified"
-
-                        connection.execute(
-                            """
-                            INSERT INTO records
-                            (
-                                upload_id,
-                                module_key,
-                                category_key,
-                                sheet_name,
-                                row_number,
-                                row_data
-                            )
-                            VALUES (?, ?, ?, ?, ?, ?)
-                            """,
-                            (
-                                upload_id,
-                                module,
-                                category,
-                                str(sheet_name),
-                                row_number,
-                                json.dumps(
-                                    _row_dict(row),
-                                    ensure_ascii=False
-                                ),
-                            ),
+                        classified_rows = classify_row(
+                            row,
+                            sheet_name,
+                            upload_mode=upload_mode,
+                            target_module=target_module,
+                            target_category=target_category,
                         )
 
+                        # One spreadsheet row can legitimately feed more than
+                        # one submodule (for example a Faculty row can contain
+                        # FDP, Research and International Exchange fields).
+                        # Each match becomes its own clean record.
+                        for module, category, category_row in classified_rows:
+                            connection.execute(
+                                """
+                                INSERT INTO records
+                                (
+                                    upload_id,
+                                    module_key,
+                                    category_key,
+                                    sheet_name,
+                                    row_number,
+                                    row_data
+                                )
+                                VALUES (?, ?, ?, ?, ?, ?)
+                                """,
+                                (
+                                    upload_id,
+                                    module,
+                                    category,
+                                    str(sheet_name),
+                                    row_number,
+                                    json.dumps(
+                                        _row_dict(category_row),
+                                        ensure_ascii=False
+                                    ),
+                                ),
+                            )
+
+                        # row_count represents source spreadsheet rows, while
+                        # records can be larger because one row may be split
+                        # into several submodule records.
                         total_rows += 1
 
                 connection.execute(
@@ -1257,9 +1707,9 @@ def create_dataset(
                     UPDATE dataset_refresh_logs
                     SET
                         status='completed',
-                        rows_imported=?,
-                        columns_imported=?,
-                        message=?
+                        row_count=?,
+                        column_count=?,
+                        error_message=?
                     WHERE upload_id=?
                     AND status='started'
                     """,
@@ -1314,7 +1764,7 @@ def create_dataset(
                 UPDATE dataset_refresh_logs
                 SET
                     status='failed',
-                    message=?
+                    error_message=?
                 WHERE upload_id=?
                 AND status='started'
                 """,
@@ -1481,8 +1931,17 @@ def _decorate(row):
     ):
         data = {}
 
-    item["row_data"] = data
-    item["data"] = data
+    # Remove portal-only classification metadata from the actual dataset
+    # payload. Module/category remain available on the record itself for
+    # internal grouping, but must never become spreadsheet data columns.
+    cleaned_data = {}
+    for key, value in data.items():
+        if normalize_text(key) in INTERNAL_DATA_FIELDS:
+            continue
+        cleaned_data[key] = value
+
+    item["row_data"] = cleaned_data
+    item["data"] = cleaned_data
 
     item["module"] = item.get(
         "module_key"
@@ -1710,6 +2169,8 @@ def prepare_module_tables(grouped_data):
                 {}
             ):
 
+                if normalize_text(column) in INTERNAL_DATA_FIELDS:
+                    continue
                 if column not in columns:
                     columns.append(column)
 
@@ -2073,7 +2534,7 @@ def delete_user_upload(upload_id, user_id):
 # =========================================================
 
 def reclassify_existing_records():
-    """Reclassify only mixed-mode imports; preserve explicit specific imports."""
+    """Repair mixed imports without destroying already-correct submodule records."""
     connection = get_connection()
     try:
         rows = connection.execute(
@@ -2100,19 +2561,47 @@ def reclassify_existing_records():
             if not isinstance(data, dict):
                 data = {}
 
-            detected_module = detect_module(data, row["sheet_name"] or "", " ".join(str(k) for k in data.keys()))
-            detected_module = detected_module or "unclassified"
-            detected_category = detect_category(detected_module, data, row["sheet_name"] or "")
-            detected_category = detected_category or "unclassified"
+            matches = detect_category_matches(
+                data,
+                row["sheet_name"] or "",
+            )
+            current = (
+                row["module_key"],
+                row["category_key"],
+            )
 
-            if detected_module != row["module_key"] or detected_category != row["category_key"]:
+            # If the existing pair is still supported by the row's fields,
+            # leave it alone.  This is important for split Faculty/Student
+            # records because their sheet name may be generic.
+            if current in matches:
+                continue
+
+            if len(matches) == 1:
+                detected_module, detected_category = matches[0]
+                # Existing records with a real module but no valid submodule
+                # are not allowed anymore: move the entire record to the
+                # single unclassified bucket.
+            elif not matches:
+                detected_module, detected_category = "unclassified", "unclassified"
+            else:
+                # More than one possible category is ambiguous.  Do not guess.
+                detected_module, detected_category = "unclassified", "unclassified"
+
+            if (
+                detected_module != row["module_key"]
+                or detected_category != row["category_key"]
+            ):
                 connection.execute(
                     """
                     UPDATE records
                     SET module_key=?, category_key=?
                     WHERE id=?
                     """,
-                    (detected_module, detected_category, row["id"]),
+                    (
+                        detected_module,
+                        detected_category,
+                        row["id"],
+                    ),
                 )
                 changed += 1
 
@@ -2120,4 +2609,3 @@ def reclassify_existing_records():
         return changed
     finally:
         connection.close()
-

@@ -716,155 +716,109 @@
         /* ================= ACCOUNT TYPE ================= */
 
         .account-type {
-
+            width: 100%;
             margin-top: 0;
-
         }
 
+        .account-type > label {
+            display: block;
+            margin-bottom: 8px;
+        }
 
         .role-options {
-
             display: grid;
-
-            grid-template-columns:
-                1fr 1fr;
-
+            grid-template-columns: 1fr 1fr;
             gap: 16px;
-
+            width: 100%;
         }
 
-
         .role-option {
-
-            height: 50px;
-
+            width: 100%;
+            height: 56px;
             display: flex;
-
+            flex-direction: row;
             align-items: center;
-
+            justify-content: flex-start;
             gap: 10px;
-
-            padding:
-                0 15px;
-
-            border:
-                1px solid var(--border);
-
+            padding: 0 16px;
+            margin: 0;
+            border: 1px solid var(--border);
             border-radius: 10px;
-
-            background:
-                #ffffff;
-
-            color:
-                var(--navy);
-
+            background: #ffffff;
+            color: var(--navy);
             font-size: 13px;
-
             font-weight: 750;
-
+            line-height: 1;
             cursor: pointer;
-
+            user-select: none;
             transition:
                 border-color 0.2s ease,
                 background 0.2s ease,
                 box-shadow 0.2s ease;
-
         }
-
 
         .role-option:hover {
-
-            border-color:
-                #c7d0dc;
-
+            border-color: #c7d0dc;
         }
 
-
-        .role-option.selected {
-
-            border-color:
-                #6079a5;
-
-            background:
-                #f8faff;
-
+        .role-option.selected,
+        .role-option:has(.role-radio:checked) {
+            border-color: #6079a5;
+            background: #f8faff;
             box-shadow:
                 0 0 0 3px
-                rgba(
-                    96,
-                    121,
-                    165,
-                    0.08
-                );
-
+                rgba(96, 121, 165, 0.08);
         }
-
 
         .role-radio {
-
-            width: 17px;
-
-            height: 17px;
-
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            min-height: 18px;
             margin: 0;
-
+            padding: 0;
             appearance: none;
-
-            -webkit-appearance:
-                none;
-
-            flex-shrink: 0;
-
-            border:
-                1.5px solid #a8b3c3;
-
+            -webkit-appearance: none;
+            flex: 0 0 18px;
+            border: 1.5px solid #a8b3c3;
             border-radius: 50%;
-
-            background:
-                #ffffff;
-
+            background: #ffffff;
             position: relative;
-
+            display: block;
             cursor: pointer;
-
         }
-
 
         .role-radio:checked {
-
-            border-color:
-                var(--navy);
-
+            border-color: var(--navy);
         }
-
 
         .role-radio:checked::after {
-
             content: "";
-
             position: absolute;
-
-            width: 7px;
-
-            height: 7px;
-
+            width: 8px;
+            height: 8px;
             left: 50%;
-
             top: 50%;
-
-            transform:
-                translate(
-                    -50%,
-                    -50%
-                );
-
+            transform: translate(-50%, -50%);
             border-radius: 50%;
-
-            background:
-                var(--navy);
-
+            background: var(--navy);
         }
 
+        .role-option span {
+            display: inline-flex;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            line-height: 1;
+            height: auto;
+        }
+
+        @media (max-width: 760px) {
+            .role-options {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
 
         /* ================= ADMIN CODE ================= */
 
@@ -1425,13 +1379,6 @@
             }
 
 
-            .role-options {
-
-                grid-template-columns:
-                    1fr;
-
-            }
-
         }
 
 
@@ -1469,6 +1416,293 @@
 
             }
 
+        }
+
+
+        /* ================= DARK THEME ================= */
+
+        body.dark-theme {
+            --text: #e8edf7;
+            --muted: #aeb9cb;
+            --icon: #9eabc0;
+            --border: #344158;
+            --background: #0f1522;
+            --white: #171f2f;
+            --navy: #e8edf7;
+            --navy-hover: #ffffff;
+            background: #0f1522;
+            color: #e8edf7;
+        }
+
+        body.dark-theme .navbar {
+            background: #151d2b;
+            border-bottom-color: #2c374b;
+        }
+
+        body.dark-theme .brand,
+        body.dark-theme .brand-name,
+        body.dark-theme .login-link {
+            color: #e8edf7;
+        }
+
+        body.dark-theme .brand-subtitle,
+        body.dark-theme .nav-links a:not(.login-link):not(.register-link) {
+            color: #aeb9cb;
+        }
+
+        body.dark-theme .nav-links a:hover {
+            color: #ffffff;
+        }
+
+        body.dark-theme .theme-button {
+            background: #1c2637;
+            border-color: #3a465b;
+            color: #e8edf7;
+        }
+
+        body.dark-theme .register-link {
+            background: #e8edf7;
+            color: #17233d !important;
+        }
+
+        body.dark-theme .register-link:hover {
+            background: #ffffff;
+        }
+
+        body.dark-theme .main {
+            background: #0f1522;
+        }
+
+        body.dark-theme .shape-one {
+            background: rgba(96, 121, 165, 0.08);
+        }
+
+        body.dark-theme .shape-two {
+            border-color: rgba(145, 166, 205, 0.12);
+        }
+
+        body.dark-theme .register-card {
+            background: #151d2b;
+            border-color: #303b50;
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, 0.28);
+        }
+
+        body.dark-theme .register-card::before {
+            background: #e8edf7;
+        }
+
+        body.dark-theme .header h1 {
+            color: #e8edf7;
+        }
+
+        body.dark-theme .header p,
+        body.dark-theme .form-group label {
+            color: #c1cada;
+        }
+
+        body.dark-theme .input {
+            background: #101827;
+            border-color: #354157;
+            color: #e8edf7;
+        }
+
+        body.dark-theme .input::placeholder {
+            color: #7f8da5;
+        }
+
+        body.dark-theme .input:hover {
+            border-color: #4b5970;
+        }
+
+        body.dark-theme .input:focus {
+            border-color: #7893c0;
+            box-shadow:
+                0 0 0 3px
+                rgba(120, 147, 192, 0.14);
+        }
+
+        body.dark-theme .role-option {
+            background: #101827;
+            border-color: #354157;
+            color: #e8edf7;
+        }
+
+        body.dark-theme .role-option:hover {
+            border-color: #4b5970;
+        }
+
+        body.dark-theme .role-option.selected,
+        body.dark-theme .role-option:has(.role-radio:checked) {
+            background: #1b2639;
+            border-color: #7893c0;
+        }
+
+        body.dark-theme .role-radio {
+            background: #101827;
+            border-color: #748198;
+        }
+
+        body.dark-theme .role-radio:checked {
+            border-color: #e8edf7;
+        }
+
+        body.dark-theme .role-radio:checked::after {
+            background: #e8edf7;
+        }
+
+        body.dark-theme .password-toggle {
+            color: #9eabc0;
+        }
+
+        body.dark-theme .password-toggle:hover {
+            background: #1c2637;
+            color: #e8edf7;
+        }
+
+        body.dark-theme .admin-note,
+        body.dark-theme .password-hint,
+        body.dark-theme .terms,
+        body.dark-theme .login-area p,
+        body.dark-theme .security,
+        body.dark-theme .footer {
+            color: #8f9db3;
+        }
+
+        body.dark-theme .terms a,
+        body.dark-theme .login-area a {
+            color: #dbe5f5;
+        }
+
+        body.dark-theme .divider {
+            color: #7f8da5;
+        }
+
+        body.dark-theme .divider::before,
+        body.dark-theme .divider::after {
+            background: #303b50;
+        }
+
+        body.dark-theme .security-icon {
+            border-color: #3a465b;
+        }
+
+        body.dark-theme .create-button {
+            background: #e8edf7;
+            color: #17233d;
+        }
+
+        body.dark-theme .create-button:hover {
+            background: #ffffff;
+            box-shadow:
+                0 8px 20px
+                rgba(0, 0, 0, 0.25);
+        }
+
+        body.dark-theme .alert-success {
+            color: #9ee2bd;
+            background: #13281f;
+            border-color: #24553e;
+        }
+
+        body.dark-theme .alert-danger,
+        body.dark-theme .alert-error {
+            color: #ffb0b0;
+            background: #301a1a;
+            border-color: #633030;
+        }
+
+        body.dark-theme .alert-warning {
+            color: #f1d38a;
+            background: #302815;
+            border-color: #5e4d20;
+        }
+
+        body.dark-theme .alert-info {
+            color: #a9c9ef;
+            background: #17273a;
+            border-color: #2e4c6d;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .theme-button {
+                transition: none;
+            }
+        }
+
+
+        /* =====================================================
+           FINAL ACCOUNT TYPE ALIGNMENT OVERRIDE
+           Overrides the generic .form-group label/input rules.
+        ====================================================== */
+
+        .form-group.account-type .role-options {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 16px !important;
+            width: 100% !important;
+            align-items: stretch !important;
+        }
+
+        .form-group.account-type .role-options .role-option {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: 56px !important;
+            min-height: 56px !important;
+            margin: 0 !important;
+            padding: 0 16px !important;
+
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+
+            gap: 10px !important;
+            line-height: 1 !important;
+        }
+
+        .form-group.account-type .role-options .role-option .role-radio {
+            box-sizing: border-box !important;
+
+            width: 18px !important;
+            height: 18px !important;
+            min-width: 18px !important;
+            max-width: 18px !important;
+            min-height: 18px !important;
+            max-height: 18px !important;
+
+            flex: 0 0 18px !important;
+
+            margin: 0 !important;
+            padding: 0 !important;
+
+            display: block !important;
+
+            appearance: none !important;
+            -webkit-appearance: none !important;
+        }
+
+        .form-group.account-type .role-options .role-option span {
+            box-sizing: border-box !important;
+
+            display: inline-flex !important;
+            align-items: center !important;
+
+            width: auto !important;
+            height: auto !important;
+
+            margin: 0 !important;
+            padding: 0 !important;
+
+            line-height: 1 !important;
+            flex: 0 0 auto !important;
+        }
+
+        @media (max-width: 760px) {
+            .form-group.account-type .role-options {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
         }
 
     </style>
@@ -2287,6 +2521,82 @@
 
     <script>
 
+
+
+        /* =====================================================
+           THEME TOGGLE
+        ====================================================== */
+
+        const themeButton =
+            document.querySelector(".theme-button");
+
+        const savedTheme =
+            localStorage.getItem("uce-theme");
+
+        function applyTheme(theme) {
+
+            const isDark =
+                theme === "dark";
+
+            document.body.classList.toggle(
+                "dark-theme",
+                isDark
+            );
+
+            if (themeButton) {
+
+                themeButton.textContent =
+                    isDark ? "☀" : "☾";
+
+                themeButton.setAttribute(
+                    "aria-label",
+                    isDark
+                        ? "Switch to light theme"
+                        : "Switch to dark theme"
+                );
+
+                themeButton.setAttribute(
+                    "title",
+                    isDark
+                        ? "Switch to light theme"
+                        : "Switch to dark theme"
+                );
+            }
+        }
+
+        applyTheme(
+            savedTheme === "dark"
+                ? "dark"
+                : "light"
+        );
+
+        if (themeButton) {
+
+            themeButton.addEventListener(
+                "click",
+                function () {
+
+                    const isDark =
+                        document.body.classList.contains(
+                            "dark-theme"
+                        );
+
+                    const nextTheme =
+                        isDark
+                            ? "light"
+                            : "dark";
+
+                    localStorage.setItem(
+                        "uce-theme",
+                        nextTheme
+                    );
+
+                    applyTheme(
+                        nextTheme
+                    );
+                }
+            );
+        }
 
         /* =====================================================
            ROLE ELEMENTS
