@@ -24,6 +24,10 @@ from werkzeug.security import (
 
 from config import Config
 from database.db import get_connection
+from services.admin_settings import (
+    generate_admin_registration_code,
+    verify_admin_registration_code,
+)
 from services.data_service import (
     MODULES,
     create_dataset,
@@ -237,207 +241,204 @@ def about():
 # REGISTER
 # =========================================================
 
-@main_bp.route(
-    "/register",
-    methods=["GET", "POST"]
-)
+@main_bp.route("/register", methods=["GET", "POST"])
 def register():
 
-    if request.method == "GET":
+    if request.method == "POST":
 
-        return render_template(
-            "register.html"
-        )
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        role = request.form.get("role", "user").strip().lower()
+        terms = request.form.get("terms")
+        registration_code = request.form.get(
+            "registration_code", ""
+        ).strip()
 
+        # =====================================================
+        # BASIC VALIDATION
+        # =====================================================
 
-    name = request.form.get(
-        "name",
-        ""
-    ).strip()
+        if not name:
+            flash("Please enter your full name.", "danger")
+            return redirect(url_for("main.register"))
 
-    email = request.form.get(
-        "email",
-        ""
-    ).strip().lower()
+        if not email:
+            flash("Please enter your email address.", "danger")
+            return redirect(url_for("main.register"))
 
-    password = request.form.get(
-        "password",
-        ""
-    )
+        if not password:
+            flash("Please enter a password.", "danger")
+            return redirect(url_for("main.register"))
 
-    confirm_password = request.form.get(
-        "confirm_password",
-        ""
-    )
-
-    role = request.form.get(
-        "role",
-        "user"
-    ).strip().lower()
-
-    admin_code = request.form.get(
-        "admin_code",
-        ""
-    ).strip()
-
-
-    if not name or not email:
-
-        flash(
-            "Name and email are required.",
-            "danger"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-
-    if len(password) < 8:
-
-        flash(
-            "Password must contain at least 8 characters.",
-            "danger"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-
-    if password != confirm_password:
-
-        flash(
-            "Passwords do not match.",
-            "danger"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-
-    if role not in (
-        "user",
-        "admin"
-    ):
-
-        role = "user"
-
-
-    if (
-        role == "admin"
-        and admin_code != Config.ADMIN_REGISTRATION_CODE
-    ):
-
-        flash(
-            "Invalid administrator registration code.",
-            "danger"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-
-    connection = get_connection()
-
-    try:
-
-        existing = connection.execute(
-            """
-            SELECT id
-            FROM users
-            WHERE email = ?
-            COLLATE NOCASE
-            LIMIT 1
-            """,
-            (email,),
-        ).fetchone()
-
-
-        if existing:
-
+        if len(password) < 6:
             flash(
-                "An account with this email already exists.",
+                "Password must contain at least 6 characters.",
                 "danger"
             )
+            return redirect(url_for("main.register"))
 
-            return render_template(
-                "register.html"
+        if password != confirm_password:
+            flash(
+                "Passwords do not match.",
+                "danger"
             )
+            return redirect(url_for("main.register"))
 
-
-        cursor = connection.execute(
-            """
-            INSERT INTO users
-            (
-                name,
-                email,
-                password_hash,
-                role
+        if not terms:
+            flash(
+                "Please accept the terms before creating your account.",
+                "danger"
             )
-            VALUES (?, ?, ?, ?)
-            """,
-            (
-                name,
-                email,
-                generate_password_hash(password),
-                role,
-            ),
-        )
+            return redirect(url_for("main.register"))
 
+        # =====================================================
+        # ROLE VALIDATION
+        # =====================================================
 
-        connection.commit()
+        if role not in ("user", "admin"):
+            flash(
+                "Invalid account type selected.",
+                "danger"
+            )
+            return redirect(url_for("main.register"))
 
-
-        session.clear()
-
-        session["user_id"] = cursor.lastrowid
-
-        session["user_name"] = name
-
-        session["user_role"] = role
-
-
-        flash(
-            "Registration successful.",
-            "success"
-        )
-
+        # =====================================================
+        # ADMIN CODE VALIDATION
+        # =====================================================
 
         if role == "admin":
 
-            return redirect(
-                url_for(
-                    "main.admin"
+            if not registration_code:
+                flash(
+                    "Admin registration code is required.",
+                    "danger"
+                )
+                return redirect(url_for("main.register"))
+
+            if not verify_admin_registration_code(registration_code):
+                flash(
+                    "Invalid administrator registration code.",
+                    "danger"
+                )
+                return redirect(url_for("main.register"))
+
+        # =====================================================
+        # DATABASE
+        # =====================================================
+
+        connection = None
+
+        try:
+
+            # -------------------------------------------------
+            # USE THE SAME DATABASE CONNECTION AS LOGIN/AUTH
+            # -------------------------------------------------
+
+            connection = get_connection()
+
+            # -------------------------------------------------
+            # CHECK EXISTING EMAIL
+            # -------------------------------------------------
+
+            existing_user = connection.execute(
+                """
+                SELECT id
+                FROM users
+                WHERE email = ?
+                COLLATE NOCASE
+                LIMIT 1
+                """,
+                (email,)
+            ).fetchone()
+
+            if existing_user:
+
+                flash(
+                    "An account with this email already exists.",
+                    "danger"
+                )
+
+                return redirect(
+                    url_for("main.register")
+                )
+
+            # -------------------------------------------------
+            # HASH PASSWORD
+            # -------------------------------------------------
+
+            password_hash = generate_password_hash(
+                password
+            )
+
+            # -------------------------------------------------
+            # CREATE USER
+            # -------------------------------------------------
+
+            connection.execute(
+                """
+                INSERT INTO users
+                (
+                    name,
+                    email,
+                    password_hash,
+                    role
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    name,
+                    email,
+                    password_hash,
+                    role
                 )
             )
 
+            connection.commit()
 
-        return redirect(
-            url_for(
-                "main.submit_link"
+            flash(
+                "Account created successfully. Please sign in.",
+                "success"
             )
-        )
 
+            return redirect(
+                url_for("main.login")
+            )
 
-    except Exception as error:
+        except Exception as e:
 
-        connection.rollback()
+            if connection is not None:
 
-        flash(
-            f"Registration failed: {error}",
-            "danger"
-        )
+                try:
+                    connection.rollback()
+                except Exception:
+                    pass
 
-        return render_template(
-            "register.html"
-        )
+            print(
+                "REGISTRATION ERROR:",
+                repr(e)
+            )
 
-    finally:
+            flash(
+                "Unable to create account. Please try again.",
+                "danger"
+            )
 
-        connection.close()
+            return redirect(
+                url_for("main.register")
+            )
+
+        finally:
+
+            if connection is not None:
+
+                try:
+                    connection.close()
+                except Exception:
+                    pass
+
+    return render_template("register.html")
 
 
 # =========================================================
@@ -1158,6 +1159,45 @@ def admin():
 
         modules=MODULES,
     )
+
+
+# =========================================================
+# ADMIN SETTINGS
+# =========================================================
+
+@main_bp.route("/admin/settings", methods=["GET"])
+@admin_required
+def admin_settings():
+    return render_template(
+        "admin_settings.html"
+    )
+
+
+@main_bp.route(
+    "/admin/settings/generate-registration-code",
+    methods=["POST"]
+)
+@admin_required
+def generate_registration_code():
+    try:
+        registration_code = generate_admin_registration_code()
+
+        return render_template(
+            "admin_settings.html",
+            registration_code=registration_code,
+        )
+
+    except Exception as error:
+        print("ADMIN REGISTRATION CODE ERROR:", error)
+
+        flash(
+            "Unable to generate a new administrator registration code.",
+            "danger"
+        )
+
+        return redirect(
+            url_for("main.admin_settings")
+        )
 
 
 # =========================================================

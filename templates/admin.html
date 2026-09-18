@@ -36,13 +36,17 @@ Admin Portal | UCE Connect
 
             <div class="admin-header-actions">
 
-                <span class="admin-badge">
+                <a
+                    class="admin-badge"
+                    href="{{ url_for('main.admin_settings') }}"
+                    style="text-decoration:none;"
+                >
 
                     <i class="fa-solid fa-shield-halved"></i>
 
                     Admin Portal
 
-                </span>
+                </a>
 
 
                 <a

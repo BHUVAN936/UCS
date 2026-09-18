@@ -36,11 +36,6 @@ class Config:
         "xls",
     }
 
-    ADMIN_REGISTRATION_CODE = os.getenv(
-        "UCE_ADMIN_REGISTRATION_CODE",
-        "Bhuvan@25",
-    )
-
     SESSION_COOKIE_HTTPONLY = True
 
     SESSION_COOKIE_SAMESITE = "Lax"

@@ -1,19 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Create Account | UCE Connect</title>
 
+
     <style>
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+
         :root {
+
             --navy: #17233d;
             --navy-hover: #243451;
             --blue: #6079a5;
@@ -23,233 +32,394 @@
             --border: #dce3ed;
             --background: #f5f7fa;
             --white: #ffffff;
+
         }
 
+
         body {
+
             min-height: 100vh;
-            font-family: "Segoe UI", Arial, Helvetica, sans-serif;
-            background: var(--background);
-            color: var(--text);
+
+            font-family:
+                "Segoe UI",
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background:
+                var(--background);
+
+            color:
+                var(--text);
+
         }
+
 
         /* ================= NAVBAR ================= */
 
         .navbar {
+
             height: 82px;
+
             width: 100%;
+
             background: #ffffff;
-            border-bottom: 1px solid #e1e6ee;
+
+            border-bottom:
+                1px solid #e1e6ee;
 
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
             padding: 0 13%;
+
         }
 
+
         .brand {
+
             display: flex;
+
             align-items: center;
+
             gap: 14px;
 
             text-decoration: none;
-            color: var(--navy);
+
+            color:
+                var(--navy);
+
         }
 
+
         .brand-logo {
+
             width: 49px;
+
             height: 49px;
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
-            background: var(--navy);
+            background:
+                var(--navy);
+
             color: white;
 
             border-radius: 12px;
 
             font-size: 14px;
+
             font-weight: 800;
+
         }
+
 
         .brand-info {
+
             display: flex;
+
             flex-direction: column;
+
             gap: 3px;
+
         }
+
 
         .brand-name {
-            color: var(--navy);
+
+            color:
+                var(--navy);
+
             font-size: 16px;
+
             font-weight: 750;
+
         }
+
 
         .brand-subtitle {
+
             color: #7c8aa2;
+
             font-size: 9px;
+
             font-weight: 700;
+
             letter-spacing: 1.2px;
+
         }
+
 
         .nav-links {
+
             display: flex;
+
             align-items: center;
+
             gap: 28px;
+
         }
+
 
         .nav-links a {
+
             color: #65748e;
+
             text-decoration: none;
+
             font-size: 13px;
+
             font-weight: 650;
+
         }
+
 
         .nav-links a:hover {
-            color: var(--navy);
+
+            color:
+                var(--navy);
+
         }
+
 
         .login-link {
-            color: var(--navy) !important;
+
+            color:
+                var(--navy) !important;
+
         }
+
 
         .register-link {
-            padding: 14px 19px;
-            background: var(--navy);
-            color: #ffffff !important;
+
+            padding:
+                14px 19px;
+
+            background:
+                var(--navy);
+
+            color:
+                #ffffff !important;
+
             border-radius: 9px;
-            font-weight: 700 !important;
+
+            font-weight:
+                700 !important;
+
         }
+
 
         .register-link:hover {
-            background: var(--navy-hover);
+
+            background:
+                var(--navy-hover);
+
         }
 
+
         .theme-button {
+
             width: 48px;
+
             height: 48px;
 
             border-radius: 50%;
-            border: 1px solid #dfe5ed;
 
-            background: #ffffff;
-            color: var(--navy);
+            border:
+                1px solid #dfe5ed;
+
+            background:
+                #ffffff;
+
+            color:
+                var(--navy);
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
             font-size: 17px;
+
+            cursor: pointer;
+
         }
+
 
         /* ================= MAIN ================= */
 
         .main {
-            min-height: calc(100vh - 82px);
+
+            min-height:
+                calc(100vh - 82px);
 
             display: flex;
+
             justify-content: center;
 
-            padding: 45px 20px 60px;
+            padding:
+                45px 20px 60px;
 
             position: relative;
+
             overflow: hidden;
+
         }
 
+
         .shape-one {
+
             position: absolute;
 
             width: 430px;
+
             height: 430px;
 
             border-radius: 50%;
 
-            background: rgba(49, 87, 164, 0.035);
+            background:
+                rgba(49, 87, 164, 0.035);
 
             top: -220px;
+
             right: -150px;
 
             pointer-events: none;
+
         }
 
+
         .shape-two {
+
             position: absolute;
 
             width: 300px;
+
             height: 300px;
 
             border-radius: 50%;
 
-            border: 1px solid rgba(49, 87, 164, 0.055);
+            border:
+                1px solid rgba(
+                    49,
+                    87,
+                    164,
+                    0.055
+                );
 
             bottom: -170px;
+
             left: -130px;
 
             pointer-events: none;
+
         }
+
 
         /* ================= CARD ================= */
 
         .register-wrapper {
+
             width: 100%;
+
             max-width: 650px;
 
             position: relative;
+
             z-index: 2;
+
         }
 
+
         .register-card {
+
             background: #ffffff;
 
-            border: 1px solid #dfe5ed;
+            border:
+                1px solid #dfe5ed;
 
             border-radius: 18px;
 
-            padding: 40px 48px 38px;
+            padding:
+                40px 48px 38px;
 
             box-shadow:
-                0 15px 40px rgba(23, 35, 61, 0.065);
+                0 15px 40px
+                rgba(
+                    23,
+                    35,
+                    61,
+                    0.065
+                );
 
             position: relative;
+
         }
 
+
         .register-card::before {
+
             content: "";
 
             position: absolute;
 
             top: 0;
+
             left: 45px;
+
             right: 45px;
 
             height: 3px;
 
-            background: var(--navy);
+            background:
+                var(--navy);
 
-            border-radius: 0 0 4px 4px;
+            border-radius:
+                0 0 4px 4px;
+
         }
+
 
         /* ================= HEADER ================= */
 
         .header {
+
             margin-bottom: 27px;
+
         }
 
+
         .eyebrow {
-            color: #6079a5;
+
+            color:
+                #6079a5;
 
             font-size: 10px;
+
             font-weight: 800;
 
             letter-spacing: 2px;
 
-            text-transform: uppercase;
+            text-transform:
+                uppercase;
 
             margin-bottom: 9px;
+
         }
 
+
         .header h1 {
-            color: var(--navy);
+
+            color:
+                var(--navy);
 
             font-family:
                 Georgia,
@@ -265,26 +435,37 @@
             letter-spacing: -1.2px;
 
             margin-bottom: 9px;
+
         }
 
+
         .header p {
-            color: #71809a;
+
+            color:
+                #71809a;
 
             font-size: 13px;
 
             line-height: 1.6;
 
             max-width: 510px;
+
         }
+
 
         /* ================= FLASH ================= */
 
         .flash-container {
+
             margin-bottom: 20px;
+
         }
 
+
         .alert {
-            padding: 11px 14px;
+
+            padding:
+                11px 14px;
 
             border-radius: 9px;
 
@@ -294,210 +475,529 @@
 
             line-height: 1.5;
 
-            border: 1px solid transparent;
+            border:
+                1px solid transparent;
+
         }
 
+
         .alert-success {
-            color: #17633f;
-            background: #edf8f2;
-            border-color: #c9ead8;
+
+            color:
+                #17633f;
+
+            background:
+                #edf8f2;
+
+            border-color:
+                #c9ead8;
+
         }
+
 
         .alert-danger,
         .alert-error {
-            color: #9b2c2c;
-            background: #fff1f1;
-            border-color: #f2cccc;
+
+            color:
+                #9b2c2c;
+
+            background:
+                #fff1f1;
+
+            border-color:
+                #f2cccc;
+
         }
+
 
         .alert-warning {
-            color: #8a6210;
-            background: #fff9e9;
-            border-color: #f1dfac;
+
+            color:
+                #8a6210;
+
+            background:
+                #fff9e9;
+
+            border-color:
+                #f1dfac;
+
         }
 
+
         .alert-info {
-            color: #315b91;
-            background: #eef5fc;
-            border-color: #cfdef0;
+
+            color:
+                #315b91;
+
+            background:
+                #eef5fc;
+
+            border-color:
+                #cfdef0;
+
         }
+
 
         /* ================= FORM GRID ================= */
 
         .form-grid {
+
             display: grid;
 
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+                1fr 1fr;
 
-            gap: 18px 16px;
+            gap:
+                18px 16px;
+
         }
+
 
         .full-width {
-            grid-column: 1 / -1;
+
+            grid-column:
+                1 / -1;
+
         }
+
 
         .form-group {
+
             margin-bottom: 0;
+
         }
 
+
         .form-group label {
+
             display: block;
 
-            color: var(--navy);
+            color:
+                var(--navy);
 
             font-size: 12px;
 
             font-weight: 750;
 
             margin-bottom: 8px;
+
         }
+
 
         /* ================= INPUT ================= */
 
         .input-box {
+
             position: relative;
+
         }
 
+
         .input-icon {
+
             position: absolute;
 
             left: 14px;
+
             top: 50%;
 
             width: 17px;
+
             height: 17px;
 
-            transform: translateY(-50%);
+            transform:
+                translateY(-50%);
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
-            color: var(--icon);
+            color:
+                var(--icon);
 
             pointer-events: none;
 
             z-index: 2;
+
         }
 
+
         .input-icon svg {
+
             width: 16px;
+
             height: 16px;
 
             fill: none;
 
-            stroke: currentColor;
+            stroke:
+                currentColor;
 
             stroke-width: 1.7;
 
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            stroke-linecap:
+                round;
+
+            stroke-linejoin:
+                round;
+
         }
 
+
         .input {
+
             width: 100%;
+
             height: 50px;
 
-            padding: 0 15px 0 42px;
+            padding:
+                0 15px 0 42px;
 
-            background: #ffffff;
+            background:
+                #ffffff;
 
-            border: 1px solid var(--border);
+            border:
+                1px solid var(--border);
 
             border-radius: 10px;
 
             outline: none;
 
-            color: var(--navy);
+            color:
+                var(--navy);
 
-            font-family: inherit;
+            font-family:
+                inherit;
 
             font-size: 13px;
 
             transition:
                 border-color 0.2s ease,
                 box-shadow 0.2s ease;
+
         }
+
 
         .input::placeholder {
-            color: #a0aabd;
+
+            color:
+                #a0aabd;
+
         }
+
 
         .input:hover {
-            border-color: #c7d0dc;
+
+            border-color:
+                #c7d0dc;
+
         }
 
+
         .input:focus {
-            border-color: #6079a5;
+
+            border-color:
+                #6079a5;
 
             box-shadow:
                 0 0 0 3px
-                rgba(96, 121, 165, 0.09);
+                rgba(
+                    96,
+                    121,
+                    165,
+                    0.09
+                );
+
         }
+
+
+        /* ================= ACCOUNT TYPE ================= */
+
+        .account-type {
+
+            margin-top: 0;
+
+        }
+
+
+        .role-options {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 16px;
+
+        }
+
+
+        .role-option {
+
+            height: 50px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding:
+                0 15px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 10px;
+
+            background:
+                #ffffff;
+
+            color:
+                var(--navy);
+
+            font-size: 13px;
+
+            font-weight: 750;
+
+            cursor: pointer;
+
+            transition:
+                border-color 0.2s ease,
+                background 0.2s ease,
+                box-shadow 0.2s ease;
+
+        }
+
+
+        .role-option:hover {
+
+            border-color:
+                #c7d0dc;
+
+        }
+
+
+        .role-option.selected {
+
+            border-color:
+                #6079a5;
+
+            background:
+                #f8faff;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(
+                    96,
+                    121,
+                    165,
+                    0.08
+                );
+
+        }
+
+
+        .role-radio {
+
+            width: 17px;
+
+            height: 17px;
+
+            margin: 0;
+
+            appearance: none;
+
+            -webkit-appearance:
+                none;
+
+            flex-shrink: 0;
+
+            border:
+                1.5px solid #a8b3c3;
+
+            border-radius: 50%;
+
+            background:
+                #ffffff;
+
+            position: relative;
+
+            cursor: pointer;
+
+        }
+
+
+        .role-radio:checked {
+
+            border-color:
+                var(--navy);
+
+        }
+
+
+        .role-radio:checked::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 7px;
+
+            height: 7px;
+
+            left: 50%;
+
+            top: 50%;
+
+            transform:
+                translate(
+                    -50%,
+                    -50%
+                );
+
+            border-radius: 50%;
+
+            background:
+                var(--navy);
+
+        }
+
+
+        /* ================= ADMIN CODE ================= */
+
+        #admin-code-group {
+
+            display: none;
+
+        }
+
+
+        #admin-code-group.show {
+
+            display: block;
+
+        }
+
+
+        .admin-note {
+
+            margin-top: 7px;
+
+            color:
+                #8a96a8;
+
+            font-size: 10px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .admin-note strong {
+
+            color:
+                #6079a5;
+
+        }
+
 
         /* ================= PASSWORD ================= */
 
         .password-input {
+
             padding-right: 48px;
+
         }
 
+
         .password-toggle {
+
             position: absolute;
 
             right: 8px;
+
             top: 50%;
 
             width: 34px;
+
             height: 34px;
 
-            transform: translateY(-50%);
+            transform:
+                translateY(-50%);
 
             display: flex;
+
             align-items: center;
+
             justify-content: center;
 
             border: none;
+
             border-radius: 7px;
 
-            background: transparent;
+            background:
+                transparent;
 
-            color: var(--icon);
+            color:
+                var(--icon);
 
             cursor: pointer;
+
         }
+
 
         .password-toggle:hover {
-            background: #f1f4f8;
-            color: var(--navy);
+
+            background:
+                #f1f4f8;
+
+            color:
+                var(--navy);
+
         }
 
+
         .password-toggle svg {
+
             width: 17px;
+
             height: 17px;
 
             fill: none;
 
-            stroke: currentColor;
+            stroke:
+                currentColor;
 
             stroke-width: 1.7;
 
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            stroke-linecap:
+                round;
+
+            stroke-linejoin:
+                round;
+
         }
 
-        /* ================= PASSWORD RULE ================= */
 
         .password-hint {
+
             margin-top: 7px;
 
-            color: #8a96a8;
+            color:
+                #8a96a8;
 
             font-size: 10px;
+
         }
+
 
         /* ================= TERMS ================= */
 
         .terms {
+
             display: flex;
 
             align-items: flex-start;
@@ -506,41 +1006,58 @@
 
             margin-top: 22px;
 
-            color: #71809a;
+            color:
+                #71809a;
 
             font-size: 11px;
 
             line-height: 1.5;
+
         }
 
+
         .terms input {
+
             width: 15px;
+
             height: 15px;
 
             flex-shrink: 0;
 
             margin-top: 1px;
 
-            accent-color: var(--navy);
+            accent-color:
+                var(--navy);
 
             cursor: pointer;
+
         }
 
+
         .terms a {
-            color: var(--navy);
+
+            color:
+                var(--navy);
 
             font-weight: 700;
 
             text-decoration: none;
+
         }
 
+
         .terms a:hover {
-            text-decoration: underline;
+
+            text-decoration:
+                underline;
+
         }
+
 
         /* ================= BUTTON ================= */
 
         .create-button {
+
             width: 100%;
 
             height: 53px;
@@ -551,11 +1068,14 @@
 
             border-radius: 10px;
 
-            background: var(--navy);
+            background:
+                var(--navy);
 
-            color: #ffffff;
+            color:
+                #ffffff;
 
-            font-family: inherit;
+            font-family:
+                inherit;
 
             font-size: 14px;
 
@@ -569,96 +1089,142 @@
                 background 0.2s ease,
                 transform 0.2s ease,
                 box-shadow 0.2s ease;
+
         }
 
-        .create-button:hover {
-            background: var(--navy-hover);
 
-            transform: translateY(-1px);
+        .create-button:hover {
+
+            background:
+                var(--navy-hover);
+
+            transform:
+                translateY(-1px);
 
             box-shadow:
                 0 8px 20px
-                rgba(23, 35, 61, 0.15);
+                rgba(
+                    23,
+                    35,
+                    61,
+                    0.15
+                );
+
         }
+
 
         .create-button:active {
-            transform: translateY(0);
+
+            transform:
+                translateY(0);
+
         }
 
+
         .button-arrow {
+
             position: absolute;
 
             right: 18px;
 
             top: 50%;
 
-            transform: translateY(-50%);
+            transform:
+                translateY(-50%);
 
             font-size: 18px;
+
         }
+
 
         /* ================= DIVIDER ================= */
 
         .divider {
+
             display: flex;
 
             align-items: center;
 
             gap: 13px;
 
-            margin: 25px 0 20px;
+            margin:
+                25px 0 20px;
 
-            color: #a0aabd;
+            color:
+                #a0aabd;
 
             font-size: 9px;
 
             font-weight: 700;
 
             letter-spacing: 1.5px;
+
         }
+
 
         .divider::before,
         .divider::after {
+
             content: "";
 
             flex: 1;
 
             height: 1px;
 
-            background: #e5e9ef;
+            background:
+                #e5e9ef;
+
         }
+
 
         /* ================= LOGIN ================= */
 
         .login-area {
+
             text-align: center;
+
         }
+
 
         .login-area p {
-            color: #71809a;
+
+            color:
+                #71809a;
 
             font-size: 13px;
+
         }
 
+
         .login-area a {
-            color: var(--navy);
+
+            color:
+                var(--navy);
 
             font-weight: 750;
 
             text-decoration: none;
 
             margin-left: 4px;
+
         }
+
 
         .login-area a:hover {
-            color: #6079a5;
 
-            text-decoration: underline;
+            color:
+                #6079a5;
+
+            text-decoration:
+                underline;
+
         }
+
 
         /* ================= SECURITY ================= */
 
         .security {
+
             display: flex;
 
             align-items: center;
@@ -669,154 +1235,244 @@
 
             margin-top: 21px;
 
-            color: #9aa5b6;
+            color:
+                #9aa5b6;
 
             font-size: 10px;
+
         }
 
+
         .security-icon {
+
             width: 17px;
+
             height: 17px;
 
             display: flex;
 
             align-items: center;
+
             justify-content: center;
 
-            border: 1px solid #d8dee7;
+            border:
+                1px solid #d8dee7;
 
             border-radius: 50%;
 
             font-size: 9px;
+
         }
+
 
         /* ================= FOOTER ================= */
 
         .footer {
+
             text-align: center;
 
             margin-top: 21px;
 
-            color: #8b98aa;
+            color:
+                #8b98aa;
 
             font-size: 10px;
+
         }
+
 
         /* ================= TABLET ================= */
 
         @media (max-width: 1000px) {
 
             .navbar {
-                padding: 0 6%;
+
+                padding:
+                    0 6%;
+
             }
 
         }
+
 
         /* ================= MOBILE ================= */
 
         @media (max-width: 760px) {
 
             .navbar {
+
                 height: 72px;
 
-                padding: 0 5%;
+                padding:
+                    0 5%;
+
             }
+
 
             .nav-links {
+
                 gap: 13px;
+
             }
 
-            .nav-links a:not(.login-link):not(.register-link) {
+
+            .nav-links a:not(
+                .login-link
+            ):not(
+                .register-link
+            ) {
+
                 display: none;
+
             }
+
 
             .theme-button {
+
                 width: 42px;
+
                 height: 42px;
+
             }
 
+
             .main {
+
                 min-height:
                     calc(100vh - 72px);
 
                 padding:
                     35px 15px 50px;
+
             }
+
 
             .register-card {
+
                 padding:
                     37px 28px 32px;
+
             }
+
 
             .form-grid {
-                grid-template-columns: 1fr;
+
+                grid-template-columns:
+                    1fr;
+
             }
 
+
             .full-width {
+
                 grid-column: auto;
+
             }
 
         }
+
 
         /* ================= SMALL MOBILE ================= */
 
         @media (max-width: 480px) {
 
             .brand-logo {
+
                 width: 43px;
+
                 height: 43px;
+
             }
+
 
             .brand-subtitle {
+
                 display: none;
+
             }
+
 
             .brand-name {
+
                 font-size: 15px;
+
             }
 
+
             .register-card {
+
                 border-radius: 15px;
 
                 padding:
                     34px 22px 29px;
+
             }
+
 
             .register-card::before {
+
                 left: 30px;
+
                 right: 30px;
+
             }
 
+
             .header h1 {
+
                 font-size: 35px;
+
+            }
+
+
+            .role-options {
+
+                grid-template-columns:
+                    1fr;
+
             }
 
         }
+
 
         /* ================= VERY SMALL ================= */
 
         @media (max-width: 370px) {
 
             .brand-info {
+
                 display: none;
+
             }
+
 
             .login-link {
-                display: none !important;
+
+                display:
+                    none !important;
+
             }
+
 
             .header h1 {
+
                 font-size: 31px;
+
             }
 
+
             .register-card {
+
                 padding-left: 18px;
+
                 padding-right: 18px;
+
             }
 
         }
 
     </style>
+
 </head>
 
 
@@ -829,6 +1485,7 @@
 
     <header class="navbar">
 
+
         <a
             href="{{ url_for('main.home') }}"
             class="brand"
@@ -838,11 +1495,13 @@
                 UCE
             </div>
 
+
             <div class="brand-info">
 
                 <div class="brand-name">
                     UCE Connect
                 </div>
+
 
                 <div class="brand-subtitle">
                     UNIVERSITY INFORMATION PORTAL
@@ -855,29 +1514,43 @@
 
         <nav class="nav-links">
 
-            <a href="{{ url_for('main.home') }}">
+
+            <a
+                href="{{ url_for('main.home') }}"
+            >
                 Home
             </a>
 
-            <a href="{{ url_for('main.modules_page') }}">
+
+            <a
+                href="{{ url_for('main.modules_page') }}"
+            >
                 Modules
             </a>
 
-            <a href="{{ url_for('main.home') }}">
+
+            <a
+                href="{{ url_for('main.home') }}"
+            >
                 Updates
             </a>
 
-            <a href="{{ url_for('main.about') }}">
+
+            <a
+                href="{{ url_for('main.about') }}"
+            >
                 About
             </a>
+
 
             <button
                 type="button"
                 class="theme-button"
-                title="Light theme"
+                title="Theme"
             >
                 ☾
             </button>
+
 
             <a
                 href="{{ url_for('main.login') }}"
@@ -886,12 +1559,14 @@
                 Login
             </a>
 
+
             <a
                 href="{{ url_for('main.register') }}"
                 class="register-link"
             >
                 Register
             </a>
+
 
         </nav>
 
@@ -903,6 +1578,7 @@
     ====================================================== -->
 
     <main class="main">
+
 
         <div class="shape-one"></div>
 
@@ -921,19 +1597,23 @@
 
                 <div class="header">
 
+
                     <div class="eyebrow">
                         UCE CONNECT
                     </div>
 
+
                     <h1>
                         Create your account.
                     </h1>
+
 
                     <p>
                         Register to access the university
                         information portal and manage your
                         academic information securely.
                     </p>
+
 
                 </div>
 
@@ -948,11 +1628,15 @@
                     )
                 %}
 
+
                     {% if messages %}
+
 
                         <div class="flash-container">
 
+
                             {% for category, message in messages %}
+
 
                                 <div
                                     class="alert alert-{{ category }}"
@@ -960,11 +1644,15 @@
                                     {{ message }}
                                 </div>
 
+
                             {% endfor %}
+
 
                         </div>
 
+
                     {% endif %}
+
 
                 {% endwith %}
 
@@ -977,6 +1665,7 @@
                     method="POST"
                     action="{{ url_for('main.register') }}"
                     autocomplete="on"
+                    id="registerForm"
                 >
 
 
@@ -985,17 +1674,24 @@
 
                         <!-- NAME -->
 
-                        <div class="form-group full-width">
+                        <div
+                            class="form-group full-width"
+                        >
 
                             <label for="name">
                                 Full Name
                             </label>
 
+
                             <div class="input-box">
+
 
                                 <span class="input-icon">
 
-                                    <svg viewBox="0 0 24 24">
+
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                    >
 
                                         <circle
                                             cx="12"
@@ -1003,11 +1699,14 @@
                                             r="3.5"
                                         ></circle>
 
+
                                         <path
                                             d="M5 20c.8-3.2 3.2-5 7-5s6.2 1.8 7 5"
                                         ></path>
 
+
                                     </svg>
+
 
                                 </span>
 
@@ -1022,24 +1721,33 @@
                                     required
                                 >
 
+
                             </div>
+
 
                         </div>
 
 
                         <!-- EMAIL -->
 
-                        <div class="form-group full-width">
+                        <div
+                            class="form-group full-width"
+                        >
 
                             <label for="email">
                                 Email Address
                             </label>
 
+
                             <div class="input-box">
+
 
                                 <span class="input-icon">
 
-                                    <svg viewBox="0 0 24 24">
+
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                    >
 
                                         <rect
                                             x="3"
@@ -1049,11 +1757,14 @@
                                             rx="2"
                                         ></rect>
 
+
                                         <path
                                             d="M3 7l9 6 9-6"
                                         ></path>
 
+
                                     </svg>
+
 
                                 </span>
 
@@ -1068,24 +1779,111 @@
                                     required
                                 >
 
+
                             </div>
+
 
                         </div>
 
 
-                        <!-- PASSWORD -->
+                        <!-- ACCOUNT TYPE -->
 
-                        <div class="form-group">
+                        <div
+                            class="form-group full-width account-type"
+                        >
 
-                            <label for="password">
-                                Password
+
+                            <label>
+                                Account Type
                             </label>
+
+
+                            <div class="role-options">
+
+
+                                <!-- USER -->
+
+                                <label
+                                    class="role-option selected"
+                                    id="user-role-option"
+                                    for="user-role"
+                                >
+
+
+                                    <input
+                                        type="radio"
+                                        class="role-radio"
+                                        id="user-role"
+                                        name="role"
+                                        value="user"
+                                        checked
+                                    >
+
+
+                                    <span>
+                                        User
+                                    </span>
+
+
+                                </label>
+
+
+                                <!-- ADMIN -->
+
+                                <label
+                                    class="role-option"
+                                    id="admin-role-option"
+                                    for="admin-role"
+                                >
+
+
+                                    <input
+                                        type="radio"
+                                        class="role-radio"
+                                        id="admin-role"
+                                        name="role"
+                                        value="admin"
+                                    >
+
+
+                                    <span>
+                                        Admin
+                                    </span>
+
+
+                                </label>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- ADMIN REGISTRATION CODE -->
+
+                        <div
+                            class="form-group full-width"
+                            id="admin-code-group"
+                        >
+
+
+                            <label
+                                for="registration_code"
+                            >
+                                Admin Registration Code
+                            </label>
+
 
                             <div class="input-box">
 
+
                                 <span class="input-icon">
 
-                                    <svg viewBox="0 0 24 24">
+
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                    >
 
                                         <rect
                                             x="5"
@@ -1095,11 +1893,120 @@
                                             rx="2"
                                         ></rect>
 
+
                                         <path
                                             d="M8 10V7a4 4 0 0 1 8 0v3"
                                         ></path>
 
+
                                     </svg>
+
+
+                                </span>
+
+
+                                <input
+                                    type="password"
+                                    id="registration_code"
+                                    name="registration_code"
+                                    class="input password-input"
+                                    placeholder="Enter admin registration code"
+                                    autocomplete="off"
+                                >
+
+
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    onclick="togglePassword(
+                                        'registration_code',
+                                        'registrationCodeEye'
+                                    )"
+                                    aria-label="Show registration code"
+                                >
+
+
+                                    <svg
+                                        id="registrationCodeEye"
+                                        viewBox="0 0 24 24"
+                                    >
+
+
+                                        <path
+                                            d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"
+                                        ></path>
+
+
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="2.5"
+                                        ></circle>
+
+
+                                    </svg>
+
+
+                                </button>
+
+
+                            </div>
+
+
+                            <div class="admin-note">
+
+                                <strong>
+                                    Admin access:
+                                </strong>
+
+                                Administrator registration
+                                code is required.
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- PASSWORD -->
+
+                        <div
+                            class="form-group"
+                        >
+
+
+                            <label for="password">
+                                Password
+                            </label>
+
+
+                            <div class="input-box">
+
+
+                                <span class="input-icon">
+
+
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                    >
+
+
+                                        <rect
+                                            x="5"
+                                            y="10"
+                                            width="14"
+                                            height="10"
+                                            rx="2"
+                                        ></rect>
+
+
+                                        <path
+                                            d="M8 10V7a4 4 0 0 1 8 0v3"
+                                        ></path>
+
+
+                                    </svg>
+
 
                                 </span>
 
@@ -1126,14 +2033,17 @@
                                     aria-label="Show password"
                                 >
 
+
                                     <svg
                                         id="passwordEye"
                                         viewBox="0 0 24 24"
                                     >
 
+
                                         <path
                                             d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"
                                         ></path>
+
 
                                         <circle
                                             cx="12"
@@ -1141,9 +2051,12 @@
                                             r="2.5"
                                         ></circle>
 
+
                                     </svg>
 
+
                                 </button>
+
 
                             </div>
 
@@ -1152,22 +2065,32 @@
                                 Minimum 6 characters
                             </div>
 
+
                         </div>
 
 
                         <!-- CONFIRM PASSWORD -->
 
-                        <div class="form-group">
+                        <div
+                            class="form-group"
+                        >
+
 
                             <label for="confirm_password">
                                 Confirm Password
                             </label>
 
+
                             <div class="input-box">
+
 
                                 <span class="input-icon">
 
-                                    <svg viewBox="0 0 24 24">
+
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                    >
+
 
                                         <rect
                                             x="5"
@@ -1177,11 +2100,14 @@
                                             rx="2"
                                         ></rect>
 
+
                                         <path
                                             d="M8 10V7a4 4 0 0 1 8 0v3"
                                         ></path>
 
+
                                     </svg>
+
 
                                 </span>
 
@@ -1208,14 +2134,17 @@
                                     aria-label="Show password"
                                 >
 
+
                                     <svg
                                         id="confirmEye"
                                         viewBox="0 0 24 24"
                                     >
 
+
                                         <path
                                             d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"
                                         ></path>
+
 
                                         <circle
                                             cx="12"
@@ -1223,11 +2152,15 @@
                                             r="2.5"
                                         ></circle>
 
+
                                     </svg>
+
 
                                 </button>
 
+
                             </div>
+
 
                         </div>
 
@@ -1235,11 +2168,10 @@
                     </div>
 
 
-                    <!-- =================================================
-                         TERMS
-                    ================================================== -->
+                    <!-- TERMS -->
 
                     <label class="terms">
+
 
                         <input
                             type="checkbox"
@@ -1248,31 +2180,36 @@
                             required
                         >
 
+
                         <span>
+
                             I agree to use UCE Connect responsibly
                             and understand that my account information
                             is handled securely.
+
                         </span>
+
 
                     </label>
 
 
-                    <!-- =================================================
-                         CREATE ACCOUNT BUTTON
-                    ================================================== -->
+                    <!-- CREATE ACCOUNT -->
 
                     <button
                         type="submit"
                         class="create-button"
                     >
 
+
                         <span>
                             Create Account
                         </span>
 
+
                         <span class="button-arrow">
                             →
                         </span>
+
 
                     </button>
 
@@ -1280,24 +2217,22 @@
                 </form>
 
 
-                <!-- =================================================
-                     DIVIDER
-                ================================================== -->
+                <!-- DIVIDER -->
 
                 <div class="divider">
                     ACCOUNT
                 </div>
 
 
-                <!-- =================================================
-                     LOGIN
-                ================================================== -->
+                <!-- LOGIN -->
 
                 <div class="login-area">
+
 
                     <p>
 
                         Already have an account?
+
 
                         <a
                             href="{{ url_for('main.login') }}"
@@ -1305,24 +2240,27 @@
                             Sign in
                         </a>
 
+
                     </p>
+
 
                 </div>
 
 
-                <!-- =================================================
-                     SECURITY
-                ================================================== -->
+                <!-- SECURITY -->
 
                 <div class="security">
+
 
                     <span class="security-icon">
                         ✓
                     </span>
 
+
                     <span>
                         Your account information is securely protected.
                     </span>
+
 
                 </div>
 
@@ -1339,6 +2277,7 @@
 
         </section>
 
+
     </main>
 
 
@@ -1348,21 +2287,173 @@
 
     <script>
 
+
+        /* =====================================================
+           ROLE ELEMENTS
+        ====================================================== */
+
+        const userRole =
+            document.getElementById(
+                "user-role"
+            );
+
+
+        const adminRole =
+            document.getElementById(
+                "admin-role"
+            );
+
+
+        const userOption =
+            document.getElementById(
+                "user-role-option"
+            );
+
+
+        const adminOption =
+            document.getElementById(
+                "admin-role-option"
+            );
+
+
+        const adminCodeGroup =
+            document.getElementById(
+                "admin-code-group"
+            );
+
+
+        const registrationCode =
+            document.getElementById(
+                "registration_code"
+            );
+
+
+        /* =====================================================
+           ROLE TOGGLE
+        ====================================================== */
+
+        function toggleRole() {
+
+
+            if (adminRole.checked) {
+
+
+                adminOption.classList.add(
+                    "selected"
+                );
+
+
+                userOption.classList.remove(
+                    "selected"
+                );
+
+
+                adminCodeGroup.classList.add(
+                    "show"
+                );
+
+
+                registrationCode.required =
+                    true;
+
+
+            } else {
+
+
+                userOption.classList.add(
+                    "selected"
+                );
+
+
+                adminOption.classList.remove(
+                    "selected"
+                );
+
+
+                adminCodeGroup.classList.remove(
+                    "show"
+                );
+
+
+                registrationCode.required =
+                    false;
+
+
+                registrationCode.value =
+                    "";
+
+
+            }
+
+        }
+
+
+        /* =====================================================
+           ROLE EVENTS
+        ====================================================== */
+
+        userRole.addEventListener(
+            "change",
+            toggleRole
+        );
+
+
+        adminRole.addEventListener(
+            "change",
+            toggleRole
+        );
+
+
+        userOption.addEventListener(
+            "click",
+            function () {
+
+                userRole.checked = true;
+
+                toggleRole();
+
+            }
+        );
+
+
+        adminOption.addEventListener(
+            "click",
+            function () {
+
+                adminRole.checked = true;
+
+                toggleRole();
+
+            }
+        );
+
+
+        /* =====================================================
+           PASSWORD VISIBILITY
+        ====================================================== */
+
         function togglePassword(
             inputId,
             iconId
         ) {
 
+
             const input =
-                document.getElementById(inputId);
+                document.getElementById(
+                    inputId
+                );
+
 
             const icon =
-                document.getElementById(iconId);
+                document.getElementById(
+                    iconId
+                );
 
 
             if (
                 input.type === "password"
             ) {
+
 
                 input.type = "text";
 
@@ -1387,9 +2478,12 @@
 
                 `;
 
+
             } else {
 
-                input.type = "password";
+
+                input.type =
+                    "password";
 
 
                 icon.innerHTML = `
@@ -1406,6 +2500,7 @@
 
                 `;
 
+
             }
 
         }
@@ -1413,29 +2508,47 @@
 
         /* =====================================================
            PASSWORD MATCH CHECK
-        ===================================================== */
+        ====================================================== */
 
         const password =
-            document.getElementById("password");
+            document.getElementById(
+                "password"
+            );
+
 
         const confirmPassword =
-            document.getElementById("confirm_password");
+            document.getElementById(
+                "confirm_password"
+            );
 
 
         function checkPasswords() {
 
+
             if (
-                confirmPassword.value.length > 0 &&
-                password.value !== confirmPassword.value
+
+                confirmPassword.value.length > 0
+
+                &&
+
+                password.value !==
+                confirmPassword.value
+
             ) {
+
 
                 confirmPassword.setCustomValidity(
                     "Passwords do not match."
                 );
 
+
             } else {
 
-                confirmPassword.setCustomValidity("");
+
+                confirmPassword.setCustomValidity(
+                    ""
+                );
+
 
             }
 
@@ -1453,7 +2566,16 @@
             checkPasswords
         );
 
+
+        /* =====================================================
+           INITIAL STATE
+        ====================================================== */
+
+        toggleRole();
+
+
     </script>
+
 
 </body>
 </html>
