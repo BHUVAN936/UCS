@@ -31,7 +31,13 @@ from werkzeug.security import (
 )
 
 from config import Config
-from database.db import get_connection
+from database.db import (
+    get_connection,
+    record_login_activity,
+    get_user_analytics,
+    update_last_login,
+    update_last_seen,
+)
 from services.link_service import download_spreadsheet
 
 from services.admin_settings import (
@@ -62,6 +68,7 @@ from services.data_service import (
     SEMESTERS,
     get_department_summary,
     read_spreadsheet,
+    detect_source_type,
     resolve_submission_file,
     classify_row,
     is_documentation_sheet,
@@ -78,6 +85,14 @@ main_bp = Blueprint(
 # =========================================================
 # AUTHENTICATION
 # =========================================================
+
+def _request_ip():
+    """Return the direct client address available to Flask."""
+    return request.remote_addr or "unknown"
+
+
+def _request_user_agent():
+    return request.headers.get("User-Agent", "")[:1000]
 
 def get_current_user():
 
@@ -107,6 +122,17 @@ def get_current_user():
 
         if not row:
             return None
+
+        # Keep the last-seen timestamp current for the admin activity dashboard.
+        connection.execute(
+            """
+            UPDATE users
+            SET last_seen_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (user_id,),
+        )
+        connection.commit()
 
         return dict(row)
 
@@ -222,6 +248,10 @@ def inject_user():
     return {
         "current_user": get_current_user(),
         "modules": MODULES,
+        "departments": DEPARTMENTS,
+        "reporting_periods": REPORTING_PERIODS,
+        "months": MONTHS,
+        "semesters": SEMESTERS,
     }
 
 
@@ -523,6 +553,14 @@ def login():
         )
     ):
 
+        record_login_activity(
+            event_type="failed_login",
+            user_id=user["id"] if user else None,
+            email_attempted=email,
+            ip_address=_request_ip(),
+            user_agent=_request_user_agent(),
+        )
+
         flash(
             "Invalid email or password.",
             "danger"
@@ -532,6 +570,16 @@ def login():
             "login.html"
         )
 
+
+    update_last_login(user["id"])
+
+    record_login_activity(
+        event_type="login",
+        user_id=user["id"],
+        email_attempted=email,
+        ip_address=_request_ip(),
+        user_agent=_request_user_agent(),
+    )
 
     session.clear()
 
@@ -929,6 +977,16 @@ def reset_password(token):
 @main_bp.route("/logout")
 def logout():
 
+    user_id = session.get("user_id")
+
+    if user_id:
+        record_login_activity(
+            event_type="logout",
+            user_id=user_id,
+            ip_address=_request_ip(),
+            user_agent=_request_user_agent(),
+        )
+
     session.clear()
 
     flash(
@@ -948,11 +1006,21 @@ def logout():
 # =========================================================
 
 @main_bp.route(
+    "/download-template",
+    methods=["GET"]
+)
+@main_bp.route(
     "/export-report",
     methods=["GET"]
 )
 @login_required
 def export_report():
+    """Download the official Excel input template.
+
+    This is intentionally a template, not a dynamic database export.
+    Users prepare their spreadsheet in this format and then upload it or
+    submit its public/downloadable link.
+    """
 
     report_path = (
         Path(current_app.root_path)
@@ -1857,6 +1925,18 @@ def submit_link_post():
         else source_url
     )
 
+    # Preserve the actual source classification before local preview handling
+    # turns the source into a local:// path.
+    if source_type == "file":
+        suffix = Path(str(preview_path or source_url)).suffix.lower()
+        source_type_for_metadata = (
+            "excel" if suffix in {".xlsx", ".xls"}
+            else "csv" if suffix == ".csv"
+            else "other"
+        )
+    else:
+        source_type_for_metadata = detect_source_type(source_url)
+
     upload_id, success, error = create_dataset(
         user["id"],
         title,
@@ -1869,6 +1949,8 @@ def submit_link_post():
         reporting_period,
         reporting_value,
         "automatic" if automatic_mode else "single",
+        "file" if source_type == "file" else "link",
+        source_type_for_metadata,
     )
 
     # create_dataset consumes/deletes local files itself.
@@ -1905,8 +1987,19 @@ def submit_link_post():
 )
 @login_required
 def submit_dataset():
+    """Import data from a module page using either a file or a URL.
+
+    Module pages are legacy entry points, so they now use the same two source
+    choices as /submit-link: direct CSV/XLS/XLSX upload or spreadsheet URL.
+    """
+    _cleanup_stale_preview_files()
+
+    source_type = request.form.get("source_type", "link").strip().lower()
+    if source_type not in {"file", "link"}:
+        source_type = "link"
 
     source_url = request.form.get("source_url", "").strip()
+    upload = request.files.get("spreadsheet_file")
     title = request.form.get("title", "").strip() or "Module Dataset"
 
     module = (
@@ -1921,37 +2014,89 @@ def submit_dataset():
         or ""
     ).strip().lower()
 
-    raw_department = request.form.get("department", "")
-    department = normalize_department(raw_department)
-    if raw_department.strip() and not department:
-        flash("Invalid department selected.", "danger")
-        return redirect(request.referrer or url_for("main.admin"))
-    reporting_period = normalize_reporting_period(request.form.get("reporting_period", ""))
-    reporting_value = request.form.get("reporting_value", "").strip()
-
-    if (
-        department not in DEPARTMENTS
-        or reporting_period not in REPORTING_PERIODS
-        or not reporting_value
-    ):
-        flash("Department and reporting period are required.", "danger")
-        return redirect(request.referrer or url_for("main.submit_link"))
-
     module = normalize_module(module)
     if module not in MODULES:
         flash("Invalid module selected.", "danger")
         return redirect(request.referrer or url_for("main.submit_link"))
 
-    if not source_url.startswith(("http://", "https://")):
-        flash("Please provide a valid HTTP/HTTPS spreadsheet link.", "danger")
+    raw_department = request.form.get("department", "")
+    department = normalize_department(raw_department)
+    if department not in DEPARTMENTS:
+        flash("Please select a valid department/group.", "danger")
         return redirect(request.referrer or url_for("main.submit_link"))
+
+    reporting_period = normalize_reporting_period(
+        request.form.get("reporting_period", "")
+    )
+    reporting_year = request.form.get("reporting_year", "").strip()
+    reporting_month = request.form.get("reporting_month", "").strip()
+    reporting_semester = request.form.get("reporting_semester", "").strip()
+    reporting_value = request.form.get("reporting_value", "").strip()
+
+    if reporting_period not in REPORTING_PERIODS:
+        flash("Please select a valid reporting period.", "danger")
+        return redirect(request.referrer or url_for("main.submit_link"))
+
+    if not reporting_value:
+        reporting_value = build_reporting_value(
+            reporting_period,
+            reporting_month,
+            reporting_semester,
+            reporting_year,
+        )
+
+    if not reporting_value:
+        flash("Please complete the reporting period details and year.", "danger")
+        return redirect(request.referrer or url_for("main.submit_link"))
+
+    if category:
+        category = normalize_category(category, module)
+        if category not in MODULES[module]["categories"]:
+            category = None
+
+    preview_dir = (
+        Path(current_app.root_path)
+        / "instance"
+        / "preview_uploads"
+    )
+    preview_dir.mkdir(parents=True, exist_ok=True)
+
+    preview_path = None
+
+    if source_type == "file":
+        if not upload or not upload.filename:
+            flash("Please choose a CSV, XLS or XLSX file.", "danger")
+            return redirect(request.referrer or url_for("main.submit_link"))
+
+        extension = Path(upload.filename).suffix.lower()
+        if extension not in {".csv", ".xlsx", ".xls"}:
+            flash("Only CSV, XLS or XLSX files are supported.", "danger")
+            return redirect(request.referrer or url_for("main.submit_link"))
+
+        token = secrets.token_urlsafe(24)
+        preview_path = preview_dir / f"{token}{extension}"
+        upload.save(preview_path)
+
+    else:
+        if not source_url.startswith(("http://", "https://")):
+            flash("Please provide a valid HTTP/HTTPS spreadsheet link.", "danger")
+            return redirect(request.referrer or url_for("main.submit_link"))
+
+        try:
+            downloaded_path, _ = download_spreadsheet(source_url)
+            preview_path = Path(downloaded_path)
+        except Exception as error:
+            flash(f"Unable to read the spreadsheet link: {error}", "danger")
+            return redirect(request.referrer or url_for("main.submit_link"))
+
+    local_source = f"local://{preview_path}"
 
     user = get_current_user()
 
     upload_id, success, error = create_dataset(
         user["id"],
         title,
-        source_url,
+        local_source,
         "specific",
         module,
         category,
@@ -1959,10 +2104,18 @@ def submit_dataset():
         None,
         reporting_period,
         reporting_value,
+        "single",
+        "file" if source_type == "file" else "link",
+        (
+            "excel" if Path(str(preview_path)).suffix.lower() in {".xlsx", ".xls"}
+            else "csv" if Path(str(preview_path)).suffix.lower() == ".csv"
+            else detect_source_type(source_url)
+        ),
     )
 
     if success:
-        flash(f"Data imported successfully. Submission #{upload_id}.", "success")
+        message = f"Data imported successfully. Submission #{upload_id}."
+        flash(message, "success")
     else:
         flash(f"Data import failed: {error}", "danger")
 
@@ -2223,6 +2376,10 @@ def admin():
 
     department_summary = get_department_summary()
 
+    # Keep user registration/activity information available on the
+    # main admin dashboard as well as on /admin/users.
+    user_analytics = get_user_analytics()
+
 
     return render_template(
         "admin.html",
@@ -2233,12 +2390,77 @@ def admin():
 
         report=report,
 
+        user_analytics=user_analytics,
+
         modules=MODULES,
 
         department_summary=department_summary,
         departments=DEPARTMENTS,
         reporting_periods=REPORTING_PERIODS,
     )
+
+
+# =========================================================
+# ADMIN USER ANALYTICS
+# =========================================================
+
+@main_bp.route("/admin/users")
+@admin_required
+def admin_users():
+
+    analytics = get_user_analytics()
+
+    return render_template(
+        "admin_users.html",
+        **analytics,
+    )
+
+
+@main_bp.route("/admin/users.csv")
+@admin_required
+def admin_users_csv():
+
+    analytics = get_user_analytics()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "Full Name",
+        "Email",
+        "Account Type",
+        "Registered",
+        "Last Seen",
+        "Status",
+        "Access",
+        "Submissions",
+    ])
+
+    for user in analytics["users"]:
+        role = str(user.get("role", "user")).lower()
+        is_admin = role == "admin"
+        status = "ACTIVE" if user.get("is_active") else "INACTIVE"
+
+        writer.writerow([
+            user.get("name", ""),
+            user.get("email", ""),
+            "ADMIN" if is_admin else "USER",
+            user.get("created_at", ""),
+            user.get("last_seen_at", ""),
+            status,
+            "Full Access" if is_admin else "Standard Access",
+            "" if is_admin else user.get("submission_count", 0),
+        ])
+
+    response = Response(
+        output.getvalue(),
+        mimetype="text/csv",
+    )
+    response.headers[
+        "Content-Disposition"
+    ] = "attachment; filename=uce_user_report.csv"
+
+    return response
 
 
 # =========================================================

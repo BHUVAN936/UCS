@@ -1,0 +1,1045 @@
+{% extends "base.html" %}
+
+{% block title %}User Analytics | UCE Connect{% endblock %}
+
+{% block content %}
+
+<style>
+/* =========================================================
+   USER ANALYTICS PAGE
+   ========================================================= */
+
+.user-analytics-page {
+    padding: 36px 0 70px;
+}
+
+.analytics-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 26px;
+}
+
+.analytics-header h1 {
+    margin: 0 0 8px;
+}
+
+.analytics-header p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.analytics-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.analytics-actions a {
+    text-decoration: none;
+}
+
+
+/* =========================================================
+   STATISTICS
+   ========================================================= */
+
+.analytics-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.analytics-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+}
+
+.analytics-stat .icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: var(--surface-2);
+    color: var(--accent);
+    margin-bottom: 14px;
+}
+
+.analytics-stat strong {
+    display: block;
+    font-size: 28px;
+    line-height: 1.1;
+    color: var(--text);
+}
+
+.analytics-stat span {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.analytics-stat small {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+
+.analytics-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+    min-width: 0;
+}
+
+.analytics-panel h2 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text);
+}
+
+.analytics-panel .panel-subtitle {
+    margin: 5px 0 20px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.table-panel {
+    overflow: hidden;
+    padding: 0;
+}
+
+.table-panel-header {
+    padding: 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+
+/* =========================================================
+   TABLE WRAPPERS
+   ========================================================= */
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+
+/*
+   Existing Admin Accounts / User Accounts scrolling.
+*/
+.role-table-scroll {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+
+/*
+   NEW:
+   Recent Login Activity gets its OWN internal scrollbar.
+
+   This means:
+   - Page itself does not become extremely long.
+   - Login records scroll inside this box.
+   - Maximum visible height = 420px.
+   - Header remains visible while scrolling.
+*/
+.login-activity-scroll {
+    height: 420px;
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+}
+
+
+/* =========================================================
+   STICKY TABLE HEADERS
+   ========================================================= */
+
+.role-table-scroll .analytics-table thead th,
+.login-activity-scroll .analytics-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1050px;
+}
+
+.analytics-table th,
+.analytics-table td {
+    padding: 13px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.analytics-table th {
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.analytics-table td {
+    color: var(--text);
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   USER INFORMATION
+   ========================================================= */
+
+.user-name {
+    font-weight: 700;
+}
+
+.user-email {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.role-badge,
+.status-badge,
+.event-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.role-badge {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.status-online {
+    background: rgba(34, 197, 94, .12);
+    color: #15803d;
+}
+
+.status-offline {
+    background: var(--surface-2);
+    color: var(--muted);
+}
+
+.event-login {
+    background: rgba(34, 197, 94, .12);
+    color: #15803d;
+}
+
+.event-logout {
+    background: rgba(59, 130, 246, .12);
+    color: #2563eb;
+}
+
+.event-failed_login {
+    background: rgba(239, 68, 68, .12);
+    color: #dc2626;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state {
+    padding: 35px;
+    text-align: center;
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   USER ROLE SUMMARY
+   ========================================================= */
+
+.analytics-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 720px;
+    margin-bottom: 18px;
+}
+
+.role-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.role-summary-title {
+    font-weight: 800;
+    color: var(--text);
+    font-size: 14px;
+}
+
+.role-summary-items {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.role-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+}
+
+.role-summary-item strong {
+    font-size: 16px;
+    color: var(--text);
+}
+
+.role-summary-item > span:last-child {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+
+/* =========================================================
+   SCROLLBAR - RECENT LOGIN ACTIVITY
+   ========================================================= */
+
+.login-activity-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.login-activity-scroll::-webkit-scrollbar-track {
+    background: var(--surface-2);
+    border-radius: 10px;
+}
+
+.login-activity-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+}
+
+.login-activity-scroll::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+
+/* =========================================================
+   SCROLLBAR - ROLE TABLES
+   ========================================================= */
+
+.role-table-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.role-table-scroll::-webkit-scrollbar-track {
+    background: var(--surface-2);
+    border-radius: 10px;
+}
+
+.role-table-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+}
+
+.role-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .analytics-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+@media (max-width: 800px) {
+
+    .analytics-header {
+        flex-direction: column;
+    }
+
+    .role-summary {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .role-summary-items {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+}
+
+@media (max-width: 560px) {
+
+    .analytics-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .login-activity-scroll {
+        height: 360px;
+        max-height: 360px;
+    }
+
+    .role-table-scroll {
+        max-height: 360px;
+    }
+
+}
+</style>
+
+
+<section class="user-analytics-page">
+
+<div class="container">
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <div class="analytics-header">
+
+        <div>
+
+            <p class="eyebrow">
+                ADMINISTRATOR
+            </p>
+
+            <h1>
+                User Analytics
+            </h1>
+
+            <p>
+                Registration, login, activity and submission
+                statistics for UCE Connect.
+            </p>
+
+        </div>
+
+
+        <div class="analytics-actions">
+
+            <a
+                class="outline-button"
+                href="{{ url_for('main.admin') }}"
+            >
+                <i class="fa-solid fa-arrow-left"></i>
+                Admin Dashboard
+            </a>
+
+
+            <a
+                class="header-button"
+                href="{{ url_for('main.admin_users_csv') }}"
+            >
+                <i class="fa-solid fa-file-csv"></i>
+                Export Users CSV
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SUMMARY STATISTICS
+         ===================================================== -->
+
+    <div class="analytics-stat-grid analytics-summary-grid">
+
+        <div class="analytics-stat">
+
+            <div class="icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+            <strong>
+                {{ "{:,}".format(stats.total_users) }}
+            </strong>
+
+            <span>
+                Total Registered Users
+            </span>
+
+            <small>
+                {{ stats.total_normal_users }}
+                users ·
+                {{ stats.total_admins }}
+                admins
+            </small>
+
+        </div>
+
+
+        <div class="analytics-stat">
+
+            <div class="icon">
+                <i class="fa-solid fa-user-plus"></i>
+            </div>
+
+            <strong>
+                {{ "{:,}".format(stats.registrations_today) }}
+            </strong>
+
+            <span>
+                Registrations Today
+            </span>
+
+            <small>
+                {{ stats.registrations_week }}
+                registrations in the last 7 days
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         USER ROLE SUMMARY
+         ===================================================== -->
+
+    <div class="role-summary">
+
+        <div class="role-summary-title">
+            User Roles
+        </div>
+
+
+        <div class="role-summary-items">
+
+            <div class="role-summary-item">
+
+                <span class="role-badge">
+                    ADMIN
+                </span>
+
+                <strong>
+                    {{ stats.total_admins }}
+                </strong>
+
+                <span>
+                    Administrators
+                </span>
+
+            </div>
+
+
+            <div class="role-summary-item">
+
+                <span class="role-badge">
+                    USER
+                </span>
+
+                <strong>
+                    {{ stats.total_normal_users }}
+                </strong>
+
+                <span>
+                    Users
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SPLIT USERS BY ROLE
+         ===================================================== -->
+
+    {% set admin_users =
+        users
+        | selectattr('role', 'equalto', 'admin')
+        | list
+    %}
+
+    {% set normal_users =
+        users
+        | selectattr('role', 'equalto', 'user')
+        | list
+    %}
+
+
+    <!-- =====================================================
+         ADMIN ACCOUNTS
+         ===================================================== -->
+
+    <section
+        class="analytics-panel table-panel"
+        style="margin-bottom:24px;"
+    >
+
+        <div class="table-panel-header">
+
+            <div>
+
+                <h2>
+                    Admin Accounts
+                </h2>
+
+                <p
+                    class="panel-subtitle"
+                    style="margin-bottom:0;"
+                >
+                    {{ admin_users|length }}
+                    admin account{{ '' if admin_users|length == 1 else 's' }}.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if admin_users %}
+
+        <div class="table-wrapper role-table-scroll">
+
+            <table class="analytics-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Registered</th>
+                        <th>Last Seen</th>
+                        <th>Status</th>
+                        <th>Access</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for user in admin_users %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="user-name">
+                                {{ user.name }}
+                            </div>
+
+                            <div class="user-email">
+                                {{ user.email }}
+                            </div>
+
+                        </td>
+
+
+                        <td>
+                            {{ user.created_at or "—" }}
+                        </td>
+
+
+                        <td>
+                            {{ user.last_seen_at or "—" }}
+                        </td>
+
+
+                        <td>
+
+                            {% if user.is_active %}
+
+                                <span class="status-badge status-online">
+                                    Online
+                                </span>
+
+                            {% else %}
+
+                                <span class="status-badge status-offline">
+                                    Inactive
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="status-badge status-online">
+                                Full Access
+                            </span>
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+            <div class="empty-state">
+                No administrator accounts are registered.
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- =====================================================
+         USER ACCOUNTS
+         ===================================================== -->
+
+    <section
+        class="analytics-panel table-panel"
+        style="margin-bottom:24px;"
+    >
+
+        <div class="table-panel-header">
+
+            <div>
+
+                <h2>
+                    User Accounts
+                </h2>
+
+                <p
+                    class="panel-subtitle"
+                    style="margin-bottom:0;"
+                >
+                    {{ normal_users|length }}
+                    user account{{ '' if normal_users|length == 1 else 's' }}.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if normal_users %}
+
+        <div class="table-wrapper role-table-scroll">
+
+            <table class="analytics-table">
+
+                <thead>
+
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Role</th>
+                        <th>Registered</th>
+                        <th>Last Seen</th>
+                        <th>Status</th>
+                        <th>Submissions</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for user in normal_users %}
+
+                    <tr>
+
+                        <td>
+
+                            <div class="user-name">
+                                {{ user.name }}
+                            </div>
+
+                            <div class="user-email">
+                                {{ user.email }}
+                            </div>
+
+                        </td>
+
+
+                        <td>
+
+                            <span class="role-badge">
+                                USER
+                            </span>
+
+                        </td>
+
+
+                        <td>
+                            {{ user.created_at or "—" }}
+                        </td>
+
+
+                        <td>
+                            {{ user.last_seen_at or "—" }}
+                        </td>
+
+
+                        <td>
+
+                            {% if user.is_active %}
+
+                                <span class="status-badge status-online">
+                                    Online
+                                </span>
+
+                            {% else %}
+
+                                <span class="status-badge status-offline">
+                                    Inactive
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+                            {{ user.submission_count }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+            <div class="empty-state">
+                No user accounts are registered.
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- =====================================================
+         RECENT LOGIN ACTIVITY
+         ===================================================== -->
+
+    <section class="analytics-panel table-panel">
+
+        <div class="table-panel-header">
+
+            <div>
+
+                <h2>
+                    Recent Login Activity
+                </h2>
+
+                <p
+                    class="panel-subtitle"
+                    style="margin-bottom:0;"
+                >
+                    Latest 100 login, logout and failed-login events.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        {% if recent_activity %}
+
+        <!--
+            IMPORTANT:
+            This wrapper creates the INTERNAL scrollbar.
+            The browser page itself does not need to scroll
+            through all login records.
+        -->
+
+        <div class="login-activity-scroll">
+
+            <table
+                class="analytics-table"
+                style="min-width:900px;"
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Time
+                        </th>
+
+                        <th>
+                            Event
+                        </th>
+
+                        <th>
+                            User
+                        </th>
+
+                        <th>
+                            Email Attempted
+                        </th>
+
+                        <th>
+                            IP Address
+                        </th>
+
+                        <th>
+                            Browser / Device
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for event in recent_activity %}
+
+                    <tr>
+
+                        <td>
+                            {{ event.event_time }}
+                        </td>
+
+
+                        <td>
+
+                            <span
+                                class="event-badge event-{{ event.event_type }}"
+                            >
+                                {{ event.event_type.replace('_',' ') }}
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            {% if event.name %}
+
+                                <div class="user-name">
+                                    {{ event.name }}
+                                </div>
+
+                                <div class="user-email">
+                                    {{ event.email }}
+                                </div>
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+                            {{ event.email_attempted or "—" }}
+                        </td>
+
+
+                        <td>
+                            {{ event.ip_address or "—" }}
+                        </td>
+
+
+                        <td
+                            title="{{ event.user_agent or '' }}"
+                        >
+
+                            {{ (event.user_agent or "—")[:80] }}
+
+                            {% if event.user_agent
+                                  and event.user_agent|length > 80 %}
+
+                                …
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+            <div class="empty-state">
+                No login activity has been recorded yet.
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+</section>
+
+{% endblock %}

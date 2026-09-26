@@ -522,6 +522,290 @@ Admin Portal | UCE Connect
     }
 
 }
+
+/* =========================================================
+   USER SUBMITTED LINKS
+   SCROLLABLE TABLE - DOES NOT EXPAND THE WHOLE PAGE
+   ========================================================= */
+
+.admin-page .uploads-history .history-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    max-height: 620px;
+    overflow-y: auto;
+    overflow-x: auto;
+
+    box-sizing: border-box;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+/* Keep the table wide enough for all columns without
+   stretching the entire page. */
+.admin-page .uploads-history .history-table {
+    width: 100%;
+    min-width: 1180px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Sticky header while only the submissions area scrolls. */
+.admin-page .uploads-history .history-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+
+    background: #ffffff;
+    box-shadow: 0 1px 0 #e2e8f0;
+
+    white-space: nowrap;
+}
+
+/* Keep rows readable. */
+.admin-page .uploads-history .history-table tbody td {
+    vertical-align: middle;
+}
+
+/* Do not allow very long warning/status text to make
+   individual rows absurdly wide. */
+.admin-page .uploads-history .history-table tbody td:nth-child(7) {
+    min-width: 260px;
+    max-width: 340px;
+}
+
+.admin-page .uploads-history .history-table tbody td:nth-child(7) small {
+    display: block;
+    max-width: 320px;
+
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+/* Source column stays compact. */
+.admin-page .uploads-history .history-table tbody td:nth-child(10) {
+    white-space: nowrap;
+}
+
+/* Action column stays compact. */
+.admin-page .uploads-history .history-table tbody td:nth-child(11) {
+    white-space: nowrap;
+}
+
+/* Chromium / Edge scrollbar */
+.admin-page .uploads-history .history-table-wrapper::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+}
+
+.admin-page .uploads-history .history-table-wrapper::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.admin-page .uploads-history .history-table-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+    border: 2px solid #f8fafc;
+}
+
+.admin-page .uploads-history .history-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Smaller screens: the table itself scrolls horizontally,
+   while the page remains stable. */
+@media (max-width: 900px) {
+
+    .admin-page .uploads-history .history-table-wrapper {
+        max-height: 560px;
+    }
+
+    .admin-page .uploads-history .history-table {
+        min-width: 1100px;
+    }
+}
+
+
+.admin-page .muted-text {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+
+/* Source action */
+.source-link {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   USER INFORMATION / ANALYTICS ON ADMIN DASHBOARD
+   ========================================================= */
+.admin-page .user-information-panel {
+    margin-top: 24px;
+}
+
+.admin-page .user-information-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.admin-page .user-information-header h2 {
+    margin: 0;
+}
+
+.admin-page .user-information-header p {
+    margin: 5px 0 0;
+}
+
+.admin-page .user-information-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.admin-page .user-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.admin-page .user-stat-card {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    background: #ffffff;
+}
+
+.admin-page .user-stat-card strong {
+    display: block;
+    color: #14213d;
+    font-size: 24px;
+    line-height: 1.1;
+}
+
+.admin-page .user-stat-card span {
+    display: block;
+    margin-top: 6px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.admin-page .user-table-scroll {
+    max-height: 460px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 13px;
+    background: #ffffff;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.admin-page .user-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-page .user-table th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: 13px 14px;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    text-align: left;
+    white-space: nowrap;
+    box-shadow: 0 1px 0 #e2e8f0;
+}
+
+.admin-page .user-table td {
+    padding: 13px 14px;
+    border-top: 1px solid #eef2f7;
+    color: #14213d;
+    font-size: 13px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.admin-page .user-table .user-name {
+    font-weight: 800;
+}
+
+.admin-page .user-table .user-email {
+    margin-top: 2px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.admin-page .user-role-badge,
+.admin-page .user-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.admin-page .user-role-badge {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.admin-page .user-status-badge.active {
+    background: #ecfdf5;
+    color: #15803d;
+}
+
+.admin-page .user-status-badge.inactive {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+@media (max-width: 1200px) {
+    .admin-page .user-stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 800px) {
+    .admin-page .user-information-header {
+        flex-direction: column;
+    }
+
+    .admin-page .user-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 500px) {
+    .admin-page .user-stat-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 </style>
 
 
@@ -598,6 +882,17 @@ Admin Portal | UCE Connect
                 >
 
                     View All Data
+
+                </a>
+
+
+                <a
+                    class="outline-button"
+                    href="{{ url_for('main.admin_users') }}"
+                >
+
+                    <i class="fa-solid fa-users"></i>
+                    User Analytics
 
                 </a>
 
@@ -710,8 +1005,6 @@ Admin Portal | UCE Connect
 
                 {% for department in department_summary %}
 
-                {% if department.department in departments and department.department|trim|lower not in ["ai & ml", "cse"] %}
-
                 <article class="specific-upload-card department-card">
 
                     <div class="specific-heading">
@@ -781,8 +1074,6 @@ Admin Portal | UCE Connect
                     </div>
 
                 </article>
-
-                {% endif %}
 
                 {% endfor %}
 
@@ -902,8 +1193,8 @@ Admin Portal | UCE Connect
 
                 <p>
 
-                    Users submit links only.
-                    No file upload is used in the user portal.
+                    User submissions are listed below.
+                    The list can be scrolled when there are many submissions.
 
                 </p>
 
@@ -1107,15 +1398,54 @@ Admin Portal | UCE Connect
 
                             <td>
 
-                                <a
-                                    href="{{ url_for('main.open_submission', upload_id=upload.id) }}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
+                                {#
+                                    IMPORTANT:
+                                    If an original uploaded file exists, ALWAYS use
+                                    the Flask open-submission route.
 
-                                    Open Submitted Spreadsheet
+                                    Do not use upload.source_url for direct uploads.
+                                    Direct uploads may have the compatibility value
+                                    https://local-upload.invalid/...
+                                #}
 
-                                </a>
+                                {% if upload.original_file_path %}
+
+                                    <a
+                                        href="{{ url_for(
+                                            'main.open_submission',
+                                            upload_id=upload.id
+                                        ) }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="source-link"
+                                    >
+
+                                        Open File
+
+                                    </a>
+
+                                {% elif upload.source_url
+                                      and upload.source_url.startswith(('http://', 'https://'))
+                                      and not upload.source_url.startswith('https://local-upload.invalid/') %}
+
+                                    <a
+                                        href="{{ upload.source_url }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="source-link"
+                                    >
+
+                                        Open Link
+
+                                    </a>
+
+                                {% else %}
+
+                                    <span class="muted-text">
+                                        Source unavailable
+                                    </span>
+
+                                {% endif %}
 
                             </td>
 

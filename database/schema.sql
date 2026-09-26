@@ -74,10 +74,11 @@ CREATE TABLE IF NOT EXISTS app_settings (
 -- UPLOAD SOURCES
 -- =========================================================
 --
--- Users submit LINKS ONLY.
+-- Users may submit a spreadsheet FILE or a spreadsheet LINK.
 --
 -- upload_method:
---     Always "link"
+--     "file" for direct uploads
+--     "link" for spreadsheet URLs
 --
 -- source_type:
 --     google_drive
@@ -117,7 +118,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 
     upload_method TEXT NOT NULL DEFAULT 'link'
         CHECK (
-            upload_method = 'link'
+            upload_method IN ('file', 'link')
         ),
 
     source_type TEXT NOT NULL DEFAULT 'other'
@@ -560,6 +561,56 @@ BEGIN
     WHERE id = OLD.id;
 
 END;
+
+
+-- =========================================================
+-- LOGIN / USER ACTIVITY
+-- =========================================================
+--
+-- Added for the Admin -> User Analytics dashboard.
+-- Existing tables above are unchanged.
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS login_activity (
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    user_id INTEGER,
+
+    event_type TEXT NOT NULL
+        CHECK (
+            event_type IN (
+                'login',
+                'logout',
+                'failed_login'
+            )
+        ),
+
+    event_time TIMESTAMP NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    email_attempted TEXT,
+
+    ip_address TEXT,
+
+    user_agent TEXT,
+
+    FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+
+CREATE INDEX IF NOT EXISTS idx_login_activity_user_id
+ON login_activity(user_id);
+
+
+CREATE INDEX IF NOT EXISTS idx_login_activity_event_type
+ON login_activity(event_type);
+
+
+CREATE INDEX IF NOT EXISTS idx_login_activity_event_time
+ON login_activity(event_time);
 
 
 -- =========================================================

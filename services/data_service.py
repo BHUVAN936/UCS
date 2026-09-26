@@ -2186,6 +2186,7 @@ def create_dataset(
     reporting_period=None,
     reporting_value=None,
     metadata_mode="single",
+    upload_method=None,
 ):
     # Canonical internal values are mixed/specific.  The UI uses mixed/single.
     upload_mode = normalize_upload_mode(upload_mode)
@@ -2240,6 +2241,12 @@ def create_dataset(
         # the temporary local path below.
         source_url = f"https://local-upload.invalid/{local_name}"
 
+    if upload_method is None:
+        upload_method = "file" if str(processing_source).startswith("local://") else "link"
+    upload_method = str(upload_method).strip().lower()
+    if upload_method not in {"file", "link"}:
+        upload_method = "file" if str(processing_source).startswith("local://") else "link"
+
     source_type = detect_source_type(source_url)
 
     connection = get_connection()
@@ -2267,12 +2274,13 @@ def create_dataset(
                 status
             )
             VALUES
-            (?, ?, ?, 'link', ?, ?, ?, ?, ?, ?, ?, ?, 'processing')
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing')
             """,
             (
                 user_id,
                 title or "Imported Dataset",
                 source_url,
+                upload_method,
                 source_type,
                 upload_mode,
                 target_module,

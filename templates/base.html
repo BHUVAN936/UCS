@@ -504,13 +504,12 @@
                     </strong>
 
                     <a
-                        href="mailto:{{ config.get('SUPPORT_EMAIL_OUTLOOK', '') }}?subject=UCE%20Connect%20Support"
+                        href="mailto:moulana@kluniversity.in?subject=UCE%20Connect%20Support"
                         style="display:inline-block; margin-right:16px;"
                     >
                         <i class="fa-solid fa-envelope"></i>
                         Outlook Support
                     </a>
-
 
                 </div>
 
@@ -610,6 +609,327 @@
         src="{{ url_for('static', filename='script.js') }}"
     ></script>
 
+
+
+    <!-- =====================================================
+         UNIFIED MODULE SUBMISSION SOURCE PICKER
+         Every legacy module page uses /submit-dataset.  This layer
+         gives those forms the same File-or-Link workflow as /submit-link.
+         ===================================================== -->
+    <style id="uce-module-submit-style">
+        .uce-module-source-picker {
+            display: grid;
+            gap: 10px;
+        }
+
+        .uce-source-choice-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .uce-source-choice {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 38px;
+            padding: 8px 12px;
+            border: 1px solid var(--border, #dbe3ef);
+            border-radius: 9px;
+            background: var(--surface, #fff);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .uce-source-choice input {
+            margin: 0;
+            accent-color: #0ea5e9;
+        }
+
+        .uce-source-field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .uce-source-field input[type="url"],
+        .uce-source-field input[type="file"] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .uce-module-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .uce-module-meta-grid .uce-meta-field {
+            display: grid;
+            gap: 5px;
+        }
+
+        .uce-module-meta-grid label {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .uce-module-meta-grid select,
+        .uce-module-meta-grid input {
+            width: 100%;
+            min-height: 38px;
+            box-sizing: border-box;
+        }
+
+        .uce-module-source-help {
+            margin: 0;
+            font-size: 11px;
+            opacity: .75;
+        }
+
+        @media (max-width: 700px) {
+            .uce-source-choice-row,
+            .uce-module-meta-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script id="uce-module-submit-enhancement">
+        (function () {
+            const options = {{ {
+                "departments": departments,
+                "reporting_periods": reporting_periods,
+                "months": months,
+                "semesters": semesters
+            } | tojson }};
+
+            function makeOption(select, value, label, placeholder) {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                if (placeholder) option.disabled = false;
+                select.appendChild(option);
+            }
+
+            function enhanceModuleForm(form, index) {
+                if (form.dataset.uceEnhanced === "1") return;
+
+                const sourceUrl = form.querySelector('input[name="source_url"]');
+                if (!sourceUrl) return;
+
+                form.dataset.uceEnhanced = "1";
+                form.enctype = "multipart/form-data";
+
+                const sourceGroup = sourceUrl.closest(".form-group") || sourceUrl.parentElement;
+                if (!sourceGroup) return;
+
+                const oldRequired = sourceUrl.required;
+                sourceGroup.innerHTML = "";
+                sourceGroup.classList.add("uce-module-source-picker");
+
+                const sourceChoiceRow = document.createElement("div");
+                sourceChoiceRow.className = "uce-source-choice-row";
+
+                const radioName = "uce_source_type_" + index;
+                const fileId = "uce_source_file_" + index;
+                const linkId = "uce_source_link_" + index;
+
+                const fileChoice = document.createElement("label");
+                fileChoice.className = "uce-source-choice";
+                fileChoice.innerHTML = '<input type="radio" name="source_type" value="file" checked> Upload Spreadsheet';
+
+                const linkChoice = document.createElement("label");
+                linkChoice.className = "uce-source-choice";
+                linkChoice.innerHTML = '<input type="radio" name="source_type" value="link"> Use Spreadsheet Link';
+
+                sourceChoiceRow.append(fileChoice, linkChoice);
+
+                const fileField = document.createElement("div");
+                fileField.className = "uce-source-field";
+                fileField.innerHTML =
+                    '<label for="' + fileId + '">Excel / CSV File</label>' +
+                    '<input id="' + fileId + '" type="file" name="spreadsheet_file" accept=".csv,.xlsx,.xls">' +
+                    '<p class="uce-module-source-help">Upload CSV, XLS or XLSX directly.</p>';
+
+                const linkField = document.createElement("div");
+                linkField.className = "uce-source-field";
+                linkField.hidden = true;
+                linkField.innerHTML =
+                    '<label for="' + linkId + '">Spreadsheet / Google Drive / Google Sheets / OneDrive Link</label>' +
+                    '<input id="' + linkId + '" type="url" name="source_url" placeholder="https://drive.google.com/..." autocomplete="url">' +
+                    '<p class="uce-module-source-help">Use a public/downloadable spreadsheet URL.</p>';
+
+                sourceGroup.append(sourceChoiceRow, fileField, linkField);
+
+                const fileRadio = fileChoice.querySelector('input[type="radio"]');
+                const linkRadio = linkChoice.querySelector('input[type="radio"]');
+                const fileInput = fileField.querySelector('input[type="file"]');
+                const linkInput = linkField.querySelector('input[name="source_url"]');
+
+                function updateSource() {
+                    const isFile = fileRadio.checked;
+                    fileField.hidden = !isFile;
+                    linkField.hidden = isFile;
+                    fileInput.required = isFile;
+                    linkInput.required = !isFile;
+                    if (isFile) linkInput.value = "";
+                    else fileInput.value = "";
+                }
+
+                fileRadio.addEventListener("change", updateSource);
+                linkRadio.addEventListener("change", updateSource);
+                updateSource();
+
+                // Module pages submit a single module/category, so the user
+                // must provide the reporting context here.
+                const meta = document.createElement("div");
+                meta.className = "uce-module-meta-grid";
+
+                const departmentField = document.createElement("div");
+                departmentField.className = "uce-meta-field";
+                departmentField.innerHTML = '<label>Department / Group</label>';
+                const department = document.createElement("select");
+                department.name = "department";
+                department.required = true;
+                makeOption(department, "", "Select department / group", true);
+                options.departments.forEach(value => makeOption(department, value, value, false));
+                departmentField.appendChild(department);
+
+                const periodField = document.createElement("div");
+                periodField.className = "uce-meta-field";
+                periodField.innerHTML = '<label>Reporting Period</label>';
+                const period = document.createElement("select");
+                period.name = "reporting_period";
+                period.required = true;
+                makeOption(period, "", "Select period", true);
+                options.reporting_periods.forEach(value => makeOption(period, value, value, false));
+                periodField.appendChild(period);
+
+                const yearField = document.createElement("div");
+                yearField.className = "uce-meta-field";
+                yearField.innerHTML = '<label>Reporting Year</label>';
+                const year = document.createElement("input");
+                year.type = "number";
+                year.name = "reporting_year";
+                year.min = "2000";
+                year.max = "2100";
+                year.placeholder = "2026";
+                year.required = true;
+                yearField.appendChild(year);
+
+                const monthField = document.createElement("div");
+                monthField.className = "uce-meta-field";
+                monthField.hidden = true;
+                monthField.innerHTML = '<label>Month</label>';
+                const month = document.createElement("select");
+                month.name = "reporting_month";
+                makeOption(month, "", "Select month", true);
+                options.months.forEach(value => makeOption(month, value, value, false));
+                monthField.appendChild(month);
+
+                const semesterField = document.createElement("div");
+                semesterField.className = "uce-meta-field";
+                semesterField.hidden = true;
+                semesterField.innerHTML = '<label>Semester</label>';
+                const semester = document.createElement("select");
+                semester.name = "reporting_semester";
+                makeOption(semester, "", "Select semester", true);
+                options.semesters.forEach(value => makeOption(semester, value, value, false));
+                semesterField.appendChild(semester);
+
+                const reportingValue = document.createElement("input");
+                reportingValue.type = "hidden";
+                reportingValue.name = "reporting_value";
+
+                const uploadMode = document.createElement("input");
+                uploadMode.type = "hidden";
+                uploadMode.name = "upload_mode";
+                uploadMode.value = "single";
+
+                const metadataMode = document.createElement("input");
+                metadataMode.type = "hidden";
+                metadataMode.name = "metadata_mode";
+                metadataMode.value = "single";
+
+                meta.append(departmentField, periodField, yearField, monthField, semesterField);
+                form.append(meta, reportingValue, uploadMode, metadataMode);
+
+                function updatePeriodFields() {
+                    monthField.hidden = period.value !== "Monthly";
+                    semesterField.hidden = period.value !== "Semester";
+                    month.required = period.value === "Monthly";
+                    semester.required = period.value === "Semester";
+                    if (period.value !== "Monthly") month.value = "";
+                    if (period.value !== "Semester") semester.value = "";
+                }
+
+                period.addEventListener("change", updatePeriodFields);
+                updatePeriodFields();
+
+                form.addEventListener("submit", function (event) {
+                    if (!department.value || !period.value || !year.value) {
+                        event.preventDefault();
+                        alert("Please select Department, Reporting Period and Reporting Year.");
+                        return;
+                    }
+
+                    if (period.value === "Monthly" && !month.value) {
+                        event.preventDefault();
+                        alert("Please select the reporting month.");
+                        return;
+                    }
+
+                    if (period.value === "Semester" && !semester.value) {
+                        event.preventDefault();
+                        alert("Please select the semester.");
+                        return;
+                    }
+
+                    if (fileRadio.checked && !fileInput.files.length) {
+                        event.preventDefault();
+                        alert("Please choose a CSV, XLS or XLSX file.");
+                        return;
+                    }
+
+                    if (linkRadio.checked && !linkInput.value.trim()) {
+                        event.preventDefault();
+                        alert("Please provide a spreadsheet link.");
+                        return;
+                    }
+
+                    if (period.value === "Monthly") {
+                        reportingValue.value = month.value + " " + year.value;
+                    } else if (period.value === "Semester") {
+                        reportingValue.value = semester.value + " - " + year.value;
+                    } else {
+                        reportingValue.value = year.value;
+                    }
+                });
+
+                const heading = form.closest(".link-submit-card");
+                if (heading) {
+                    const title = heading.querySelector("h3");
+                    const description = heading.querySelector("p");
+                    if (title) title.textContent = "Submit Data";
+                    if (description) description.textContent = "Upload CSV/XLS/XLSX directly or use a spreadsheet link.";
+                }
+            }
+
+            function initModuleSubmissionForms() {
+                document.querySelectorAll('form[action*="submit-dataset"]').forEach(enhanceModuleForm);
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", initModuleSubmissionForms);
+            } else {
+                initModuleSubmissionForms();
+            }
+        })();
+    </script>
 
     {% block scripts %}{% endblock %}
 

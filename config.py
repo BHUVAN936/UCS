@@ -23,10 +23,19 @@ class Config:
         SECRET_KEY = secrets.token_hex(32)
         _SECRET_FILE.write_text(SECRET_KEY, encoding="utf-8")
 
+    # Production uses PostgreSQL through DATABASE_URL.
+    # Local development keeps SQLite so the existing local workflow remains unchanged.
+    DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+
     DATABASE_PATH = str(
         BASE_DIR
         / "instance"
         / "database.db"
+    )
+
+    SUBMISSION_STORAGE_DIR = os.getenv(
+        "UCE_SUBMISSION_STORAGE_DIR",
+        str(BASE_DIR / "instance" / "submissions"),
     )
 
     UPLOAD_FOLDER = str(
@@ -92,7 +101,7 @@ class Config:
 
     SMTP_HOST = os.getenv(
         "UCE_SMTP_HOST",
-        "",
+        "smtp.gmail.com",
     )
 
     SMTP_PORT = int(
@@ -132,32 +141,18 @@ class Config:
         "UCE_SMTP_FROM_EMAIL",
         SMTP_USERNAME,
     )
+
     # -----------------------------------------------------
     # HELP & SUPPORT
     # -----------------------------------------------------
     # Primary support address: KLU Outlook
     SUPPORT_EMAIL_OUTLOOK = os.getenv(
         "UCE_SUPPORT_EMAIL_OUTLOOK",
-        "2500032499@kluniversity.in",
+        "moulana@kluniversity.in",
     )
 
-    # Secondary support address: Gmail
-    SUPPORT_EMAIL_GMAIL = os.getenv(
-        "UCE_SUPPORT_EMAIL_GMAIL",
-        "chimatabhuvan84@gmail.com",
-    )
-
+    # Main support email
     SUPPORT_EMAIL = os.getenv(
         "UCE_SUPPORT_EMAIL",
         SUPPORT_EMAIL_OUTLOOK,
     )
-
-    SUPPORT_EMAILS = [
-        email
-        for email in (
-            SUPPORT_EMAIL_OUTLOOK,
-            SUPPORT_EMAIL_GMAIL,
-        )
-        if email
-    ]
-
