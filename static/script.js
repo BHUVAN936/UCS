@@ -1,123 +1,83 @@
 "use strict";
 
+/*
+ * UCE Connect - shared browser behavior
+ *
+ * This file intentionally keeps the existing UI/CSS intact.
+ * It only handles interaction and data loading.
+ */
+
 document.addEventListener("DOMContentLoaded", function () {
 
     // =========================================================
-    // THEME TOGGLE
+    // THEME
     // =========================================================
 
-    const themeToggle =
-        document.getElementById("themeToggle");
-
-    const root =
-        document.documentElement;
-
+    const root = document.documentElement;
+    const themeToggle = document.getElementById("themeToggle");
 
     function updateThemeButton() {
+        if (!themeToggle) return;
 
-        if (!themeToggle) {
-            return;
-        }
-
-        const dark =
-            root.getAttribute("data-theme") === "dark";
-
-        const icon =
-            themeToggle.querySelector("i");
-
+        const isDark = root.getAttribute("data-theme") === "dark";
+        const icon = themeToggle.querySelector("i");
 
         if (icon) {
-
-            icon.className =
-                dark
-                    ? "fa-solid fa-sun"
-                    : "fa-solid fa-moon";
-
+            icon.className = isDark
+                ? "fa-solid fa-sun"
+                : "fa-solid fa-moon";
         }
-
 
         themeToggle.setAttribute(
             "aria-label",
-            dark
-                ? "Switch to light mode"
-                : "Switch to dark mode"
+            isDark ? "Switch to light mode" : "Switch to dark mode"
         );
-
 
         themeToggle.setAttribute(
             "title",
-            dark
-                ? "Switch to light mode"
-                : "Switch to dark mode"
+            isDark ? "Switch to light mode" : "Switch to dark mode"
         );
-
     }
-
 
     function setTheme(theme) {
+        const value = theme === "dark" ? "dark" : "light";
 
-        root.setAttribute(
-            "data-theme",
-            theme
-        );
-
-
+        root.setAttribute("data-theme", value);
+        document.body.setAttribute("data-theme", value);
         document.body.classList.toggle(
             "dark-theme",
-            theme === "dark"
+            value === "dark"
         );
 
-
         try {
-
             localStorage.setItem(
                 "uce-theme",
-                theme
+                value
             );
-
+        } catch (error) {
+            // Storage can be unavailable.
         }
-        catch (error) {
-
-            console.warn(
-                "Unable to save theme.",
-                error
-            );
-
-        }
-
 
         updateThemeButton();
-
     }
-
 
     let savedTheme = "light";
 
     try {
-
-        const storedTheme =
+        const stored =
             localStorage.getItem("uce-theme");
 
         if (
-            storedTheme === "dark" ||
-            storedTheme === "light"
+            stored === "dark" ||
+            stored === "light"
         ) {
-
-            savedTheme =
-                storedTheme;
-
+            savedTheme = stored;
         }
-
-    }
-    catch (error) {
-
+    } catch (error) {
         savedTheme = "light";
-
     }
-
 
     setTheme(savedTheme);
-
 
     if (themeToggle) {
 
@@ -127,12 +87,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 event.preventDefault();
 
-                const currentTheme =
+                const current =
                     root.getAttribute("data-theme");
 
-
                 setTheme(
-                    currentTheme === "dark"
+                    current === "dark"
                         ? "light"
                         : "dark"
                 );
@@ -157,7 +116,6 @@ document.addEventListener("DOMContentLoaded", function () {
             "mainNavigation"
         );
 
-
     if (
         mobileButton &&
         navigation
@@ -172,16 +130,13 @@ document.addEventListener("DOMContentLoaded", function () {
                         "mobile-open"
                     );
 
-
                 mobileButton.setAttribute(
                     "aria-expanded",
                     String(open)
                 );
 
-
                 const icon =
                     mobileButton.querySelector("i");
-
 
                 if (icon) {
 
@@ -209,16 +164,13 @@ document.addEventListener("DOMContentLoaded", function () {
                                 "mobile-open"
                             );
 
-
                             mobileButton.setAttribute(
                                 "aria-expanded",
                                 "false"
                             );
 
-
                             const icon =
                                 mobileButton.querySelector("i");
-
 
                             if (icon) {
 
@@ -239,20 +191,167 @@ document.addEventListener("DOMContentLoaded", function () {
     // =========================================================
     // MODULE ACCORDIONS
     // =========================================================
+    //
+    // IMPORTANT:
+    // Modules work in BOTH admin and user mode.
+    //
+    // Every module starts CLOSED after refresh.
+    //
+    // Click the arrow:
+    //     ↓ = open
+    //     ↑ = close
+    //
+    // Only one module is open at a time.
+    // =========================================================
 
     const modules =
-        document.querySelectorAll(
-            ".portal-module"
+        Array.from(
+            document.querySelectorAll(
+                ".portal-module"
+            )
         );
 
 
+    const currentRole =
+        document.body.getAttribute(
+            "data-role"
+        ) || "guest";
+
+
+    const isAdmin =
+        currentRole === "admin";
+
+
+    function updateModuleArrow(
+        module,
+        open
+    ) {
+
+        if (!module) {
+            return;
+        }
+
+
+        const arrow =
+            module.querySelector(
+                ".module-toggle i"
+            );
+
+
+        if (!arrow) {
+            return;
+        }
+
+
+        arrow.className =
+            open
+                ? "fa-solid fa-chevron-up"
+                : "fa-solid fa-chevron-down";
+
+    }
+
+
+    function setModuleState(
+        module,
+        open
+    ) {
+
+        if (!module) {
+            return;
+        }
+
+
+        const header =
+            module.querySelector(
+                "[data-module-toggle]"
+            );
+
+
+        const body =
+            module.querySelector(
+                ".module-body"
+            );
+
+
+        if (
+            !header ||
+            !body
+        ) {
+
+            return;
+
+        }
+
+
+        header.setAttribute(
+            "aria-expanded",
+            String(open)
+        );
+
+
+        body.hidden =
+            !open;
+
+
+        module.classList.toggle(
+            "active",
+            open
+        );
+
+
+        module.classList.toggle(
+            "open",
+            open
+        );
+
+
+        updateModuleArrow(
+            module,
+            open
+        );
+
+    }
+
+
+    function closeOtherModules(
+        selectedModule
+    ) {
+
+        modules.forEach(
+            function (module) {
+
+                if (
+                    module !== selectedModule
+                ) {
+
+                    setModuleState(
+                        module,
+                        false
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // =========================================================
+    // INITIALIZE ALL MODULES
+    // =========================================================
+
     modules.forEach(
-        function (module) {
+        function (
+            module,
+            index
+        ) {
 
             const header =
                 module.querySelector(
                     "[data-module-toggle]"
                 );
+
 
             const body =
                 module.querySelector(
@@ -271,42 +370,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             /*
-             * Set initial arrow according
-             * to the existing HTML state.
+             * IMPORTANT:
+             *
+             * Every module starts CLOSED after
+             * a page load or browser refresh.
+             *
+             * The user/admin must click the
+             * arrow to explore the module.
              */
-            const initiallyOpen =
-                header.getAttribute(
-                    "aria-expanded"
-                ) === "true";
 
-
-            if (initiallyOpen) {
-
-                module.classList.add(
-                    "active"
-                );
-
-                module.classList.add(
-                    "open"
-                );
-
-                body.hidden =
-                    false;
-
-            }
-            else {
-
-                body.hidden =
-                    true;
-
-            }
-
-
-            updateModuleArrow(
+            setModuleState(
                 module,
-                initiallyOpen
+                false
             );
 
+
+            // =================================================
+            // MODULE CLICK
+            // =================================================
 
             header.addEventListener(
                 "click",
@@ -317,109 +398,63 @@ document.addEventListener("DOMContentLoaded", function () {
                     event.stopPropagation();
 
 
-                    const isCurrentlyOpen =
+                    const currentlyOpen =
                         header.getAttribute(
                             "aria-expanded"
                         ) === "true";
 
 
-                    const willOpen =
-                        !isCurrentlyOpen;
+                    const nextState =
+                        !currentlyOpen;
 
 
                     /*
-                     * Close every other module.
+                     * If opening a module,
+                     * close all other modules.
                      */
-                    modules.forEach(
-                        function (other) {
 
-                            if (
-                                other === module
-                            ) {
+                    if (nextState) {
 
-                                return;
+                        closeOtherModules(
+                            module
+                        );
 
-                            }
-
-
-                            const otherHeader =
-                                other.querySelector(
-                                    "[data-module-toggle]"
-                                );
-
-                            const otherBody =
-                                other.querySelector(
-                                    ".module-body"
-                                );
-
-
-                            if (otherHeader) {
-
-                                otherHeader.setAttribute(
-                                    "aria-expanded",
-                                    "false"
-                                );
-
-                            }
-
-
-                            if (otherBody) {
-
-                                otherBody.hidden =
-                                    true;
-
-                            }
-
-
-                            other.classList.remove(
-                                "active"
-                            );
-
-                            other.classList.remove(
-                                "open"
-                            );
-
-
-                            updateModuleArrow(
-                                other,
-                                false
-                            );
-
-                        }
-                    );
+                    }
 
 
                     /*
-                     * Open/close selected module.
+                     * Open or close selected module.
                      */
-                    header.setAttribute(
-                        "aria-expanded",
-                        String(willOpen)
-                    );
 
-
-                    body.hidden =
-                        !willOpen;
-
-
-                    module.classList.toggle(
-                        "active",
-                        willOpen
-                    );
-
-
-                    module.classList.toggle(
-                        "open",
-                        willOpen
-                    );
-
-
-                    updateModuleArrow(
+                    setModuleState(
                         module,
-                        willOpen
+                        nextState
                     );
 
                 }
+            );
+
+
+            // =================================================
+            // ACCESSIBILITY
+            // =================================================
+
+            const titleElement =
+                module.querySelector("h3");
+
+
+            const title =
+                titleElement
+                    ? titleElement.textContent.trim()
+                    : `module ${index + 1}`;
+
+
+            header.setAttribute(
+                "aria-label",
+                header.getAttribute(
+                    "aria-label"
+                ) ||
+                `Toggle ${title}`
             );
 
         }
@@ -427,7 +462,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // =========================================================
-    // CATEGORY CARDS
+    // ADMIN SUBMODULE DATA CARDS
+    // =========================================================
+    //
+    // User mode:
+    //     Submodules are visible.
+    //     Submodules do NOT open datasets.
+    //
+    // Admin mode:
+    //     Submodules can load their data.
     // =========================================================
 
     document
@@ -435,37 +478,48 @@ document.addEventListener("DOMContentLoaded", function () {
             ".subtopic-card"
         )
         .forEach(
-            function (button) {
+            function (card) {
 
-                button.addEventListener(
+                /*
+                 * User mode uses non-button cards.
+                 * Only admin buttons are interactive.
+                 */
+
+                if (
+                    card.tagName.toLowerCase() !==
+                    "button"
+                ) {
+
+                    return;
+
+                }
+
+
+                card.addEventListener(
                     "click",
                     async function (event) {
 
-                        /*
-                         * Prevent category click from
-                         * triggering the module header.
-                         */
                         event.preventDefault();
 
                         event.stopPropagation();
 
 
                         const module =
-                            button.closest(
+                            card.closest(
                                 ".portal-module"
                             );
 
 
                         if (!module) {
-
                             return;
-
                         }
 
 
                         /*
-                         * Mark selected category.
+                         * Remove active state
+                         * from other submodules.
                          */
+
                         module
                             .querySelectorAll(
                                 ".subtopic-card"
@@ -481,18 +535,18 @@ document.addEventListener("DOMContentLoaded", function () {
                             );
 
 
-                        button.classList.add(
+                        card.classList.add(
                             "active"
                         );
 
 
                         const moduleKey =
-                            button.dataset.module ||
+                            card.dataset.module ||
                             module.dataset.module;
 
 
                         const topic =
-                            button.dataset.topic;
+                            card.dataset.topic;
 
 
                         const content =
@@ -533,6 +587,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById(
             "moduleSearch"
         );
+
 
     const noResults =
         document.getElementById(
@@ -583,7 +638,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                         if (matches) {
 
-                            visibleCount++;
+                            visibleCount += 1;
 
                         }
 
@@ -605,12 +660,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     // =========================================================
-    // UPDATES NAVIGATION
+    // UPDATES HASH NAVIGATION
     // =========================================================
 
     document
         .querySelectorAll(
-            'a[href$="#updates"], a[href*="#updates"]'
+            'a[href*="#updates"]'
         )
         .forEach(
             function (link) {
@@ -625,43 +680,36 @@ document.addEventListener("DOMContentLoaded", function () {
                             );
 
 
-                        /*
-                         * If an Updates section exists
-                         * on the current page, scroll to it.
-                         */
-                        if (section) {
-
-                            event.preventDefault();
+                        if (!section) {
+                            return;
+                        }
 
 
-                            section.scrollIntoView(
-                                {
-                                    behavior:
-                                        "smooth",
+                        event.preventDefault();
 
-                                    block:
-                                        "start"
-                                }
+
+                        section.scrollIntoView(
+                            {
+                                behavior:
+                                    "smooth",
+
+                                block:
+                                    "start"
+                            }
+                        );
+
+
+                        try {
+
+                            history.pushState(
+                                null,
+                                "",
+                                "#updates"
                             );
 
+                        } catch (error) {
 
-                            /*
-                             * Keep URL hash.
-                             */
-                            try {
-
-                                history.pushState(
-                                    null,
-                                    "",
-                                    "#updates"
-                                );
-
-                            }
-                            catch (error) {
-
-                                // Ignore history errors.
-
-                            }
+                            // Ignore history API restrictions.
 
                         }
 
@@ -672,10 +720,10 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
 
-    /*
-     * If page opened directly with #updates,
-     * scroll to the Updates section.
-     */
+    // =========================================================
+    // OPEN UPDATES WHEN URL HAS #updates
+    // =========================================================
+
     if (
         window.location.hash ===
         "#updates"
@@ -721,63 +769,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 // =============================================================
-// MODULE ARROW
-// =============================================================
-
-function updateModuleArrow(
-    module,
-    open
-) {
-
-    if (!module) {
-
-        return;
-
-    }
-
-
-    const arrow =
-        module.querySelector(
-            ".module-toggle i"
-        );
-
-
-    if (!arrow) {
-
-        return;
-
-    }
-
-
-    arrow.className =
-        open
-            ? "fa-solid fa-chevron-up"
-            : "fa-solid fa-chevron-down";
-
-
-    /*
-     * Gives the opened arrow the
-     * same accent color used by
-     * your portal.
-     */
-    if (open) {
-
-        arrow.style.color =
-            "var(--accent, #19c6c8)";
-
-    }
-    else {
-
-        arrow.style.color =
-            "";
-
-    }
-
-}
-
-
-// =============================================================
-// LOAD DATA FOR HOMEPAGE CATEGORY
+// ADMIN DATA LOADING
 // =============================================================
 
 async function loadTopic(
@@ -821,7 +813,8 @@ async function loadTopic(
             await fetch(
                 url,
                 {
-                    method: "GET",
+                    method:
+                        "GET",
 
                     headers: {
                         "Accept":
@@ -834,8 +827,7 @@ async function loadTopic(
             );
 
 
-        let result =
-            null;
+        let result;
 
 
         try {
@@ -843,8 +835,7 @@ async function loadTopic(
             result =
                 await response.json();
 
-        }
-        catch (error) {
+        } catch (error) {
 
             throw new Error(
                 "The server returned an invalid response."
@@ -871,8 +862,7 @@ async function loadTopic(
                 result
             );
 
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "UCE Connect data loading error:",
@@ -904,7 +894,7 @@ async function loadTopic(
 
 
 // =============================================================
-// BUILD HOMEPAGE DATA VIEW
+// BUILD ADMIN DATA VIEW
 // =============================================================
 
 function buildDataView(
@@ -912,7 +902,9 @@ function buildDataView(
 ) {
 
     const rows =
-        Array.isArray(result.data)
+        Array.isArray(
+            result.data
+        )
             ? result.data
             : [];
 
@@ -944,10 +936,6 @@ function buildDataView(
     }
 
 
-    /*
-     * Get every column from the
-     * returned records.
-     */
     const columns =
         [];
 
@@ -992,6 +980,7 @@ function buildDataView(
         <div class="data-summary">
 
             <div>
+
                 <strong>
                     ${escapeHtml(
                         analysis.rows ??
@@ -1002,10 +991,12 @@ function buildDataView(
                 <span>
                     Rows
                 </span>
+
             </div>
 
 
             <div>
+
                 <strong>
                     ${escapeHtml(
                         analysis.columns ??
@@ -1016,10 +1007,12 @@ function buildDataView(
                 <span>
                     Columns
                 </span>
+
             </div>
 
 
             <div>
+
                 <strong>
                     ${escapeHtml(
                         result.module ||
@@ -1030,10 +1023,12 @@ function buildDataView(
                 <span>
                     Module
                 </span>
+
             </div>
 
 
             <div>
+
                 <strong>
                     ${escapeHtml(
                         result.title ||
@@ -1044,6 +1039,7 @@ function buildDataView(
                 <span>
                     Category
                 </span>
+
             </div>
 
         </div>
@@ -1140,9 +1136,6 @@ function setupFlashMessages() {
     messages.forEach(
         function (message) {
 
-            /*
-             * Existing close button.
-             */
             const closeButton =
                 message.querySelector(
                     ".flash-close"
@@ -1167,10 +1160,6 @@ function setupFlashMessages() {
             }
 
 
-            /*
-             * Automatically disappear
-             * after exactly 2 seconds.
-             */
             window.setTimeout(
                 function () {
 
@@ -1189,7 +1178,7 @@ function setupFlashMessages() {
 
 
 // =============================================================
-// REMOVE FLASH MESSAGE
+// REMOVE FLASH
 // =============================================================
 
 function removeFlash(

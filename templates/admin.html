@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -5,6 +6,524 @@ Admin Portal | UCE Connect
 {% endblock %}
 
 {% block content %}
+
+<style>
+/* =========================================================
+   ADMIN DEPARTMENT / REPORTING PERIOD
+   CLEAN RESPONSIVE CSS
+   Only affects Department Data section
+   ========================================================= */
+
+.admin-page .department-data-panel {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------
+   DEPARTMENT GRID
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel .department-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 24px !important;
+    width: 100%;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+/* ---------------------------------------------------------
+   DEPARTMENT CARD
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel .department-card {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    padding: 24px !important;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    overflow: hidden;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.admin-page .department-data-panel .department-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #cbd5e1;
+
+    box-shadow:
+        0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+
+/* ---------------------------------------------------------
+   DEPARTMENT HEADER
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-card .specific-heading {
+
+    width: 100%;
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    box-sizing: border-box;
+}
+
+.admin-page .department-data-panel
+.department-card .specific-heading > div {
+
+    min-width: 0;
+    flex: 1;
+}
+
+.admin-page .department-data-panel
+.department-card .specific-heading small {
+
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #64748b;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 0.08em;
+}
+
+.admin-page .department-data-panel
+.department-card .specific-heading h3 {
+
+    margin: 0 !important;
+
+    color: #14213d;
+
+    font-size: 22px;
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* ---------------------------------------------------------
+   DEPARTMENT ICON
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-card .module-icon {
+
+    flex: 0 0 52px;
+
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: #eff6f7;
+
+    color: #08b7bd;
+
+    font-size: 21px;
+}
+
+
+/* ---------------------------------------------------------
+   RECORD / SUBMISSION COUNT
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-card > p {
+
+    width: 100%;
+
+    margin: 22px 0 18px !important;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    line-height: 1.5;
+}
+
+
+/* ---------------------------------------------------------
+   MONTHLY / SEMESTER / YEARLY GRID
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-periods {
+
+    width: 100%;
+
+    display: grid !important;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr)) !important;
+
+    gap: 10px !important;
+
+    margin: 0 !important;
+
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   PERIOD BUTTON
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-period-link {
+
+    width: 100%;
+    min-width: 0;
+
+    min-height: 78px;
+
+    box-sizing: border-box;
+
+    display: flex !important;
+
+    flex-direction: column !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 6px !important;
+
+    padding: 12px 8px !important;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 11px;
+
+    background: #f8fafc;
+
+    color: #14213d;
+
+    text-decoration: none;
+
+    text-align: center;
+
+    overflow: hidden;
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+
+/* ---------------------------------------------------------
+   PERIOD HOVER
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-period-link:hover {
+
+    background: #ffffff;
+
+    border-color: #08aeb5;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 6px 16px rgba(15, 23, 42, 0.08);
+
+}
+
+
+/* ---------------------------------------------------------
+   PERIOD NAME
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-period-link .period-name {
+
+    display: block;
+
+    width: 100%;
+
+    min-width: 0;
+
+    margin: 0;
+
+    color: #14213d;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+/* ---------------------------------------------------------
+   PERIOD RECORD COUNT
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-period-link .period-records {
+
+    display: block;
+
+    width: 100%;
+
+    min-width: 0;
+
+    margin: 0;
+
+    color: #087f83;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+/* Arrow */
+.admin-page .department-data-panel
+.department-period-link .period-records i {
+
+    margin-left: 3px;
+
+    font-size: 9px;
+}
+
+
+/* ---------------------------------------------------------
+   EMPTY PERIOD
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-period-link.empty {
+
+    background: #f8fafc;
+
+    color: #64748b;
+}
+
+.admin-page .department-data-panel
+.department-period-link.empty .period-name {
+
+    color: #475569;
+}
+
+.admin-page .department-data-panel
+.department-period-link.empty .period-records {
+
+    color: #94a3b8;
+}
+
+
+/* ---------------------------------------------------------
+   VIEW DEPARTMENT DATA BUTTON
+   --------------------------------------------------------- */
+
+.admin-page .department-data-panel
+.department-actions {
+
+    width: 100%;
+
+    display: flex;
+
+    margin-top: 18px;
+
+    padding: 0 !important;
+
+    box-sizing: border-box;
+}
+
+.admin-page .department-data-panel
+.department-actions .header-button {
+
+    width: 100% !important;
+
+    min-height: 46px;
+
+    display: flex !important;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    box-sizing: border-box;
+
+    border-radius: 10px;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
+
+
+/* ---------------------------------------------------------
+   TABLET
+   --------------------------------------------------------- */
+
+@media (max-width: 1200px) {
+
+    .admin-page .department-data-panel
+    .department-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr)) !important;
+
+        gap: 20px !important;
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   SMALL TABLET
+   --------------------------------------------------------- */
+
+@media (max-width: 800px) {
+
+    .admin-page .department-data-panel
+    .department-grid {
+
+        grid-template-columns: 1fr !important;
+
+        gap: 18px !important;
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 600px) {
+
+    .admin-page .department-data-panel
+    .department-card {
+
+        padding: 20px !important;
+    }
+
+    .admin-page .department-data-panel
+    .department-periods {
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr)) !important;
+
+        gap: 8px !important;
+    }
+
+    .admin-page .department-data-panel
+    .department-period-link {
+
+        min-height: 72px;
+
+        padding: 10px 5px !important;
+    }
+
+    .admin-page .department-data-panel
+    .department-period-link .period-name {
+
+        font-size: 12px;
+    }
+
+    .admin-page .department-data-panel
+    .department-period-link .period-records {
+
+        font-size: 10px;
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   VERY SMALL MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 400px) {
+
+    .admin-page .department-data-panel
+    .department-periods {
+
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-page .department-data-panel
+    .department-period-link {
+
+        min-height: 58px;
+
+        flex-direction: row !important;
+
+        justify-content: space-between !important;
+
+        padding: 12px 14px !important;
+
+        text-align: left;
+    }
+
+    .admin-page .department-data-panel
+    .department-period-link .period-name {
+
+        width: auto;
+
+        text-align: left;
+    }
+
+    .admin-page .department-data-panel
+    .department-period-link .period-records {
+
+        width: auto;
+
+        text-align: right;
+    }
+
+}
+</style>
+
 
 <section class="admin-page">
 
@@ -160,56 +679,55 @@ Admin Portal | UCE Connect
 
 
         <!-- =====================================================
-             MODULE PROGRESS
+             DEPARTMENT / REPORTING PERIOD DATA
         ====================================================== -->
 
-        <section class="upload-panel">
+        <section class="upload-panel department-data-panel">
 
             <div class="section-heading">
 
                 <div>
 
                     <p class="eyebrow">
-                        MODULE PROGRESS
+                        DEPARTMENT WISE DATA
                     </p>
 
                     <h2>
-                        Current Data Coverage
+                        Department → Reporting Period
                     </h2>
 
                 </div>
 
+                <p>
+                    Every user submission is stored under the department and
+                    reporting period selected by the user.
+                </p>
+
             </div>
 
 
-            <div class="specific-upload-grid">
+            <div class="specific-upload-grid department-grid">
 
-                {% for module in university_report.modules %}
+                {% for department in department_summary %}
 
-                <article class="specific-upload-card">
+                {% if department.department in departments and department.department|trim|lower not in ["ai & ml", "cse"] %}
 
-
-                    <!-- MODULE HEADER -->
+                <article class="specific-upload-card department-card">
 
                     <div class="specific-heading">
 
                         <span class="module-icon">
-
-                            <i
-                                class="fa-solid {{ module.icon|default('fa-folder') }}"
-                            ></i>
-
+                            <i class="fa-solid fa-building-columns"></i>
                         </span>
-
 
                         <div>
 
                             <small>
-                                {{ "%02d"|format(loop.index) }}
+                                DEPARTMENT
                             </small>
 
                             <h3>
-                                {{ module.name }}
+                                {{ department.department }}
                             </h3>
 
                         </div>
@@ -217,154 +735,54 @@ Admin Portal | UCE Connect
                     </div>
 
 
-                    <!-- MODULE DESCRIPTION -->
-
-                    <p>
-
-                        {{ module.description|default(
-                            "University information module."
-                        ) }}
-
+                    <p style="margin-bottom:10px;">
+                        {{ department.records }} records ·
+                        {{ department.uploads }} submissions
                     </p>
 
 
-                    <!-- RECORD COUNT -->
+                    <div class="department-periods">
 
-                    <h3>
-
-                        {{ "{:,}".format(module.total_records|default(0)) }}
-
-                        records
-
-                    </h3>
-
-
-                    <!-- =================================================
-                         CATEGORY / SUB MODULE COUNTS
-                    ================================================== -->
-
-                    {% if module.categories %}
-
-                        {% for category in module.categories %}
-
-                        <div
-                            style="
-                                display:flex;
-                                justify-content:space-between;
-                                align-items:center;
-                                gap:15px;
-                                margin:10px 0;
-                                padding:10px 12px;
-                                border-radius:8px;
-                                background:rgba(0,0,0,0.03);
-                            "
-                        >
-
-                            <span>
-
-                                {% if category.name is defined %}
-
-                                    {{ category.name }}
-
-                                {% else %}
-
-                                    {{ category }}
-
-                                {% endif %}
-
-                            </span>
-
-
-                            <strong>
-
-                                {% if category.count is defined %}
-
-                                    {{ category.count }}
-
-                                {% elif module.category_counts is defined %}
-
-                                    {{ module.category_counts.get(category, 0) }}
-
-                                {% else %}
-
-                                    0
-
-                                {% endif %}
-
-                            </strong>
-
-                        </div>
-
-                        {% endfor %}
-
-                    {% else %}
-
-                        <div
-                            style="
-                                padding:12px;
-                                margin:10px 0;
-                                border-radius:8px;
-                                background:rgba(0,0,0,0.03);
-                            "
-                        >
-
-                            No category data available.
-
-                        </div>
-
-                    {% endif %}
-
-
-                    <!-- =================================================
-                         MODULE ACTIONS
-                    ================================================== -->
-
-                    <div
-                        style="
-                            display:flex;
-                            flex-wrap:wrap;
-                            gap:10px;
-                            margin-top:18px;
-                        "
-                    >
-
-                        <!-- MODULE REPORT -->
+                        {% for item in department.periods %}
 
                         <a
-                            class="header-button"
-                            href="{{ url_for(
-                                'main.admin_module_report',
-                                module=module.key
-                            ) }}"
-                        >
-
-                            <i class="fa-solid fa-chart-column"></i>
-
-                            Module Report
-
-                        </a>
-
-
-                        <!-- VIEW MODULE DATA -->
-
-                        <a
-                            class="outline-button"
+                            class="department-period-link{% if item.records == 0 %} empty{% endif %}"
                             href="{{ url_for(
                                 'main.admin_data',
-                                module=module.key
+                                department=department.department,
+                                period=item.period
                             ) }}"
                         >
-
-                            <i class="fa-solid fa-table"></i>
-
-                            View Module Data
-
+                            <span class="period-name">{{ item.period }}</span>
+                            <span class="period-records">
+                                {{ item.records }} records
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </span>
                         </a>
+
+                        {% endfor %}
 
                     </div>
 
 
+                    <div class="department-actions">
+
+                        <a
+                            class="header-button"
+                            href="{{ url_for(
+                                'main.admin_data',
+                                department=department.department
+                            ) }}"
+                        >
+                            <i class="fa-solid fa-table"></i>
+                            View Department Data
+                        </a>
+
+                    </div>
+
                 </article>
+
+                {% endif %}
 
                 {% endfor %}
 
@@ -511,6 +929,14 @@ Admin Portal | UCE Connect
                             </th>
 
                             <th>
+                                Department
+                            </th>
+
+                            <th>
+                                Period
+                            </th>
+
+                            <th>
                                 Mode
                             </th>
 
@@ -572,6 +998,24 @@ Admin Portal | UCE Connect
                                     {{ upload.uploader_email or '' }}
                                 </small>
 
+                            </td>
+
+
+                            <!-- DEPARTMENT -->
+
+                            <td>
+                                {{ upload.department or 'Legacy record' }}
+                            </td>
+
+
+                            <!-- PERIOD -->
+
+                            <td>
+                                <strong>{{ upload.reporting_period or 'Legacy record' }}</strong>
+                                {% if upload.reporting_value %}
+                                    <br>
+                                    <small>{{ upload.reporting_value }}</small>
+                                {% endif %}
                             </td>
 
 
@@ -664,12 +1108,12 @@ Admin Portal | UCE Connect
                             <td>
 
                                 <a
-                                    href="{{ upload.source_url }}"
+                                    href="{{ url_for('main.open_submission', upload_id=upload.id) }}"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
 
-                                    Open Link
+                                    Open Submitted Spreadsheet
 
                                 </a>
 

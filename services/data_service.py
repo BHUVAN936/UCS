@@ -1,6 +1,9 @@
 import io
 import json
+import os
 import re
+import shutil
+from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -8,6 +11,162 @@ import pandas as pd
 
 from database.db import get_connection
 from services.link_service import download_spreadsheet
+
+# =========================================================
+# DEPARTMENTS
+# =========================================================
+# EXACTLY 17 UNIVERSITY DEPARTMENTS
+# Do not add AI & ML, CSE, BBA, MBA, Pharmacy, Student Affairs, etc.
+# =========================================================
+
+DEPARTMENTS = [
+    "CSE-1",
+    "CSE-2",
+    "CSE-3",
+    "CSE-4",
+    "ECE",
+    "EEE",
+    "Mechanical",
+    "Civil",
+    "CS & IT",
+    "AI & DS",
+    "EL & GE",
+    "MD & E",
+    "IR & D",
+    "BT - Biotechnology",
+    "IOT",
+    "BCA",
+    "MCA",
+]
+
+REPORTING_PERIODS = [
+    "Monthly",
+    "Semester",
+    "Yearly",
+]
+
+MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
+SEMESTERS = [
+    "Semester 1",
+    "Semester 2",
+]
+
+# Kept only for compatibility with old database records and older helper calls.
+# The user/admin interface no longer exposes 1st/2nd/3rd/4th year.
+YEARS = [
+    "1st Year", "2nd Year", "3rd Year", "4th Year",
+]
+
+def normalize_study_year(value):
+    if value is None:
+        return ""
+    target = re.sub(r"\s+", " ", str(value).strip()).lower()
+    aliases = {
+        "1": "1st Year", "1st": "1st Year", "1st year": "1st Year",
+        "first": "1st Year", "first year": "1st Year",
+        "2": "2nd Year", "2nd": "2nd Year", "2nd year": "2nd Year",
+        "second": "2nd Year", "second year": "2nd Year",
+        "3": "3rd Year", "3rd": "3rd Year", "3rd year": "3rd Year",
+        "third": "3rd Year", "third year": "3rd Year",
+        "4": "4th Year", "4th": "4th Year", "4th year": "4th Year",
+        "fourth": "4th Year", "fourth year": "4th Year",
+    }
+    return aliases.get(target, str(value).strip())
+
+def normalize_department(value):
+    if value is None:
+        return ""
+    target = re.sub(r"\s+", " ", str(value).strip())
+    if not target:
+        return ""
+    key = target.lower().replace(" ", "").replace("_", "-")
+    aliases = {
+        "cse1": "CSE-1", "cse-1": "CSE-1",
+        "cse2": "CSE-2", "cse-2": "CSE-2",
+        "cse3": "CSE-3", "cse-3": "CSE-3",
+        "cse4": "CSE-4", "cse-4": "CSE-4",
+        "ece": "ECE", "eee": "EEE",
+        "me": "Mechanical", "mech": "Mechanical", "mechanical": "Mechanical",
+        "civil": "Civil",
+        "it": "CS & IT",
+        "csit": "CS & IT", "cs-it": "CS & IT", "cs&it": "CS & IT",
+        "aids": "AI & DS", "ai&ds": "AI & DS", "ai ds": "AI & DS",
+        "elge": "EL & GE", "el&ge": "EL & GE", "el-ge": "EL & GE",
+        "mde": "MD & E", "md&e": "MD & E", "md-e": "MD & E",
+        "ird": "IR & D", "ir&d": "IR & D", "ir-d": "IR & D",
+        "bt": "BT - Biotechnology", "biotechnology": "BT - Biotechnology",
+        "iot": "IOT",
+        "bca": "BCA",
+        "mca": "MCA",
+    }
+    return aliases.get(key, target)
+
+def is_valid_department(value):
+    """Return True when the supplied value resolves to a configured department."""
+    normalized = normalize_department(value)
+    return bool(normalized) and normalized in DEPARTMENTS
+
+def normalize_reporting_period(value):
+    if value is None:
+        return ""
+    target = str(value).strip().lower()
+    aliases = {
+        "monthly": "Monthly",
+        "month": "Monthly",
+        "semester": "Semester",
+        "sem": "Semester",
+        "yearly": "Yearly",
+        "annual": "Yearly",
+        "year": "Yearly",
+    }
+    return aliases.get(target, str(value).strip())
+
+def normalize_month(value):
+    if value is None:
+        return ""
+    target = str(value).strip().lower()
+    for month in MONTHS:
+        if target == month.lower() or target[:3] == month[:3].lower():
+            return month
+    return ""
+
+def normalize_semester(value):
+    if value is None:
+        return ""
+    target = str(value).strip().lower()
+    if target in {"1", "sem 1", "semester 1", "first", "first semester"}:
+        return "Semester 1"
+    if target in {"2", "sem 2", "semester 2", "second", "second semester"}:
+        return "Semester 2"
+    return ""
+
+def normalize_reporting_year(value):
+    try:
+        year = int(str(value).strip())
+    except (TypeError, ValueError):
+        return ""
+    if year < 2000 or year > 2100:
+        return ""
+    return str(year)
+
+def build_reporting_value(period_type, month=None, semester=None, reporting_year=None):
+    period_type = normalize_reporting_period(period_type)
+    reporting_year = normalize_reporting_year(reporting_year)
+    if not reporting_year:
+        return ""
+    if period_type == "Monthly":
+        month = normalize_month(month)
+        return f"{month} {reporting_year}" if month else ""
+    if period_type == "Semester":
+        semester = normalize_semester(semester)
+        return f"{semester} - {reporting_year}" if semester else ""
+    if period_type == "Yearly":
+        return reporting_year
+    return ""
 
 
 # =========================================================
@@ -296,6 +455,115 @@ MODULES = {
         },
     },
 }
+
+
+# =========================================================
+# STUDENT CATEGORY REPORT SUPPORT
+# =========================================================
+# The student-category Excel format uses:
+#     Category     -> UCE module
+#     Sub Category -> UCE submodule
+#     Value        -> metric value
+#
+# These definitions are intentionally explicit.  They make the importer
+# understand the supplied student report without guessing a different module.
+
+_EXCEL_CATEGORY_DEFINITIONS = {
+    "academics": [
+        "Average CGPA",
+        "Average SGPA",
+        "Backlog Students",
+        "Exam Results",
+        "Internal Marks",
+        "Pass Percentage",
+        "Students Enrolled",
+    ],
+    "placements": [
+        "Average Package",
+        "Companies Visited",
+        "Highest Package",
+        "Internship Programs",
+        "Placement Drive",
+        "Students Placed",
+    ],
+    "faculty_affairs": [
+        "Academic Excellence",
+        "Certifications",
+        "Course Design",
+        "Curriculum Development",
+        "FDP Programs",
+        "Faculty Attendance",
+        "Faculty Promoted",
+        "Faculty Resigned",
+        "Faculty Strength",
+        "Faculty Training",
+        "Guest Lectures",
+        "Industry Collaboration",
+        "Library Resources",
+        "New Faculty Joined",
+        "PhD Supervision",
+        "Professional Development",
+        "Publications",
+        "Research Output",
+        "Research Projects",
+        "Seminars Conducted",
+        "Skill Development",
+        "Training Hours",
+        "Workshops Attended",
+    ],
+    "p_and_d": [
+        "Building Renovation",
+        "Equipment Purchase",
+        "Facility Upgrade",
+        "Infrastructure Development",
+        "Infrastructure Planning",
+        "Lab Setup",
+        "Maintenance Activities",
+    ],
+    "research": [
+        "Book Chapters",
+        "Case Studies",
+        "Collaborations",
+        "Conference Papers",
+        "Consulting Projects",
+        "Data Analysis",
+        "Funded Projects",
+        "IP Management",
+        "Industry Projects",
+        "Innovation Projects",
+        "Journal Publications",
+        "Knowledge Transfer",
+        "Lab Equipment",
+        "Patent Applications",
+        "Patents Filed",
+        "Research Ethics",
+        "Research Grants",
+        "Research Methodology",
+        "Research Papers",
+        "Research Proposal",
+        "Research Quality",
+        "Seminars Organized",
+        "Technical Papers",
+        "Technology Transfer",
+    ],
+}
+
+# Add the Excel-defined categories to the existing modules. Existing UCE
+# categories are preserved; these are additional supported submodules.
+for _excel_module, _excel_categories in _EXCEL_CATEGORY_DEFINITIONS.items():
+    # Excel data may extend the subcategory list of an EXISTING module,
+    # but it must never create a new portal module automatically.
+    if _excel_module not in MODULES:
+        continue
+
+    for _excel_category in _excel_categories:
+        _excel_key = re.sub(
+            r"[^a-z0-9]+",
+            "_",
+            _excel_category.lower(),
+        ).strip("_")
+        MODULES[_excel_module].setdefault("categories", {})[_excel_key] = _excel_category
+
 
 
 # =========================================================
@@ -641,6 +909,7 @@ def detect_explicit_category(module, row):
             "sub-module", "sub module", "submodule",
             "category", "category name", "subtopic", "topic",
             "metric", "indicator", "parameter",
+            "audit item", "audit_item", "item", "metric name", "metric_name",
         ],
     )
     if not value:
@@ -1027,11 +1296,27 @@ def _value_aware_matches(row, sheet_name):
 def detect_category_matches(row, sheet_name="", forced_module=None):
     """Return all confident (module, category) matches for one row.
 
-    A row may legitimately contain data for several modules.  The importer
-    therefore returns multiple matches instead of forcing the whole row into
-    one category.  Ambiguous or unmatched data returns an empty list and is
-    stored as module=unclassified/category=unclassified.
+    For IQAC/audit-style sheets, the metric text (Description/Audit Item) is
+    the authoritative classification signal.  The workbook's Module column is
+    treated as a hint because real workbooks can contain legacy or inconsistent
+    module labels.
     """
+    # Audit-style rows must be classified from their actual metric text first.
+    # This fixes workbooks where a row says ``Module=Academics`` but its Audit
+    # Item is clearly a placement, finance, library, etc. metric.
+    if is_reference_style_row(row):
+        description = _description_column(row)
+        detected = detect_metric_from_description(description)
+        if detected:
+            if forced_module:
+                forced = normalize_module(forced_module)
+                if forced in MODULES and detected[0] != forced:
+                    detected_in_forced = detect_metric_from_description(description, forced)
+                    if detected_in_forced:
+                        return [detected_in_forced]
+                    return []
+            return [detected]
+
     explicit_module = detect_explicit_module(row)
     module_hint = normalize_module(forced_module) if forced_module else None
 
@@ -1053,7 +1338,7 @@ def detect_category_matches(row, sheet_name="", forced_module=None):
 
     explicit_value = get_column_value(
         row,
-        ["sub-module", "sub module", "submodule", "category", "category name", "subtopic", "topic", "metric", "indicator", "parameter"],
+        ["sub-module", "sub module", "submodule", "category", "category name", "subtopic", "topic", "metric", "indicator", "parameter", "audit item", "audit_item", "item", "metric name", "metric_name"],
     )
     if explicit_value:
         target = normalize_text(explicit_value)
@@ -1270,27 +1555,354 @@ def build_category_row(row, module, category, sheet_name=""):
     return output
 
 
-def classify_row(row, sheet_name="", upload_mode="mixed", target_module=None, target_category=None):
-    """Classify one spreadsheet row without ever creating module/unclassified.
 
-    For mixed imports, every confident submodule gets its own record.  When no
-    submodule matches, the complete row is stored only as
-    unclassified/unclassified.  A module with an unknown submodule is never
-    stored as module/unclassified.
+# =========================================================
+# REFERENCE-STYLE AUDIT EXCEL CLASSIFICATION
+# =========================================================
+# The official IQAC workbook is a REFERENCE for the portal's metric registry.
+# It is NOT the master data source and its Category/Sub Category columns are
+# NOT used as the primary classifier.
+#
+# For any uploaded workbook/link that has a Description column, Description is
+# treated as the metric identity. The row is then routed to the configured
+# module/category whose metric label best matches that description. The full
+# original row is preserved, including Category/Sub Category, Frequency,
+# target, achievement and proof columns.
+
+AUDIT_DESCRIPTION_HEADERS = {
+    "description",
+    "audit item",
+    "audit_item",
+    "item",
+    "metric name",
+    "metric_name",
+    "metric",
+    "indicator description",
+    "audit description",
+    "parameter description",
+    "item description",
+}
+
+AUDIT_FREQUENCY_HEADERS = {
+    "frequency",
+    "reporting frequency",
+    "periodicity",
+}
+
+REFERENCE_ONLY_HEADERS = {
+    "category",
+    "sub category",
+    "subcategory",
+    "module",
+    "submodule",
+    "sub module",
+}
+
+
+def _description_column(row):
+    """Return the actual metric-description value, if the row has one."""
+    if isinstance(row, pd.Series):
+        items = row.to_dict()
+    elif isinstance(row, dict):
+        items = row
+    else:
+        return ""
+
+    normalized = {
+        normalize_text(key): value
+        for key, value in items.items()
+    }
+
+    for header in AUDIT_DESCRIPTION_HEADERS:
+        value = normalized.get(normalize_text(header))
+        if value is None:
+            continue
+        try:
+            if pd.isna(value):
+                continue
+        except (TypeError, ValueError):
+            pass
+        value = str(value).strip()
+        if value:
+            return value
+    return ""
+
+
+def is_reference_style_row(row):
+    """Detect the IQAC-style one-row-per-metric spreadsheet format."""
+    if not isinstance(row, (pd.Series, dict)):
+        return False
+
+    if not _description_column(row):
+        return False
+
+    if isinstance(row, pd.Series):
+        keys = row.index
+    else:
+        keys = row.keys()
+
+    headers = {normalize_text(key) for key in keys}
+    return (
+        bool(headers.intersection({normalize_text(x) for x in AUDIT_FREQUENCY_HEADERS}))
+        or bool(headers.intersection({normalize_text(x) for x in REFERENCE_ONLY_HEADERS}))
+    )
+
+
+def _metric_tokens(value):
+    text = normalize_text(value)
+    text = re.sub(r"[^a-z0-9 ]+", " ", text)
+    tokens = [token for token in text.split() if len(token) > 1]
+    stop_words = {
+        "the", "of", "and", "for", "to", "in", "on", "with", "from",
+        "by", "per", "all", "no", "number", "total", "percentage", "%",
+    }
+    return set(token for token in tokens if token not in stop_words)
+
+
+def _metric_similarity(description, label):
+    """Return a deterministic 0..1 similarity for metric descriptions."""
+    a = normalize_text(description)
+    b = normalize_text(label)
+    if not a or not b:
+        return 0.0
+    if a == b:
+        return 1.0
+    if a in b or b in a:
+        return 0.94
+
+    a_tokens = _metric_tokens(a)
+    b_tokens = _metric_tokens(b)
+    if not a_tokens or not b_tokens:
+        return SequenceMatcher(None, a, b).ratio()
+
+    overlap = len(a_tokens & b_tokens) / max(1, len(a_tokens | b_tokens))
+    containment = max(
+        len(a_tokens & b_tokens) / max(1, len(a_tokens)),
+        len(a_tokens & b_tokens) / max(1, len(b_tokens)),
+    )
+    sequence = SequenceMatcher(None, a, b).ratio()
+    return max(sequence, 0.65 * overlap + 0.35 * containment)
+
+
+def detect_metric_from_description(description, target_module=None):
+    """Map Description to one configured module/category without using
+    Category/Sub Category as evidence.
+
+    Exact/near-exact configured labels win. Ambiguous weak matches are rejected
+    instead of sending data to the wrong module.
     """
+    if not description:
+        return None
+
+    modules = [normalize_module(target_module)] if target_module else list(MODULES.keys())
+    modules = [module for module in modules if module in MODULES]
+    candidates = []
+
+    for module in modules:
+        for category, label in MODULES[module].get("categories", {}).items():
+            score = _metric_similarity(description, label)
+            candidates.append((score, module, category))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: (-item[0], item[1], item[2]))
+    best = candidates[0]
+    second = candidates[1] if len(candidates) > 1 else (0.0, "", "")
+
+    # Exact labels and strong containment are always accepted. For fuzzy
+    # matching require both a reasonable score and a useful margin.
+    if best[0] >= 0.90:
+        return best[1], best[2]
+    if best[0] >= 0.72 and (best[0] - second[0] >= 0.06):
+        return best[1], best[2]
+
+    return None
+
+
+def _find_category_from_text(module, value):
+    """Find the configured submodule/category for a row value.
+
+    Matching order:
+    1. exact configured key/label
+    2. strong token/containment match
+    3. conservative fuzzy match
+
+    Ambiguous matches are rejected instead of guessing.
+    """
+    if not module or module not in MODULES or not value:
+        return None
+
+    target = normalize_text(value)
+    categories = MODULES[module].get("categories", {})
+    candidates = []
+
+    for key, label in categories.items():
+        key_text = normalize_text(key)
+        label_text = normalize_text(label)
+
+        if target == key_text or target == label_text:
+            return key
+
+        score_key = _metric_similarity(target, key_text)
+        score_label = _metric_similarity(target, label_text)
+        score = max(score_key, score_label)
+
+        # Strong token overlap is especially useful for values such as
+        # "Students Placed" vs "Number of students to be placed".
+        target_tokens = _metric_tokens(target)
+        label_tokens = _metric_tokens(label_text)
+        if target_tokens and label_tokens:
+            overlap = len(target_tokens & label_tokens) / max(1, len(target_tokens))
+            score = max(score, 0.85 * overlap)
+
+        candidates.append((score, key))
+
+    candidates.sort(key=lambda item: (-item[0], item[1]))
+    if not candidates:
+        return None
+
+    best_score, best_key = candidates[0]
+    second_score = candidates[1][0] if len(candidates) > 1 else 0.0
+
+    if best_score >= 0.90:
+        return best_key
+    if best_score >= 0.72 and (best_score - second_score >= 0.06):
+        return best_key
+
+    return None
+
+
+def _explicit_category_module_row(row):
+    """Classify spreadsheets having Category + Sub Category columns.
+
+    This is the format used by the user's university category report:
+        Category     -> UCE module
+        Sub Category -> UCE submodule
+        Value        -> metric value
+    """
+    category_value = get_column_value(
+        row,
+        ["category", "module", "category name", "module name"],
+    )
+    subcategory_value = get_column_value(
+        row,
+        ["sub category", "subcategory", "submodule", "sub module", "topic"],
+    )
+
+    if not category_value and not subcategory_value:
+        return None, None, None
+
+    if not category_value:
+        return None, None, "Missing module/category."
+
+    module = normalize_module(category_value)
+
+    # Match display names as well as normalized keys.
+    if module not in MODULES:
+        target = normalize_text(category_value)
+        for key, info in MODULES.items():
+            if target == normalize_text(info.get("name", key)):
+                module = key
+                break
+
+    if module not in MODULES:
+        return None, None, f'Unknown module/category: "{category_value}".'
+
+    if not subcategory_value:
+        return None, None, f'Missing submodule for module "{MODULES[module].get("name", module)}".'
+
+    category_key = _find_category_from_text(module, subcategory_value)
+    if not category_key:
+        return None, None, (
+            f'Submodule "{subcategory_value}" does not match any configured '
+            f'submodule under "{MODULES[module].get("name", module)}".'
+        )
+
+    return module, category_key, None
+
+
+def classify_reference_row(row, target_module=None, target_category=None):
+    """Classify one Description/audit row and preserve the complete row."""
+    original = row.to_dict() if isinstance(row, pd.Series) else dict(row)
+    description = _description_column(row)
+
+    if target_module:
+        module = normalize_module(target_module)
+        if module in MODULES:
+            category = normalize_category(target_category, module) if target_category else ""
+            if category in MODULES[module].get("categories", {}):
+                return [(module, category, original)]
+            detected = detect_metric_from_description(description, module)
+            if detected:
+                return [(detected[0], detected[1], original)]
+            return [("unclassified", "unclassified", original)]
+
+    # If the row also contains explicit Category/Sub Category, prefer those
+    # because they are stronger evidence than a fuzzy Description match.
+    module, category, error = _explicit_category_module_row(row)
+    if module and category:
+        return [(module, category, original)]
+
+    detected = detect_metric_from_description(description)
+    if detected:
+        return [(detected[0], detected[1], original)]
+
+    return [("unclassified", "unclassified", original)]
+
+
+def normalize_upload_mode(value):
+    """Return the canonical internal upload mode.
+
+    The user-facing value is ``single``.  The database schema historically
+    used ``specific`` for the same behavior, so both names are accepted and
+    normalized here.  ``mixed`` remains automatic row-level consolidation.
+    """
+    value = str(value or "").strip().lower()
+    if value in {"single", "specific"}:
+        return "specific"
+    return "mixed"
+
+
+def classify_row(row, sheet_name="", upload_mode="mixed", target_module=None, target_category=None):
+    """Classify one spreadsheet row without silently assigning bad data."""
+    upload_mode = normalize_upload_mode(upload_mode)
+    original = row.to_dict() if isinstance(row, pd.Series) else dict(row)
+
+    # IMPORTANT: spreadsheets containing Category + Sub Category are the
+    # primary UCE Connect import format. Handle them before generic keyword
+    # detection so the module/submodule supplied by the spreadsheet wins.
+    explicit_category = get_column_value(
+        row,
+        ["category", "module", "category name", "module name"],
+    )
+    explicit_subcategory = get_column_value(
+        row,
+        ["sub category", "subcategory", "submodule", "sub module", "topic"],
+    )
+
+    if explicit_category or explicit_subcategory:
+        module, category, error = _explicit_category_module_row(row)
+        if module and category:
+            return [(module, category, original)]
+        return [("unclassified", "unclassified", original)]
+
+    if is_reference_style_row(row):
+        return classify_reference_row(row, target_module, target_category)
+
     if upload_mode == "specific":
         module = normalize_module(target_module)
         category = normalize_category(target_category, module)
         if module in MODULES and category in MODULES[module].get("categories", {}):
             category_row = build_category_row(row, module, category, sheet_name)
             if not category_row:
-                category_row = row.to_dict() if isinstance(row, pd.Series) else dict(row)
+                category_row = original
             return [(module, category, category_row)]
-        return [("unclassified", "unclassified", row)]
+        return [("unclassified", "unclassified", original)]
 
     matches = detect_category_matches(row, sheet_name)
     if not matches:
-        return [("unclassified", "unclassified", row)]
+        return [("unclassified", "unclassified", original)]
 
     classified = []
     for module, category in matches:
@@ -1299,7 +1911,7 @@ def classify_row(row, sheet_name="", upload_mode="mixed", target_module=None, ta
             classified.append((module, category, category_row))
 
     if not classified:
-        return [("unclassified", "unclassified", row)]
+        return [("unclassified", "unclassified", original)]
 
     return classified
 
@@ -1341,12 +1953,74 @@ def detect_source_type(url):
     if path.endswith(".csv"):
         return "csv"
 
+    if path.endswith((".xlsx", ".xls")):
+        return "excel"
+
     return "other"
 
 
 # =========================================================
 # CLEANING
 # =========================================================
+
+
+DOCUMENTATION_SHEET_NAMES = {
+    "instructions", "instruction", "module index", "module indexes",
+    "read me", "readme", "contents", "index",
+}
+
+
+def is_documentation_sheet(sheet_name):
+    return normalize_text(sheet_name) in DOCUMENTATION_SHEET_NAMES
+
+
+def _find_header_row(file_path, sheet_name):
+    """Find the real header row in spreadsheets that have title rows above it."""
+    try:
+        preview = pd.read_excel(
+            file_path,
+            sheet_name=sheet_name,
+            header=None,
+            nrows=12,
+        )
+    except Exception:
+        return 0
+
+    for index, values in preview.iterrows():
+        headers = {normalize_text(value) for value in values.tolist() if pd.notna(value)}
+        has_metric = bool(headers.intersection({
+            "description", "audit item", "audit_item", "item",
+            "metric", "metric name", "metric_name"
+        }))
+        has_sno = "s.no." in headers or "s no" in headers or "sno" in headers
+        has_module = "module" in headers or "module name" in headers
+        has_department = "department" in headers or "department name" in headers
+        if has_metric and (has_sno or has_module or has_department):
+            return int(index)
+
+    return 0
+
+
+def read_spreadsheet(file_path, extension):
+    """Read CSV/XLS/XLSX while handling title rows in audit workbooks."""
+    if extension == ".csv":
+        return {"CSV": pd.read_csv(file_path)}
+
+    if extension in {".xlsx", ".xls"}:
+        # First get sheet names without assuming the first row is the header.
+        excel = pd.ExcelFile(file_path)
+        sheets = {}
+        for sheet_name in excel.sheet_names:
+            header_row = _find_header_row(file_path, sheet_name)
+            sheets[sheet_name] = pd.read_excel(
+                file_path,
+                sheet_name=sheet_name,
+                header=header_row,
+            )
+        return sheets
+
+    raise ValueError("Only CSV, XLS and XLSX files are supported.")
+
 
 def clean_columns(columns):
     result = []
@@ -1413,6 +2087,90 @@ def _row_dict(row):
 
 
 # =========================================================
+# ORIGINAL SUBMISSION STORAGE
+# =========================================================
+
+
+def _submission_storage_dir():
+    """Return the persistent directory used for original submitted files.
+
+    Set UCE_SUBMISSION_STORAGE_DIR in production to a persistent volume.
+    The default keeps the existing local instance/submissions location.
+    """
+    configured = os.getenv("UCE_SUBMISSION_STORAGE_DIR", "").strip()
+    if configured:
+        directory = Path(configured).expanduser()
+    else:
+        directory = Path(__file__).resolve().parents[1] / "instance" / "submissions"
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory.resolve()
+
+
+def _store_submission_file(file_path, upload_id, filename):
+    """Copy the exact submitted spreadsheet into persistent storage.
+
+    Only the generated filename is stored in the database.  Never store a
+    machine-specific absolute Windows/Linux path in uploads.original_file_path.
+    """
+    source = Path(file_path)
+    if not source.exists():
+        return None
+
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", str(filename or source.name)).strip("._")
+    if not safe_name:
+        safe_name = "submission.xlsx"
+
+    stored_name = f"{int(upload_id)}_{safe_name}"
+    destination = _submission_storage_dir() / stored_name
+    shutil.copy2(source, destination)
+    return stored_name
+
+
+def resolve_submission_file(stored_path):
+    """Resolve a stored submission path across local and deployed machines.
+
+    New records contain only the generated filename.  Older records may contain
+    an absolute path from the original Windows machine; those are supported by
+    falling back to the basename inside the current persistent storage folder.
+    """
+    if not stored_path:
+        return None
+
+    raw = str(stored_path).strip()
+    if not raw:
+        return None
+
+    candidate = Path(raw)
+    if candidate.is_file():
+        return candidate
+
+    # Legacy Windows paths do not parse as Windows paths when the deployed
+    # server is Linux. Normalize backslashes before taking the basename.
+    legacy_name = raw.replace("\\", "/").split("/")[-1]
+
+    # New portable format and legacy absolute-path fallback.
+    candidate = _submission_storage_dir() / legacy_name
+    if candidate.is_file():
+        return candidate
+
+    return None
+
+
+def _remove_submission_file(path):
+    if not path:
+        return
+    try:
+        resolved = resolve_submission_file(path)
+        if resolved:
+            resolved.unlink(missing_ok=True)
+            return
+        # Last attempt for a legacy absolute path.
+        Path(str(path)).unlink(missing_ok=True)
+    except Exception:
+        pass
+
+
+# =========================================================
 # CREATE DATASET
 # =========================================================
 
@@ -1423,15 +2181,37 @@ def create_dataset(
     upload_mode="mixed",
     target_module=None,
     target_category=None,
+    department=None,
+    study_year=None,
+    reporting_period=None,
+    reporting_value=None,
+    metadata_mode="single",
 ):
-    upload_mode = (
-        upload_mode
-        if upload_mode in {
-            "mixed",
-            "specific"
-        }
-        else "mixed"
+    # Canonical internal values are mixed/specific.  The UI uses mixed/single.
+    upload_mode = normalize_upload_mode(upload_mode)
+
+    metadata_mode = (
+        metadata_mode
+        if metadata_mode in {"automatic", "single"}
+        else "single"
     )
+
+    department = normalize_department(department)
+    study_year = normalize_study_year(study_year)
+
+    if department not in DEPARTMENTS:
+        department = None
+
+    if study_year not in YEARS:
+        study_year = None
+
+    reporting_period = normalize_reporting_period(reporting_period)
+    if reporting_period not in REPORTING_PERIODS:
+        reporting_period = None
+        reporting_value = None
+
+    if reporting_period:
+        reporting_value = str(reporting_value or "").strip() or None
 
     target_module = normalize_module(
         target_module
@@ -1452,9 +2232,15 @@ def create_dataset(
         ]["categories"]:
             target_category = None
 
-    source_type = detect_source_type(
-        source_url
-    )
+    processing_source = source_url
+    if str(source_url).startswith("local://"):
+        local_name = Path(str(source_url)[len("local://"):]).name
+        # uploads.source_url intentionally remains a valid URL for compatibility
+        # with the existing database schema; the actual file is processed from
+        # the temporary local path below.
+        source_url = f"https://local-upload.invalid/{local_name}"
+
+    source_type = detect_source_type(source_url)
 
     connection = get_connection()
 
@@ -1474,10 +2260,14 @@ def create_dataset(
                 upload_mode,
                 target_module,
                 target_category,
+                department,
+                study_year,
+                reporting_period,
+                reporting_value,
                 status
             )
             VALUES
-            (?, ?, ?, 'link', ?, ?, ?, ?, 'processing')
+            (?, ?, ?, 'link', ?, ?, ?, ?, ?, ?, ?, ?, 'processing')
             """,
             (
                 user_id,
@@ -1487,6 +2277,10 @@ def create_dataset(
                 upload_mode,
                 target_module,
                 target_category,
+                department,
+                study_year,
+                reporting_period,
+                reporting_value,
             ),
         )
 
@@ -1513,9 +2307,41 @@ def create_dataset(
 
         try:
 
-            file_path, filename = download_spreadsheet(
-                source_url
+            # The normal path is a remote spreadsheet link. The same importer
+            # also accepts a temporary local file created by the upload route.
+            if str(processing_source).startswith("local://"):
+                file_path = str(processing_source)[len("local://"):]
+                filename = Path(file_path).name
+            else:
+                file_path, filename = download_spreadsheet(
+                    processing_source
+                )
+
+            # Preserve the exact source spreadsheet so Admin can open the
+            # submitted workbook later. The temporary processing copy is
+            # still removed after import.
+            permanent_file_path = _store_submission_file(
+                file_path,
+                upload_id,
+                filename,
             )
+
+            connection.execute(
+                """
+                UPDATE uploads
+                SET
+                    original_file_path=?,
+                    original_filename=?,
+                    updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+                """,
+                (
+                    permanent_file_path,
+                    str(filename or Path(file_path).name),
+                    upload_id,
+                ),
+            )
+            connection.commit()
 
             try:
 
@@ -1525,38 +2351,26 @@ def create_dataset(
                     .lower()
                 )
 
-                if extension == ".csv":
-
-                    dataframe = pd.read_csv(
-                        file_path
-                    )
-
-                    sheets = {
-                        "CSV": dataframe
-                    }
-
-                elif extension in {
-                    ".xlsx",
-                    ".xls",
-                }:
-
-                    sheets = pd.read_excel(
-                        file_path,
-                        sheet_name=None
-                    )
-
-                else:
-
-                    raise ValueError(
-                        "Only CSV, XLS and XLSX files are supported."
-                    )
+                sheets = read_spreadsheet(
+                    file_path,
+                    extension,
+                )
 
                 total_rows = 0
                 max_columns = 0
+                classification_counts = {}
+                department_conflicts = 0
+                skipped_documentation_sheets = 0
+                rejected_rows = 0
+                warning_messages = []
 
                 for sheet_name, dataframe in sheets.items():
 
                     if dataframe is None:
+                        continue
+
+                    if is_documentation_sheet(sheet_name):
+                        skipped_documentation_sheets += 1
                         continue
 
                     dataframe = dataframe.dropna(
@@ -1640,6 +2454,143 @@ def create_dataset(
                         start=2
                     ):
 
+                        if not any(
+                            str(value).strip()
+                            for value in row.tolist()
+                            if pd.notna(value)
+                        ):
+                            continue
+
+                        source_department = normalize_department(
+                            get_column_value(
+                                row,
+                                ["department", "department name", "dept", "group"]
+                            )
+                        )
+                        if (
+                            department
+                            and source_department
+                            and source_department != department
+                        ):
+                            department_conflicts += 1
+
+                        if metadata_mode == "automatic":
+                            row_department = normalize_department(
+                                get_column_value(
+                                    row,
+                                    ["department", "department name", "dept", "group", "department/group"],
+                                )
+                            )
+
+                            row_year_raw = get_column_value(
+                                row,
+                                [
+                                    "year",
+                                    "reporting year",
+                                    "reporting_year",
+                                    "academic year",
+                                    "academic_year",
+                                ],
+                            )
+                            row_year = normalize_reporting_year(row_year_raw)
+
+                            row_period_raw = str(
+                                get_column_value(
+                                    row,
+                                    [
+                                        "period",
+                                        "period type",
+                                        "period_type",
+                                        "reporting period",
+                                        "reporting_period",
+                                        "frequency",
+                                        "reporting type",
+                                        "reporting_type",
+                                    ],
+                                )
+                                or ""
+                            ).strip()
+                            row_period_lower = row_period_raw.lower()
+
+                            if "semester" in row_period_lower or re.search(r"\bsem(?:ester)?\s*[12]\b", row_period_lower):
+                                row_period = "Semester"
+                            elif "month" in row_period_lower:
+                                row_period = "Monthly"
+                            elif any(token in row_period_lower for token in ["yearly", "annual", "year"]):
+                                row_period = "Yearly"
+                            else:
+                                row_period = normalize_reporting_period(row_period_raw)
+
+                            row_month = str(
+                                get_column_value(
+                                    row,
+                                    ["month", "reporting month", "reporting_month"],
+                                )
+                                or ""
+                            ).strip()
+                            row_semester = str(
+                                get_column_value(
+                                    row,
+                                    ["semester", "reporting semester", "reporting_semester", "sem"],
+                                )
+                                or ""
+                            ).strip()
+
+                            if not row_period:
+                                if row_semester:
+                                    row_period = "Semester"
+                                elif row_month:
+                                    row_period = "Monthly"
+                                elif row_year:
+                                    row_period = "Yearly"
+
+                            if row_period == "Semester" and not row_semester:
+                                match = re.search(r"(?:semester|sem)\s*([12])", row_period_lower)
+                                if match:
+                                    row_semester = f"Semester {match.group(1)}"
+
+                            if row_period == "Monthly" and not row_month:
+                                for month_name in MONTHS:
+                                    if month_name.lower() in row_period_lower:
+                                        row_month = month_name
+                                        break
+
+                            row_reporting_value = build_reporting_value(
+                                row_period,
+                                row_month,
+                                row_semester,
+                                row_year,
+                            )
+
+                            # Automatic Consolidation accepts a row-level
+                            # Period Type + Reporting Year without requiring a
+                            # separate month/semester field.
+                            if row_period == "Monthly" and row_year and not row_reporting_value:
+                                row_reporting_value = f"Monthly {row_year}"
+                            elif row_period == "Semester" and row_year and not row_reporting_value:
+                                row_reporting_value = f"Semester - {row_year}"
+
+                            if (
+                                not row_department
+                                or not row_year
+                                or row_period not in REPORTING_PERIODS
+                                or not row_reporting_value
+                            ):
+                                # Automatic Consolidation validates that the
+                                # source row contains department/year/period.
+                                # Do NOT restrict the department to the portal's
+                                # fixed dropdown list here: the spreadsheet may
+                                # legitimately contain groups such as MECH, MBA,
+                                # Pharmacy, etc. Preserve the source value in
+                                # row_data instead of silently dropping the row.
+                                total_rows += 1
+                                rejected_rows += 1
+                                if len(warning_messages) < 100:
+                                    warning_messages.append(
+                                        f"{sheet_name} row {row_number}: missing Department, Year or Period Type."
+                                    )
+                                continue
+
                         classified_rows = classify_row(
                             row,
                             sheet_name,
@@ -1648,11 +2599,27 @@ def create_dataset(
                             target_category=target_category,
                         )
 
+                        valid_matches = [
+                            item
+                            for item in classified_rows
+                            if item[0] != "unclassified"
+                            and item[1] != "unclassified"
+                        ]
+
+                        if not valid_matches:
+                            total_rows += 1
+                            rejected_rows += 1
+                            if len(warning_messages) < 100:
+                                warning_messages.append(
+                                    f"{sheet_name} row {row_number}: could not classify the Category/Sub Category or metric."
+                                )
+                            continue
+
                         # One spreadsheet row can legitimately feed more than
                         # one submodule (for example a Faculty row can contain
                         # FDP, Research and International Exchange fields).
-                        # Each match becomes its own clean record.
-                        for module, category, category_row in classified_rows:
+                        # Each valid match becomes its own clean record.
+                        for module, category, category_row in valid_matches:
                             connection.execute(
                                 """
                                 INSERT INTO records
@@ -1679,10 +2646,25 @@ def create_dataset(
                                 ),
                             )
 
+                        for classified_module, classified_category, _ in valid_matches:
+                            key = f"{classified_module}:{classified_category}"
+                            classification_counts[key] = classification_counts.get(key, 0) + 1
+
                         # row_count represents source spreadsheet rows, while
                         # records can be larger because one row may be split
                         # into several submodule records.
                         total_rows += 1
+
+                generated_records = sum(classification_counts.values())
+                warning_count = rejected_rows
+                warning_text = ""
+                if warning_count:
+                    warning_text = (
+                        "Completed with warnings. "
+                        f"{rejected_rows} source row(s) were not imported."
+                    )
+                    if warning_messages:
+                        warning_text += " " + " ".join(warning_messages[:5])
 
                 connection.execute(
                     """
@@ -1691,13 +2673,18 @@ def create_dataset(
                         status='completed',
                         row_count=?,
                         column_count=?,
-                        error_message=NULL,
+                        warning_count=?,
+                        rejected_row_count=?,
+                        error_message=?,
                         updated_at=CURRENT_TIMESTAMP
                     WHERE id=?
                     """,
                     (
                         total_rows,
                         max_columns,
+                        warning_count,
+                        rejected_rows,
+                        warning_text or None,
                         upload_id,
                     ),
                 )
@@ -1716,7 +2703,14 @@ def create_dataset(
                     (
                         total_rows,
                         max_columns,
-                        "Import completed successfully.",
+                        (
+                            "Import completed. "
+                            f"Source rows: {total_rows}; "
+                            f"Generated records: {generated_records}; "
+                            f"Rejected rows: {rejected_rows}; "
+                            f"Documentation sheets skipped: {skipped_documentation_sheets}; "
+                            f"Department conflicts: {department_conflicts}."
+                        ),
                         upload_id,
                     ),
                 )
@@ -1726,7 +2720,7 @@ def create_dataset(
                 return (
                     upload_id,
                     True,
-                    None
+                    warning_text or None
                 )
 
             finally:
@@ -1801,46 +2795,99 @@ def create_dataset(
 # UPLOADS
 # =========================================================
 
-def get_uploads():
+def get_uploads(include_row_metadata=True):
 
     connection = get_connection()
 
     try:
-
         rows = connection.execute(
             """
             SELECT
                 u.*,
                 users.name AS uploader_name,
-                users.email AS uploader_email
+                users.email AS uploader_email,
+                COUNT(r.id) AS imported_record_count
             FROM uploads u
             LEFT JOIN users
                 ON users.id = u.uploaded_by
+            LEFT JOIN records r
+                ON r.upload_id = u.id
+            GROUP BY u.id
             ORDER BY u.created_at DESC
             """
         ).fetchall()
 
         result = []
 
+        # Automatic Consolidation keeps department/period inside row_data.
+        # Build those display values once for the Admin submission table.
+        metadata = {}
+        if include_row_metadata:
+            record_cursor = connection.execute(
+                "SELECT upload_id, row_data FROM records ORDER BY upload_id, id"
+            )
+        else:
+            record_cursor = []
+        for record in record_cursor:
+            upload_id = int(record["upload_id"])
+            entry = metadata.setdefault(
+                upload_id,
+                {"departments": set(), "periods": set()},
+            )
+            try:
+                data = json.loads(record["row_data"] or "{}")
+            except (TypeError, ValueError):
+                data = {}
+            if not isinstance(data, dict):
+                data = {}
+
+            normalized = {normalize_text(k): v for k, v in data.items()}
+
+            for name in ("department", "department name", "dept", "group"):
+                value = normalized.get(normalize_text(name))
+                if value is not None and str(value).strip():
+                    normalized_department = normalize_department(value)
+                    entry["departments"].add(normalized_department or str(value).strip())
+                    break
+
+            for name in ("period type", "reporting period", "period", "frequency"):
+                value = normalized.get(normalize_text(name))
+                if value is not None and str(value).strip():
+                    period = normalize_reporting_period(value)
+                    if period:
+                        entry["periods"].add(period)
+                    break
+
         for row in rows:
-
             item = dict(row)
+            item["filename"] = item.get("title")
+            item["uploader"] = item.get("uploader_name")
 
-            item["filename"] = item.get(
-                "title"
-            )
+            meta = metadata.get(item["id"], {"departments": set(), "periods": set()})
+            departments = sorted(meta["departments"])
+            periods = [p for p in REPORTING_PERIODS if p in meta["periods"]]
 
-            item["uploader"] = item.get(
-                "uploader_name"
-            )
+            if not departments and item.get("department"):
+                departments = [str(item["department"])]
+            if not periods and item.get("reporting_period"):
+                normalized_period = normalize_reporting_period(item["reporting_period"])
+                if normalized_period:
+                    periods = [normalized_period]
 
+            item["departments"] = departments
+            item["periods"] = periods
+            item["department_count"] = len(departments)
+            item["period_count"] = len(periods)
+            item["department_display"] = ", ".join(departments) if departments else "—"
+            item["period_display"] = ", ".join(periods) if periods else "—"
+            item["imported_record_count"] = int(item.get("imported_record_count") or 0)
+            item["source_row_count"] = int(item.get("row_count") or 0)
             result.append(item)
 
         return result
 
     finally:
         connection.close()
-
 
 def get_all_uploads():
     return get_uploads()
@@ -1959,6 +3006,22 @@ def _decorate(row):
         "uploader_name"
     )
 
+    item["department"] = item.get(
+        "department"
+    )
+
+    item["study_year"] = item.get(
+        "study_year"
+    )
+
+    item["reporting_period"] = item.get(
+        "reporting_period"
+    )
+
+    item["reporting_value"] = item.get(
+        "reporting_value"
+    )
+
     return item
 
 
@@ -2033,11 +3096,92 @@ def get_dataset_rows(
         connection.close()
 
 
+def get_record_counts(
+    module=None,
+    category=None,
+    department=None,
+    reporting_period=None,
+):
+    """Return record counts without loading every row into Python."""
+    where = ["1=1"]
+    params = []
+
+    if module:
+        where.append("r.module_key=?")
+        params.append(normalize_module(module))
+
+    if category:
+        where.append("r.category_key=?")
+        params.append(normalize_category(category, module))
+
+    department_expr = "COALESCE(json_extract(r.row_data, '$.Department'), json_extract(r.row_data, '$.Department Name'), json_extract(r.row_data, '$.Dept'), json_extract(r.row_data, '$.Group'), u.department)"
+    period_expr = "COALESCE(json_extract(r.row_data, '$.Period Type'), json_extract(r.row_data, '$.Reporting Period'), json_extract(r.row_data, '$.Period'), json_extract(r.row_data, '$.Frequency'), u.reporting_period)"
+
+    if department:
+        normalized_department = normalize_department(department).lower()
+        aliases = {
+            "mechanical": ("mechanical", "mech", "me"),
+            "cs & it": ("cs & it", "csit", "cs-it", "it"),
+            "ai & ds": ("ai & ds", "aids", "ai ds"),
+            "el & ge": ("el & ge", "elge", "el-ge"),
+            "md & e": ("md & e", "mde", "md-e"),
+            "ir & d": ("ir & d", "ird", "ir-d"),
+            "bt - biotechnology": ("bt - biotechnology", "bt", "biotechnology"),
+        }
+        accepted = aliases.get(normalized_department, (normalized_department,))
+        placeholders = ",".join("?" for _ in accepted)
+        where.append(f"LOWER(TRIM(CAST({department_expr} AS TEXT))) IN ({placeholders})")
+        params.extend(accepted)
+
+    if reporting_period:
+        period = normalize_reporting_period(reporting_period)
+        accepted_periods = {
+            "monthly": ("monthly", "month"),
+            "semester": ("semester", "sem"),
+            "yearly": ("yearly", "annual", "year"),
+        }.get(period.lower(), (period.lower(),))
+        placeholders = ",".join("?" for _ in accepted_periods)
+        where.append(f"LOWER(TRIM(CAST({period_expr} AS TEXT))) IN ({placeholders})")
+        params.extend(accepted_periods)
+
+    connection = get_connection()
+    try:
+        total = connection.execute(
+            f"SELECT COUNT(*) FROM records r JOIN uploads u ON u.id=r.upload_id WHERE {' AND '.join(where)}",
+            params,
+        ).fetchone()[0]
+
+        by_category = {}
+        if module:
+            rows = connection.execute(
+                f"SELECT r.category_key, COUNT(*) AS count FROM records r JOIN uploads u ON u.id=r.upload_id WHERE {' AND '.join(where)} GROUP BY r.category_key",
+                params,
+            ).fetchall()
+            by_category = {row["category_key"]: int(row["count"]) for row in rows}
+
+        by_module = {}
+        if not module:
+            rows = connection.execute(
+                f"SELECT r.module_key, COUNT(*) AS count FROM records r JOIN uploads u ON u.id=r.upload_id WHERE {' AND '.join(where)} GROUP BY r.module_key",
+                params,
+            ).fetchall()
+            by_module = {row["module_key"]: int(row["count"]) for row in rows}
+
+        return {"total": int(total), "by_category": by_category, "by_module": by_module}
+    finally:
+        connection.close()
+
+
 def get_all_rows(
     module=None,
     category=None,
     upload_id=None,
-    user_id=None
+    user_id=None,
+    department=None,
+    study_year=None,
+    reporting_period=None,
+    limit=None,
+    offset=0,
 ):
 
     query = """
@@ -2046,81 +3190,123 @@ def get_all_rows(
             u.title,
             u.source_url,
             u.uploaded_by,
+            u.department,
+            u.study_year,
+            u.reporting_period,
+            u.reporting_value,
             users.name AS uploader_name,
             users.email AS uploader_email
         FROM records r
-        JOIN uploads u
-            ON u.id=r.upload_id
-        LEFT JOIN users
-            ON users.id=u.uploaded_by
+        JOIN uploads u ON u.id=r.upload_id
+        LEFT JOIN users ON users.id=u.uploaded_by
         WHERE 1=1
     """
-
     params = []
 
     if module:
-
-        query += """
-            AND r.module_key=?
-        """
-
-        params.append(
-            normalize_module(module)
-        )
-
+        query += " AND r.module_key=?"
+        params.append(normalize_module(module))
     if category:
-
-        query += """
-            AND r.category_key=?
-        """
-
-        params.append(
-            normalize_category(category)
-        )
-
+        query += " AND r.category_key=?"
+        params.append(normalize_category(category))
     if upload_id:
-
-        query += """
-            AND r.upload_id=?
-        """
-
-        params.append(
-            upload_id
-        )
-
+        query += " AND r.upload_id=?"
+        params.append(upload_id)
     if user_id:
+        query += " AND u.uploaded_by=?"
+        params.append(user_id)
 
-        query += """
-            AND u.uploaded_by=?
-        """
+    if department:
+        requested = normalize_department(department).lower()
+        department_expr = "LOWER(TRIM(CAST(COALESCE(json_extract(r.row_data, '$.Department'), json_extract(r.row_data, '$.Department Name'), json_extract(r.row_data, '$.Dept'), json_extract(r.row_data, '$.Group'), u.department) AS TEXT)))"
+        aliases = {
+            "mechanical": ("mechanical", "mech", "me"),
+            "cs & it": ("cs & it", "csit", "cs-it", "it"),
+            "ai & ds": ("ai & ds", "aids", "ai ds"),
+            "el & ge": ("el & ge", "elge", "el-ge"),
+            "md & e": ("md & e", "mde", "md-e"),
+            "ir & d": ("ir & d", "ird", "ir-d"),
+            "bt - biotechnology": ("bt - biotechnology", "bt", "biotechnology"),
+        }
+        accepted = aliases.get(requested, (requested,))
+        query += " AND " + department_expr + " IN (" + ",".join("?" for _ in accepted) + ")"
+        params.extend(accepted)
 
-        params.append(
-            user_id
-        )
+    if reporting_period:
+        period = normalize_reporting_period(reporting_period).lower()
+        aliases = {
+            "monthly": ("monthly", "month"),
+            "semester": ("semester", "sem"),
+            "yearly": ("yearly", "annual", "year"),
+        }
+        accepted = aliases.get(period, (period,))
+        period_expr = "LOWER(TRIM(CAST(COALESCE(json_extract(r.row_data, '$.Period Type'), json_extract(r.row_data, '$.Reporting Period'), json_extract(r.row_data, '$.Period'), json_extract(r.row_data, '$.Frequency'), u.reporting_period) AS TEXT)))"
+        query += " AND " + period_expr + " IN (" + ",".join("?" for _ in accepted) + ")"
+        params.extend(accepted)
 
     query += """
-        ORDER BY
-            u.created_at DESC,
-            r.sheet_name,
-            r.row_number
+        ORDER BY u.created_at DESC, r.sheet_name, r.row_number
     """
 
+    if limit is not None:
+        safe_limit = max(int(limit), 0)
+        safe_offset = max(int(offset or 0), 0)
+        query += " LIMIT ? OFFSET ?"
+        params.extend([safe_limit, safe_offset])
+
     connection = get_connection()
-
     try:
-
-        return [
+        decorated = [
             _decorate(row)
-            for row in
-            connection.execute(
-                query,
-                params
-            ).fetchall()
+            for row in connection.execute(query, params).fetchall()
         ]
 
+        def row_value(item, names):
+            data = item.get("data") or {}
+            normalized = {normalize_text(k): v for k, v in data.items()}
+            for name in names:
+                value = normalized.get(normalize_text(name))
+                if value is not None and str(value).strip() != "":
+                    return str(value).strip()
+            return ""
+
+        if department:
+            requested = normalize_department(department)
+            filtered = []
+            for item in decorated:
+                raw = row_value(item, ["Department", "Department Name", "Dept"])
+                raw = raw or item.get("department") or ""
+                effective = normalize_department(raw)
+                if requested == "Not specified":
+                    if not effective:
+                        filtered.append(item)
+                elif effective == requested:
+                    filtered.append(item)
+            decorated = filtered
+
+        if study_year:
+            requested_year = normalize_study_year(study_year)
+            decorated = [
+                item for item in decorated
+                if normalize_study_year(
+                    row_value(item, ["Admission Year", "Study Year", "Year", "Reporting Year"])
+                    or item.get("study_year")
+                ) == requested_year
+            ]
+
+        if reporting_period:
+            requested_period = normalize_reporting_period(reporting_period)
+            decorated = [
+                item for item in decorated
+                if normalize_reporting_period(
+                    row_value(item, ["Period Type", "Reporting Period", "Period", "Frequency"])
+                    or item.get("reporting_period")
+                ) == requested_period
+            ]
+
+        return decorated
     finally:
         connection.close()
-
 
 def get_module_data(module_key):
 
@@ -2343,130 +3529,221 @@ def build_module_report(
     }
 
 
+# =========================================================
+# DEPARTMENT / REPORTING PERIOD ADMIN SUMMARY
+# =========================================================
+
+def get_department_summary():
+    """Build Admin department/reporting-period counts from actual imported rows.
+
+    Automatic Consolidation keeps Department and Period Type inside each
+    spreadsheet row, so uploads.department/reporting_period may be blank.
+    A submission is counted once per department/period for each upload that
+    contains at least one matching row.
+    """
+    connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT r.upload_id, r.row_data,
+                   u.department AS upload_department,
+                   u.reporting_period AS upload_reporting_period
+            FROM records r
+            JOIN uploads u ON u.id=r.upload_id
+            ORDER BY r.upload_id, r.id
+            """
+        ).fetchall()
+
+        summary = {
+            department: {
+                "department": department,
+                "uploads": 0,
+                "records": 0,
+                "periods": {
+                    period: {"period": period, "uploads": 0, "records": 0}
+                    for period in REPORTING_PERIODS
+                },
+            }
+            for department in DEPARTMENTS
+        }
+        seen = {
+            department: {period: set() for period in REPORTING_PERIODS}
+            for department in DEPARTMENTS
+        }
+
+        def value_from(data, names):
+            normalized = {normalize_text(k): v for k, v in data.items()}
+            for name in names:
+                value = normalized.get(normalize_text(name))
+                if value is not None and str(value).strip() != "":
+                    return str(value).strip()
+            return ""
+
+        for row in rows:
+            try:
+                data = json.loads(row["row_data"] or "{}")
+                if not isinstance(data, dict):
+                    data = {}
+            except (TypeError, ValueError):
+                data = {}
+
+            raw_department = value_from(data, ["Department", "Department Name", "Dept"])
+            raw_department = raw_department or row["upload_department"] or ""
+            department = normalize_department(raw_department)
+
+            if department and department not in summary:
+                summary[department] = {
+                    "department": department,
+                    "uploads": 0,
+                    "records": 0,
+                    "periods": {
+                        period_name: {
+                            "period": period_name,
+                            "uploads": 0,
+                            "records": 0,
+                        }
+                        for period_name in REPORTING_PERIODS
+                    },
+                }
+                seen[department] = {period_name: set() for period_name in REPORTING_PERIODS}
+
+            raw_period = value_from(data, ["Period Type", "Reporting Period", "Period", "Frequency"])
+            raw_period = raw_period or row["upload_reporting_period"] or ""
+            period = normalize_reporting_period(raw_period)
+
+            if department not in summary or period not in REPORTING_PERIODS:
+                continue
+
+            upload_id = int(row["upload_id"])
+            summary[department]["records"] += 1
+            summary[department]["periods"][period]["records"] += 1
+
+            if upload_id not in seen[department][period]:
+                seen[department][period].add(upload_id)
+                summary[department]["uploads"] += 1
+                summary[department]["periods"][period]["uploads"] += 1
+
+        ordered_departments = list(DEPARTMENTS) + sorted(
+            department
+            for department in summary
+            if department not in DEPARTMENTS
+        )
+
+        return [
+            {
+                **summary[department],
+                "periods": [summary[department]["periods"][period] for period in REPORTING_PERIODS],
+            }
+            for department in ordered_departments
+        ]
+    finally:
+        connection.close()
+
 def get_report():
-
-    uploads = get_uploads()
-
+    """Build the overall report using database aggregation instead of loading
+    every record once for every module. This keeps reports responsive on large
+    datasets while preserving the existing report structure.
+    """
+    uploads = get_uploads(include_row_metadata=False)
     modules = []
-
     total_records = 0
     populated_categories = 0
+    connection = get_connection()
 
-    for key, info in MODULES.items():
+    try:
+        for key, info in MODULES.items():
+            module_total_row = connection.execute(
+                "SELECT COUNT(*) AS count FROM records WHERE module_key=?",
+                (key,),
+            ).fetchone()
+            module_total = int(module_total_row["count"] or 0)
 
-        grouped = get_module_data(
-            key
-        )
+            category_rows = connection.execute(
+                """
+                SELECT category_key, COUNT(*) AS count
+                FROM records
+                WHERE module_key=?
+                GROUP BY category_key
+                """,
+                (key,),
+            ).fetchall()
+            category_counts = {row["category_key"]: int(row["count"]) for row in category_rows}
 
-        report = build_module_report(
-            key,
-            grouped
-        )
+            categories = []
+            for cat_key, cat_name in info.get("categories", {}).items():
+                count = category_counts.get(cat_key, 0)
+                if count:
+                    populated_categories += 1
+                categories.append({"key": cat_key, "name": cat_name, "count": count})
 
-        categories = []
-
-        for cat_key, values in grouped.items():
-
-            cat_name = info[
-                "categories"
-            ].get(
-                cat_key,
-                str(cat_key)
-                .replace("_", " ")
-                .title()
-            )
-
-            count = len(values)
-
-            if count:
-                populated_categories += 1
-
-            categories.append(
-                {
+            # Keep dynamically classified categories visible as well.
+            for cat_key, count in category_counts.items():
+                if cat_key in info.get("categories", {}):
+                    continue
+                if count:
+                    populated_categories += 1
+                categories.append({
                     "key": cat_key,
-                    "name": cat_name,
+                    "name": str(cat_key).replace("_", " ").title(),
                     "count": count,
-                }
-            )
+                })
 
-        total_records += report[
-            "total_records"
-        ]
+            average_rows = connection.execute(
+                """
+                SELECT
+                    json_each.key AS field,
+                    AVG(CAST(json_each.value AS REAL)) AS average_value,
+                    COUNT(*) AS value_count
+                FROM records r, json_each(r.row_data)
+                WHERE r.module_key=?
+                  AND json_each.type IN ('integer', 'real')
+                GROUP BY json_each.key
+                ORDER BY value_count DESC
+                LIMIT 20
+                """,
+                (key,),
+            ).fetchall()
 
-        modules.append(
-            {
+            numeric_averages = {}
+            for row in average_rows:
+                field = str(row["field"] or "")
+                if not is_meaningful_numeric(field):
+                    continue
+                numeric_averages[field] = round(float(row["average_value"]), 2)
+                if len(numeric_averages) >= 8:
+                    break
+
+            total_records += module_total
+            modules.append({
                 "key": key,
                 "name": info["name"],
                 "description": info["description"],
                 "icon": info["icon"],
-                "total_records": report[
-                    "total_records"
-                ],
+                "total_records": module_total,
                 "categories": categories,
                 "numeric_averages": [
-                    {
-                        "field": field,
-                        "value": value,
-                    }
-                    for field, value
-                    in report[
-                        "numeric_averages"
-                    ].items()
-                ][:8],
-            }
-        )
+                    {"field": field, "value": value}
+                    for field, value in numeric_averages.items()
+                ],
+            })
 
-    unclassified_count = len(
-        get_all_rows(
-            module="unclassified"
-        )
-    )
+        unclassified_count = connection.execute(
+            "SELECT COUNT(*) FROM records WHERE module_key='unclassified'"
+        ).fetchone()[0]
+    finally:
+        connection.close()
 
     return {
-        "generated_at":
-            pd.Timestamp.now().strftime(
-                "%d %b %Y, %I:%M %p"
-            ),
-
-        "total_records":
-            total_records,
-
-        "total_uploads":
-            len(uploads),
-
-        "populated_modules":
-            sum(
-                1
-                for module
-                in modules
-                if module[
-                    "total_records"
-                ] > 0
-            ),
-
-        "total_modules":
-            len(MODULES),
-
-        "populated_categories":
-            populated_categories,
-
-        "total_categories":
-            sum(
-                len(
-                    module["categories"]
-                )
-                for module
-                in modules
-            ),
-
-        "unclassified_records":
-            unclassified_count,
-
-        "modules":
-            modules,
-
-        "recent_uploads":
-            uploads[:8],
+        "generated_at": pd.Timestamp.now().strftime("%d %b %Y, %I:%M %p"),
+        "total_records": total_records,
+        "total_uploads": len(uploads),
+        "populated_modules": sum(1 for module in modules if module["total_records"] > 0),
+        "total_modules": len(MODULES),
+        "populated_categories": populated_categories,
+        "total_categories": sum(len(module["categories"]) for module in modules),
+        "unclassified_records": int(unclassified_count or 0),
+        "modules": modules,
+        "recent_uploads": uploads[:8],
     }
 
 
@@ -2479,11 +3756,13 @@ def delete_upload(upload_id):
     connection = get_connection()
     try:
         exists = connection.execute(
-            "SELECT 1 FROM uploads WHERE id=? LIMIT 1",
+            "SELECT original_file_path FROM uploads WHERE id=? LIMIT 1",
             (upload_id,),
         ).fetchone()
         if not exists:
             return False
+
+        original_file_path = exists["original_file_path"] if "original_file_path" in exists.keys() else None
 
         # Explicit child deletion makes this work even when an older database
         # schema does not have ON DELETE CASCADE.
@@ -2492,6 +3771,7 @@ def delete_upload(upload_id):
         connection.execute("DELETE FROM dataset_refresh_logs WHERE upload_id=?", (upload_id,))
         connection.execute("DELETE FROM uploads WHERE id=?", (upload_id,))
         connection.commit()
+        _remove_submission_file(original_file_path)
         return True
     except Exception:
         connection.rollback()
@@ -2506,11 +3786,13 @@ def delete_user_upload(upload_id, user_id):
     connection = get_connection()
     try:
         exists = connection.execute(
-            "SELECT 1 FROM uploads WHERE id=? AND uploaded_by=? LIMIT 1",
+            "SELECT original_file_path FROM uploads WHERE id=? AND uploaded_by=? LIMIT 1",
             (upload_id, user_id),
         ).fetchone()
         if not exists:
             return False
+
+        original_file_path = exists["original_file_path"] if "original_file_path" in exists.keys() else None
 
         connection.execute("DELETE FROM records WHERE upload_id=?", (upload_id,))
         connection.execute("DELETE FROM dataset_columns WHERE upload_id=?", (upload_id,))
@@ -2520,6 +3802,7 @@ def delete_user_upload(upload_id, user_id):
             (upload_id, user_id),
         )
         connection.commit()
+        _remove_submission_file(original_file_path)
         return True
     except Exception:
         connection.rollback()
@@ -2533,27 +3816,35 @@ def delete_user_upload(upload_id, user_id):
 # RECLASSIFY EXISTING DATABASE DATA
 # =========================================================
 
-def reclassify_existing_records():
-    """Repair mixed imports without destroying already-correct submodule records."""
+def reclassify_existing_records(force=False):
+    """Repair legacy mixed imports once and leave specific uploads untouched."""
+    marker = Path(__file__).resolve().parents[1] / "instance" / ".reclassification_v2"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+
+    if marker.exists() and not force:
+        return 0
+
     connection = get_connection()
     try:
         rows = connection.execute(
             """
-            SELECT
-                r.id,
-                r.module_key,
-                r.category_key,
-                r.sheet_name,
-                r.row_data
+            SELECT r.id, r.module_key, r.category_key, r.sheet_name, r.row_data
             FROM records r
-            INNER JOIN uploads u
-                ON u.id = r.upload_id
+            INNER JOIN uploads u ON u.id = r.upload_id
             WHERE COALESCE(u.upload_mode, 'mixed') <> 'specific'
             """
         ).fetchall()
 
         changed = 0
+        deleted = 0
+
         for row in rows:
+            sheet_name = row["sheet_name"] or ""
+            if is_documentation_sheet(sheet_name):
+                connection.execute("DELETE FROM records WHERE id=?", (row["id"],))
+                deleted += 1
+                continue
+
             try:
                 data = json.loads(row["row_data"] or "{}")
             except Exception:
@@ -2561,51 +3852,33 @@ def reclassify_existing_records():
             if not isinstance(data, dict):
                 data = {}
 
-            matches = detect_category_matches(
-                data,
-                row["sheet_name"] or "",
-            )
-            current = (
-                row["module_key"],
-                row["category_key"],
-            )
+            matches = detect_category_matches(data, sheet_name)
+            current = (row["module_key"], row["category_key"])
 
-            # If the existing pair is still supported by the row's fields,
-            # leave it alone.  This is important for split Faculty/Student
-            # records because their sheet name may be generic.
             if current in matches:
                 continue
 
             if len(matches) == 1:
                 detected_module, detected_category = matches[0]
-                # Existing records with a real module but no valid submodule
-                # are not allowed anymore: move the entire record to the
-                # single unclassified bucket.
-            elif not matches:
-                detected_module, detected_category = "unclassified", "unclassified"
             else:
-                # More than one possible category is ambiguous.  Do not guess.
                 detected_module, detected_category = "unclassified", "unclassified"
 
-            if (
-                detected_module != row["module_key"]
-                or detected_category != row["category_key"]
-            ):
+            if (detected_module, detected_category) != current:
                 connection.execute(
-                    """
-                    UPDATE records
-                    SET module_key=?, category_key=?
-                    WHERE id=?
-                    """,
-                    (
-                        detected_module,
-                        detected_category,
-                        row["id"],
-                    ),
+                    "UPDATE records SET module_key=?, category_key=? WHERE id=?",
+                    (detected_module, detected_category, row["id"]),
                 )
                 changed += 1
 
         connection.commit()
-        return changed
+        marker.write_text(
+            f"reclassified={changed}\ndeleted_documentation={deleted}\n",
+            encoding="utf-8",
+        )
+        return changed + deleted
+    except Exception:
+        connection.rollback()
+        raise
     finally:
         connection.close()
+

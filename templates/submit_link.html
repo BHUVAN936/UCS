@@ -6,6 +6,75 @@ Submit Data Link — UCE Connect
 
 {% block content %}
 
+<style>
+    /* Compact source-selection controls */
+    .source-choice-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin: 0 0 14px !important;
+        width: 100% !important;
+    }
+
+    .source-choice {
+        display: inline-flex !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 190px !important;
+        min-height: 44px !important;
+        box-sizing: border-box !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 9px !important;
+        margin: 0 !important;
+        padding: 9px 14px !important;
+        border: 1px solid #d9e1eb !important;
+        border-radius: 10px !important;
+        background: #ffffff !important;
+        cursor: pointer !important;
+        font-weight: 600 !important;
+        line-height: 1.2 !important;
+    }
+
+    .source-choice:hover {
+        border-color: #9fb1c8 !important;
+        background: #f8fafc !important;
+    }
+
+    .source-choice:has(input:checked) {
+        border-color: #0b63ce !important;
+        background: #f5f9ff !important;
+    }
+
+    .source-choice input[type="radio"] {
+        width: 17px !important;
+        height: 17px !important;
+        min-width: 17px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        accent-color: #0b63ce !important;
+    }
+
+    .source-choice-text {
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 14px !important;
+        white-space: nowrap !important;
+    }
+
+    @media (max-width: 700px) {
+        .source-choice-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+        .source-choice {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+    }
+</style>
+
 <section class="admin-page">
 
     <div class="container">
@@ -24,13 +93,17 @@ Submit Data Link — UCE Connect
 
                 <p>
                     Submit a Google Drive, Google Sheets,
-                    CSV, XLS or XLSX link.
+                    CSV, XLS or XLSX source.
                 </p>
 
             </div>
 
         </div>
 
+
+        <!-- =====================================================
+             IMPORT SPREADSHEET
+        ====================================================== -->
 
         <section class="upload-panel">
 
@@ -43,7 +116,7 @@ Submit Data Link — UCE Connect
                 <div>
 
                     <p class="eyebrow">
-                        LINK ONLY
+                        IMPORT DATA
                     </p>
 
                     <h2>
@@ -51,8 +124,8 @@ Submit Data Link — UCE Connect
                     </h2>
 
                     <p>
-                        File upload is disabled.
-                        Only a spreadsheet link is accepted.
+                        Upload an Excel/CSV file directly or provide a spreadsheet link.
+                        The file is checked and classified before anything is imported.
                     </p>
 
                 </div>
@@ -64,13 +137,36 @@ Submit Data Link — UCE Connect
                 method="POST"
                 action="{{ url_for('main.submit_link_post') }}"
                 class="upload-form"
+                enctype="multipart/form-data"
+                id="importForm"
             >
 
-                <!-- SOURCE LINK -->
+                <!-- =================================================
+                     SOURCE LINK
+                ================================================== -->
+
+                <div class="source-choice-row">
+
+                    <label class="source-choice" for="sourceTypeFile">
+                        <input type="radio" name="source_type" value="file" id="sourceTypeFile" checked>
+                        <span class="source-choice-text">Upload Spreadsheet</span>
+                    </label>
+
+                    <label class="source-choice" for="sourceTypeLink">
+                        <input type="radio" name="source_type" value="link" id="sourceTypeLink">
+                        <span class="source-choice-text">Use Spreadsheet Link</span>
+                    </label>
+
+                </div>
+
+
+                <!-- =================================================
+                     SOURCE LINK
+                ================================================== -->
 
                 <label for="sourceUrl">
 
-                    Spreadsheet / Google Drive Link
+                    Spreadsheet / Google Drive / Google Sheets / OneDrive Link
 
                     <input
                         type="url"
@@ -78,13 +174,41 @@ Submit Data Link — UCE Connect
                         name="source_url"
                         placeholder="https://docs.google.com/..."
                         autocomplete="url"
-                        required
+                        disabled
                     >
+
+                    <small class="form-help">
+                        Choose the link option above and paste a public/downloadable spreadsheet URL.
+                    </small>
 
                 </label>
 
 
-                <!-- PROCESSING MODE -->
+                <!-- =================================================
+                     FILE
+                ================================================== -->
+
+                <label for="spreadsheetFile">
+
+                    Excel / CSV File
+
+                    <input
+                        type="file"
+                        id="spreadsheetFile"
+                        name="spreadsheet_file"
+                        accept=".csv,.xlsx,.xls"
+                    >
+
+                    <small class="form-help">
+                        Choose this option to upload CSV, XLS or XLSX directly.
+                    </small>
+
+                </label>
+
+
+                <!-- =================================================
+                     PROCESSING MODE
+                ================================================== -->
 
                 <label for="uploadMode">
 
@@ -96,86 +220,491 @@ Submit Data Link — UCE Connect
                     >
 
                         <option value="mixed">
-                            Automatic Classification
+                            Automatic Consolidation
                         </option>
 
-                        <option value="specific">
-                            Specific Module
+                        <option value="single">
+                            Single Department / Period
                         </option>
+
+                    </select>
+
+                    <small class="form-help">
+                        Automatic Consolidation detects Department, Year, Period,
+                        Semester and Module row-by-row from the spreadsheet.
+                    </small>
+
+                </label>
+
+
+                <!-- =================================================
+                     DEPARTMENT / GROUP
+                ================================================== -->
+
+                <label for="departmentSelect">
+
+                    Department / Group
+
+                    <select
+                        name="department"
+                        id="departmentSelect"
+                        required
+                    >
+
+                        <option value="">
+                            Select department / group
+                        </option>
+
+                        {% for department in departments %}
+
+                        <option value="{{ department }}">
+                            {{ department }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <small class="form-help" id="departmentHelp">
+                        Select the department when using Single Department / Period.
+                    </small>
+
+                </label>
+
+
+                <!-- =================================================
+                     REPORTING PERIOD
+                ================================================== -->
+
+                <label for="reportingPeriodSelect">
+
+                    Reporting Period
+
+                    <select
+                        name="reporting_period"
+                        id="reportingPeriodSelect"
+                        required
+                    >
+
+                        <option value="">
+                            Select period
+                        </option>
+
+                        {% for period in reporting_periods %}
+
+                        <option value="{{ period }}">
+                            {{ period }}
+                        </option>
+
+                        {% endfor %}
 
                     </select>
 
                 </label>
 
 
-                <!-- SPECIFIC MODULE SELECTION -->
+                <!-- =================================================
+                     REPORTING YEAR
+                ================================================== -->
 
-                <div
-                    id="specificFields"
+                <label for="reportingYear">
+
+                    Reporting Year
+
+                    <input
+                        type="number"
+                        name="reporting_year"
+                        id="reportingYear"
+                        min="2000"
+                        max="2100"
+                        placeholder="2026"
+                        required
+                    >
+
+                </label>
+
+
+                <!-- =================================================
+                     MONTH
+                ================================================== -->
+
+                <label
+                    for="reportingMonth"
+                    id="reportingMonthField"
                     hidden
                 >
 
-                    <label for="targetModule">
+                    Month
 
-                        Module
+                    <select
+                        name="reporting_month"
+                        id="reportingMonth"
+                    >
 
-                        <select
-                            name="target_module"
-                            id="targetModule"
-                            disabled
-                        >
+                        <option value="">
+                            Select month
+                        </option>
 
-                            {% for key, item in modules.items() %}
+                        {% for month in months %}
 
-                            <option value="{{ key }}">
-                                {{ item.name }}
-                            </option>
+                        <option value="{{ month }}">
+                            {{ month }}
+                        </option>
 
-                            {% endfor %}
+                        {% endfor %}
 
-                        </select>
+                    </select>
 
-                    </label>
+                </label>
 
 
-                    <!-- SPECIFIC CATEGORY -->
+                <!-- =================================================
+                     SEMESTER
+                ================================================== -->
 
-                    <label for="targetCategory">
+                <label
+                    for="reportingSemester"
+                    id="reportingSemesterField"
+                    hidden
+                >
 
-                        Category / Submodule
+                    Semester
 
-                        <select
-                            name="target_category"
-                            id="targetCategory"
-                            disabled
-                            required
-                        >
+                    <select
+                        name="reporting_semester"
+                        id="reportingSemester"
+                    >
 
-                        </select>
+                        <option value="">
+                            Select semester
+                        </option>
 
-                    </label>
+                        {% for semester in semesters %}
+
+                        <option value="{{ semester }}">
+                            {{ semester }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </label>
+
+                <!-- =================================================
+                     ACTIONS
+                ================================================== -->
+
+                <div
+                    class="user-data-actions"
+                    style="
+                        grid-column: 2;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 12px;
+                        width: 100%;
+                        box-sizing: border-box;
+                        align-items: stretch;
+                    "
+                >
+
+                    <button
+                        type="button"
+                        class="header-button"
+                        id="previewButton"
+                        style="
+                            width: 100%;
+                            min-height: 64px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            box-sizing: border-box;
+                            border: none;
+                            cursor: pointer;
+                        "
+                    >
+
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+
+                        Preview Import
+
+                    </button>
+
+
+                    <a
+                        href="{{ url_for('main.export_report') }}"
+                        class="header-button"
+                        id="exportReportButton"
+                        style="
+                            width: 100%;
+                            min-height: 64px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            box-sizing: border-box;
+                            text-decoration: none;
+                        "
+                    >
+
+                        <i class="fa-solid fa-file-excel"></i>
+
+                        Export Report
+
+                    </a>
 
                 </div>
 
 
-                <!-- SUBMIT -->
+                <style>
 
-                <button
-                    type="submit"
-                    class="header-button"
-                    id="importButton"
+                    .user-data-actions {
+                        width: 100%;
+                    }
+
+                    @media (max-width: 800px) {
+
+                        .user-data-actions {
+                            grid-column: 1 !important;
+                        }
+
+                    }
+
+                    @media (max-width: 520px) {
+
+                        .user-data-actions {
+                            grid-template-columns: 1fr !important;
+                        }
+
+                    }
+
+                </style>
+
+
+                <!-- Token is populated after preview. -->
+                <input
+                    type="hidden"
+                    name="preview_token"
+                    id="previewToken"
+                    value=""
                 >
-
-                    <i class="fa-solid fa-cloud-arrow-down"></i>
-
-                    Import Data
-
-                </button>
 
             </form>
 
 
-            <!-- INFORMATION -->
+            <!-- =====================================================
+                 IMPORT PREVIEW
+            ====================================================== -->
+
+            <section
+                id="importPreview"
+                hidden
+                style="
+                    margin-top: 28px;
+                    scroll-margin-top: 110px;
+                    border: 1px solid rgba(18, 38, 68, 0.14);
+                    border-radius: 18px;
+                    background: var(--card-bg, #ffffff);
+                    overflow: hidden;
+                "
+            >
+
+                <style>
+                    #previewFileDetails > div {
+                        min-width: 0;
+                    }
+
+                    #previewFileDetails strong {
+                        white-space: normal;
+                        overflow-wrap: anywhere;
+                        word-break: break-word;
+                    }
+
+                    @media (max-width: 900px) {
+                        #previewFileDetails {
+                            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                        }
+                    }
+
+                    @media (max-width: 560px) {
+                        #previewFileDetails,
+                        #previewStats {
+                            grid-template-columns: 1fr !important;
+                        }
+                    }
+                </style>
+
+                <div
+                    style="
+                        padding: 22px 24px;
+                        border-bottom: 1px solid rgba(18, 38, 68, 0.10);
+                    "
+                >
+
+                    <p class="eyebrow" style="margin-bottom: 6px;">
+                        IMPORT PREVIEW
+                    </p>
+
+                    <h2 style="margin: 0;">
+                        Review before import
+                    </h2>
+
+                </div>
+
+
+                <div style="padding: 22px 24px;">
+
+                    <div
+                        id="previewFileDetails"
+                        style="
+                            display: grid;
+                            grid-template-columns: repeat(4, minmax(0, 1fr));
+                            gap: 14px;
+                            align-items: stretch;
+                            margin-bottom: 24px;
+                        "
+                    ></div>
+
+
+                    <div
+                        id="previewStats"
+                        style="
+                            display: grid;
+                            grid-template-columns: repeat(3, minmax(0, 1fr));
+                            gap: 14px;
+                            margin-bottom: 24px;
+                        "
+                    ></div>
+
+
+                    <div style="margin-bottom: 22px;">
+
+                        <h3 style="margin-bottom: 14px;">
+                            Detected Data
+                        </h3>
+
+                        <div
+                            id="previewDetectedData"
+                            style="
+                                display: grid;
+                                grid-template-columns: repeat(3, minmax(0, 1fr));
+                                gap: 14px;
+                                margin-bottom: 22px;
+                            "
+                        ></div>
+
+                    </div>
+
+
+                    <div style="margin-bottom: 22px;">
+
+                        <h3 style="margin-bottom: 14px;">
+                            Module Classification
+                        </h3>
+
+                        <div
+                            id="previewClassification"
+                            style="
+                                display: grid;
+                                gap: 8px;
+                            "
+                        ></div>
+
+                    </div>
+
+
+                    <div style="margin-bottom: 22px;">
+
+                        <h3 style="margin-bottom: 14px;">
+                            Row Classification
+                        </h3>
+
+                        <div
+                            id="previewRows"
+                            style="
+                                width: 100%;
+                                overflow-x: auto;
+                                border: 1px solid rgba(18,38,68,0.10);
+                                border-radius: 12px;
+                            "
+                        ></div>
+
+                    </div>
+
+
+                    <div
+                        id="previewErrorsBox"
+                        hidden
+                        style="
+                            margin-top: 20px;
+                            border-top: 1px solid rgba(18, 38, 68, 0.10);
+                            padding-top: 18px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="viewErrorsButton"
+                            class="header-button"
+                            style="margin-bottom: 12px; cursor: pointer;"
+                        >
+                            View Errors
+                        </button>
+
+                        <div
+                            id="previewErrors"
+                            hidden
+                        ></div>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: flex-end;
+                            gap: 12px;
+                            flex-wrap: wrap;
+                            margin-top: 24px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            id="clearPreviewButton"
+                            class="header-button"
+                            style="cursor: pointer;"
+                        >
+                            Back / Preview Again
+                        </button>
+
+                        <button
+                            type="submit"
+                            form="importForm"
+                            class="header-button"
+                            id="confirmImportButton"
+                            name="confirm_import"
+                            value="1"
+                            style="
+                                cursor: pointer;
+                                border: none;
+                            "
+                        >
+                            <i class="fa-solid fa-circle-check"></i>
+                            Confirm Import
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =====================================================
+                 INFORMATION
+            ====================================================== -->
 
             <div class="upload-help">
 
@@ -183,12 +712,10 @@ Submit Data Link — UCE Connect
 
                 <span>
 
-                    The spreadsheet must be accessible
-                    through the submitted link.
-
-                    The system downloads the data temporarily,
-                    extracts the rows and stores the imported
-                    records in the database.
+                    Preview first. In Automatic Consolidation mode, Department,
+                    Year, Period, Semester and Module are detected row-by-row.
+                    Nothing is inserted into the database until you press
+                    Confirm Import.
 
                 </span>
 
@@ -201,11 +728,11 @@ Submit Data Link — UCE Connect
 </section>
 
 
-<script>
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
 
-/* =========================================================
-   MODULE DATA FROM FLASK
-   ========================================================= */
+<script>
 
 const UCE_MODULES = {{ modules | tojson }};
 
@@ -214,146 +741,719 @@ document.addEventListener(
     "DOMContentLoaded",
     function () {
 
-        const mode =
-            document.getElementById(
-                "uploadMode"
-            );
+        const form = document.getElementById("importForm");
+        const sourceUrl = document.getElementById("sourceUrl");
+        const spreadsheetFile = document.getElementById("spreadsheetFile");
+        const sourceTypeFile = document.getElementById("sourceTypeFile");
+        const sourceTypeLink = document.getElementById("sourceTypeLink");
+        const previewButton = document.getElementById("previewButton");
+        const previewToken = document.getElementById("previewToken");
 
-        const fields =
-            document.getElementById(
-                "specificFields"
-            );
+        const mode = document.getElementById("uploadMode");
+        const departmentSelect = document.getElementById("departmentSelect");
+        const departmentHelp = document.getElementById("departmentHelp");
+        const reportingYear = document.getElementById("reportingYear");
 
-        const moduleSelect =
-            document.getElementById(
-                "targetModule"
-            );
+        const reportingPeriod = document.getElementById("reportingPeriodSelect");
+        const reportingMonthField = document.getElementById("reportingMonthField");
+        const reportingSemesterField = document.getElementById("reportingSemesterField");
+        const reportingMonth = document.getElementById("reportingMonth");
+        const reportingSemester = document.getElementById("reportingSemester");
 
-        const categorySelect =
-            document.getElementById(
-                "targetCategory"
-            );
-
-
-        /* =================================================
-           UPDATE CATEGORY LIST
-           ================================================= */
-
-        function updateCategories() {
-
-            categorySelect.innerHTML = "";
-
-
-            const selectedModule =
-                UCE_MODULES[
-                    moduleSelect.value
-                ];
+        const preview = document.getElementById("importPreview");
+        const previewFileDetails = document.getElementById("previewFileDetails");
+        const previewStats = document.getElementById("previewStats");
+        const previewClassification = document.getElementById("previewClassification");
+        const previewDetectedData = document.getElementById("previewDetectedData");
+        const previewRows = document.getElementById("previewRows");
+        const previewErrorsBox = document.getElementById("previewErrorsBox");
+        const previewErrors = document.getElementById("previewErrors");
+        const viewErrorsButton = document.getElementById("viewErrorsButton");
+        const clearPreviewButton = document.getElementById("clearPreviewButton");
+        const confirmImportButton = document.getElementById("confirmImportButton");
 
 
-            if (
-                !selectedModule ||
-                !selectedModule.categories
-            ) {
-
-                const option =
-                    document.createElement(
-                        "option"
-                    );
-
-                option.value = "";
-                option.textContent =
-                    "No categories available";
-
-                categorySelect.appendChild(
-                    option
-                );
-
-                return;
+        function invalidatePreview() {
+            if (previewToken.value) {
+                previewToken.value = "";
+                preview.hidden = true;
             }
-
-
-            const categories =
-                selectedModule.categories;
-
-
-            Object.entries(
-                categories
-            ).forEach(
-                function ([key, label]) {
-
-                    const option =
-                        document.createElement(
-                            "option"
-                        );
-
-                    option.value = key;
-
-                    option.textContent = label;
-
-                    categorySelect.appendChild(
-                        option
-                    );
-
-                }
-            );
-
         }
 
 
-        /* =================================================
-           UPDATE PROCESSING MODE
-           ================================================= */
+        // =====================================================
+        // SOURCE TYPE
+        // =====================================================
+
+        function updateSourceType() {
+
+            const useFile = sourceTypeFile.checked;
+
+            spreadsheetFile.disabled = !useFile;
+            sourceUrl.disabled = useFile;
+
+            if (useFile) {
+                sourceUrl.value = "";
+            } else {
+                spreadsheetFile.value = "";
+            }
+
+        }
+
+        sourceTypeFile.addEventListener("change", function () {
+            invalidatePreview();
+            updateSourceType();
+        });
+        sourceTypeLink.addEventListener("change", function () {
+            invalidatePreview();
+            updateSourceType();
+        });
+
+
+        // =====================================================
+        // REPORTING PERIOD
+        // =====================================================
+
+        function updateReportingFields() {
+
+            const period = reportingPeriod.value;
+            const monthly = period === "Monthly";
+            const semester = period === "Semester";
+
+            reportingMonthField.hidden = !monthly;
+            reportingSemesterField.hidden = !semester;
+
+            const singleMode = mode.value === "single";
+
+            reportingMonth.required = singleMode && monthly;
+            reportingSemester.required = singleMode && semester;
+
+            if (!monthly) {
+                reportingMonth.value = "";
+            }
+
+            if (!semester) {
+                reportingSemester.value = "";
+            }
+
+        }
+
+        reportingPeriod.addEventListener(
+            "change",
+            function () {
+                invalidatePreview();
+                updateReportingFields();
+            }
+        );
+
+
+        // =====================================================
+        // PROCESSING MODE
+        // =====================================================
 
         function updateMode() {
 
-            const isSpecific =
-                mode.value === "specific";
+            const singleMode = mode.value === "single";
+            const automaticMode = !singleMode;
 
+            departmentSelect.disabled = automaticMode;
+            reportingPeriod.disabled = automaticMode;
+            reportingYear.disabled = automaticMode;
+            reportingMonth.disabled = automaticMode;
+            reportingSemester.disabled = automaticMode;
 
-            fields.hidden =
-                !isSpecific;
+            departmentSelect.required = singleMode;
+            reportingPeriod.required = singleMode;
+            reportingYear.required = singleMode;
 
+            if (singleMode) {
+                departmentHelp.textContent =
+                    "Select the department for all rows in this spreadsheet.";
+            } else {
+                departmentHelp.textContent =
+                    "Detected from the spreadsheet row-by-row.";
+                reportingMonth.required = false;
+                reportingSemester.required = false;
+            }
 
-            moduleSelect.disabled =
-                !isSpecific;
+            updateReportingFields();
 
-
-            categorySelect.disabled =
-                !isSpecific;
-
-
-            if (isSpecific) {
-
-                updateCategories();
-
+            if (automaticMode) {
+                reportingMonth.required = false;
+                reportingSemester.required = false;
             }
 
         }
 
-
-        /* =================================================
-           EVENTS
-           ================================================= */
-
         mode.addEventListener(
             "change",
-            updateMode
+            function () {
+                invalidatePreview();
+                updateMode();
+            }
         );
 
 
-        moduleSelect.addEventListener(
-            "change",
-            updateCategories
+
+        [departmentSelect, reportingYear, reportingMonth, reportingSemester].forEach(
+            function (element) {
+                element.addEventListener("change", invalidatePreview);
+                element.addEventListener("input", invalidatePreview);
+            }
         );
 
 
-        /* =================================================
-           INITIAL STATE
-           ================================================= */
+        // =====================================================
+        // PREVIEW VALIDATION
+        // =====================================================
 
-        updateCategories();
+        function validateSource() {
 
+            const hasFile =
+                spreadsheetFile.files &&
+                spreadsheetFile.files.length > 0;
+
+            const hasUrl =
+                sourceUrl.value.trim() !== "";
+
+            if (sourceTypeFile.checked) {
+                if (!hasFile) {
+                    alert("Please choose a CSV, XLS or XLSX file.");
+                    return false;
+                }
+            } else if (!hasUrl) {
+                alert("Please provide a spreadsheet link.");
+                return false;
+            }
+
+            if (hasFile && sourceTypeFile.checked) {
+
+                const name =
+                    spreadsheetFile.files[0].name.toLowerCase();
+
+                if (
+                    !name.endsWith(".csv") &&
+                    !name.endsWith(".xlsx") &&
+                    !name.endsWith(".xls")
+                ) {
+                    alert(
+                        "Only CSV, XLS or XLSX files are supported."
+                    );
+                    return false;
+                }
+
+            }
+
+            if (mode.value === "single") {
+
+                if (!departmentSelect.value) {
+                    alert("Please select a department/group.");
+                    return false;
+                }
+
+                if (!reportingPeriod.value) {
+                    alert("Please select a reporting period.");
+                    return false;
+                }
+
+                if (!reportingYear.value) {
+                    alert("Please enter the reporting year.");
+                    return false;
+                }
+
+                if (
+                    reportingPeriod.value === "Monthly" &&
+                    !reportingMonth.value
+                ) {
+                    alert("Please select a month.");
+                    return false;
+                }
+
+                if (
+                    reportingPeriod.value === "Semester" &&
+                    !reportingSemester.value
+                ) {
+                    alert("Please select a semester.");
+                    return false;
+                }
+
+            }
+
+            return true;
+
+        }
+
+
+        // =====================================================
+        // PREVIEW CARD HELPERS
+        // =====================================================
+
+        function escapeHtml(value) {
+
+            return String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        function infoCard(label, value) {
+
+            return `
+                <div
+                    style="
+                        min-width: 0;
+                        box-sizing: border-box;
+                        border: 1px solid rgba(18,38,68,0.10);
+                        border-radius: 12px;
+                        padding: 14px 16px;
+                        background: rgba(18,38,68,0.025);
+                        overflow: hidden;
+                    "
+                >
+                    <div
+                        style="
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: .08em;
+                            opacity: .65;
+                            margin-bottom: 6px;
+                        "
+                    >
+                        ${escapeHtml(label)}
+                    </div>
+                    <strong
+                        style="
+                            display: block;
+                            min-width: 0;
+                            max-width: 100%;
+                            overflow-wrap: anywhere;
+                            word-break: break-word;
+                            line-height: 1.4;
+                        "
+                        title="${escapeHtml(value)}"
+                    >
+                        ${escapeHtml(value)}
+                    </strong>
+                </div>
+            `;
+
+        }
+
+
+        function statCard(label, value) {
+
+            return `
+                <div
+                    style="
+                        border: 1px solid rgba(18,38,68,0.10);
+                        border-radius: 12px;
+                        padding: 16px;
+                    "
+                >
+                    <div
+                        style="
+                            font-size: 12px;
+                            text-transform: uppercase;
+                            letter-spacing: .08em;
+                            opacity: .65;
+                            margin-bottom: 7px;
+                        "
+                    >
+                        ${escapeHtml(label)}
+                    </div>
+                    <strong style="font-size: 24px;">
+                        ${escapeHtml(value)}
+                    </strong>
+                </div>
+            `;
+
+        }
+
+
+        function renderClassification(data) {
+
+            const entries =
+                Object.entries(data || {});
+
+            if (!entries.length) {
+
+                previewClassification.innerHTML = `
+                    <div
+                        style="
+                            padding: 14px 16px;
+                            border: 1px solid rgba(18,38,68,0.10);
+                            border-radius: 10px;
+                        "
+                    >
+                        No recognized modules were found.
+                    </div>
+                `;
+
+                return;
+
+            }
+
+            previewClassification.innerHTML =
+                entries.map(
+                    function ([moduleName, count]) {
+
+                        return `
+                            <div
+                                style="
+                                    display: flex;
+                                    justify-content: space-between;
+                                    gap: 20px;
+                                    padding: 11px 14px;
+                                    border: 1px solid rgba(18,38,68,0.08);
+                                    border-radius: 9px;
+                                "
+                            >
+                                <span>
+                                    ${escapeHtml(moduleName)}
+                                </span>
+                                <strong>
+                                    ${escapeHtml(count)}
+                                </strong>
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+        }
+
+
+        function renderDetectedData(data) {
+
+            const detected = data || {};
+
+            previewDetectedData.innerHTML = [
+                infoCard("Departments", (detected.departments || []).join(", ") || "None detected"),
+                infoCard("Years", (detected.years || []).join(", ") || "None detected"),
+                infoCard("Periods", (detected.periods || []).join(", ") || "None detected"),
+                infoCard("Semesters", (detected.semesters || []).join(", ") || "None detected"),
+                infoCard("Months", (detected.months || []).join(", ") || "None detected"),
+                infoCard("Mode", data.mode_label || "Automatic Consolidation")
+            ].join("");
+
+        }
+
+
+        function renderRows(rows) {
+
+            if (!rows || !rows.length) {
+                previewRows.innerHTML = `
+                    <div style="padding: 16px;">
+                        No row-level classification is available.
+                    </div>
+                `;
+                return;
+            }
+
+            const visibleRows = rows.slice(0, 50);
+
+            const body = visibleRows.map(function (item) {
+                return `
+                    <tr>
+                        <td style="padding: 10px 12px; white-space: nowrap;">${escapeHtml(item.row)}</td>
+                        <td style="padding: 10px 12px; white-space: nowrap;">${escapeHtml(item.department)}</td>
+                        <td style="padding: 10px 12px; white-space: nowrap;">${escapeHtml(item.year)}</td>
+                        <td style="padding: 10px 12px; white-space: nowrap;">${escapeHtml(item.period)}</td>
+                        <td style="padding: 10px 12px; white-space: nowrap;">${escapeHtml(item.detail)}</td>
+                        <td style="padding: 10px 12px; min-width: 180px;">${escapeHtml(item.metric)}</td>
+                        <td style="padding: 10px 12px; min-width: 120px;">${escapeHtml(item.value)}</td>
+                        <td style="padding: 10px 12px; min-width: 160px;">${escapeHtml(item.module)}</td>
+                    </tr>
+                `;
+            }).join("");
+
+            previewRows.innerHTML = `
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr>
+                            <th style="padding:10px 12px; text-align:left;">Row</th>
+                            <th style="padding:10px 12px; text-align:left;">Department</th>
+                            <th style="padding:10px 12px; text-align:left;">Year</th>
+                            <th style="padding:10px 12px; text-align:left;">Period</th>
+                            <th style="padding:10px 12px; text-align:left;">Semester / Month</th>
+                            <th style="padding:10px 12px; text-align:left;">Metric</th>
+                            <th style="padding:10px 12px; text-align:left;">Value</th>
+                            <th style="padding:10px 12px; text-align:left;">Module</th>
+                        </tr>
+                    </thead>
+                    <tbody>${body}</tbody>
+                </table>
+                ${rows.length > 50 ? `<div style="padding:12px; opacity:.7;">Showing first 50 rows. Total classified rows: ${rows.length}.</div>` : ""}
+            `;
+
+        }
+
+
+        function renderErrors(errors) {
+
+            if (!errors || !errors.length) {
+
+                previewErrorsBox.hidden = true;
+                previewErrors.hidden = true;
+                previewErrors.innerHTML = "";
+                return;
+
+            }
+
+            previewErrorsBox.hidden = false;
+
+            previewErrors.innerHTML =
+                errors.map(
+                    function (item) {
+
+                        return `
+                            <div
+                                style="
+                                    padding: 12px 14px;
+                                    margin-bottom: 8px;
+                                    border: 1px solid rgba(180,50,50,0.18);
+                                    border-radius: 9px;
+                                "
+                            >
+                                <strong>
+                                    ${escapeHtml(item.type)}
+                                </strong>
+                                <div style="margin-top: 4px;">
+                                    ${escapeHtml(item.sheet)}
+                                    — Row ${escapeHtml(item.row)}
+                                </div>
+                                <div style="margin-top: 4px; opacity: .75;">
+                                    ${escapeHtml(item.message)}
+                                </div>
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+            previewErrors.hidden = true;
+            viewErrorsButton.textContent =
+                `View Errors (${errors.length})`;
+
+        }
+
+
+        // =====================================================
+        // PREVIEW REQUEST
+        // =====================================================
+
+        previewButton.addEventListener(
+            "click",
+            async function () {
+
+                if (!validateSource()) {
+                    return;
+                }
+
+                previewButton.disabled = true;
+                previewButton.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Checking...
+                `;
+
+                preview.hidden = true;
+
+                try {
+
+                    const formData =
+                        new FormData(form);
+
+                    const response =
+                        await fetch(
+                            "{{ url_for('main.submit_link_preview') }}",
+                            {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    "Accept": "application/json"
+                                }
+                            }
+                        );
+
+                    const data =
+                        await response.json();
+
+                    if (
+                        !response.ok ||
+                        !data.success
+                    ) {
+                        throw new Error(
+                            data.error ||
+                            "Unable to preview the spreadsheet."
+                        );
+                    }
+
+                    previewToken.value =
+                        data.preview_token || "";
+
+                    previewFileDetails.innerHTML = [
+                        infoCard("File", data.file_name),
+                        infoCard("Processing Mode", data.mode_label),
+                        infoCard("Department", data.department || "Detected per row"),
+                        infoCard("Period", data.reporting_period || "Detected per row"),
+                        infoCard("Year", data.reporting_year || "Detected per row")
+                    ].join("");
+
+                    previewStats.innerHTML = [
+                        statCard("Total rows", data.total_rows),
+                        statCard("Valid metrics", data.valid_metrics),
+                        statCard("Unrecognized metrics", data.unrecognized_metrics),
+                        statCard("Missing required values", data.missing_required_values)
+                    ].join("");
+
+                    renderDetectedData(data.detected);
+
+                    renderClassification(
+                        data.classification
+                    );
+
+                    renderRows(data.rows);
+
+                    renderErrors(
+                        data.errors
+                    );
+
+                    preview.hidden = false;
+
+                    preview.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+
+                }
+                catch (error) {
+
+                    alert(
+                        error.message ||
+                        "Unable to preview the spreadsheet."
+                    );
+
+                }
+                finally {
+
+                    previewButton.disabled = false;
+
+                    previewButton.innerHTML = `
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+                        Preview Import
+                    `;
+
+                }
+
+            }
+        );
+
+
+        // =====================================================
+        // VIEW ERRORS
+        // =====================================================
+
+        viewErrorsButton.addEventListener(
+            "click",
+            function () {
+
+                const showing =
+                    !previewErrors.hidden;
+
+                previewErrors.hidden = showing;
+
+                viewErrorsButton.textContent =
+                    showing
+                        ? "View Errors"
+                        : "Hide Errors";
+
+            }
+        );
+
+
+        // =====================================================
+        // CLEAR PREVIEW
+        // =====================================================
+
+        clearPreviewButton.addEventListener(
+            "click",
+            function () {
+
+                preview.hidden = true;
+                previewToken.value = "";
+
+                previewFileDetails.innerHTML = "";
+                previewStats.innerHTML = "";
+                previewClassification.innerHTML = "";
+                previewDetectedData.innerHTML = "";
+                previewRows.innerHTML = "";
+                previewErrors.innerHTML = "";
+                previewErrorsBox.hidden = true;
+                previewErrors.hidden = true;
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+
+            }
+        );
+
+
+        // =====================================================
+        // CONFIRMATION GUARD
+        // =====================================================
+
+        form.addEventListener(
+            "submit",
+            function (event) {
+
+                const submitter =
+                    event.submitter;
+
+                const confirming =
+                    submitter &&
+                    submitter.id === "confirmImportButton";
+
+                if (!confirming) {
+                    return;
+                }
+
+                if (!previewToken.value) {
+
+                    event.preventDefault();
+
+                    alert(
+                        "Please preview the spreadsheet before confirming the import."
+                    );
+
+                    return;
+
+                }
+
+                confirmImportButton.disabled = true;
+                confirmImportButton.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Importing...
+                `;
+
+            }
+        );
+
+
+        // =====================================================
+        // INITIAL STATE
+        // =====================================================
+
+        updateSourceType();
         updateMode();
+        updateReportingFields();
 
     }
 );

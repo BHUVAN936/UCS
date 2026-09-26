@@ -1,19 +1,25 @@
+from pathlib import Path
 import csv
 import io
 import hashlib
 import secrets
 import smtplib
+import shutil
+import re
+import time
 from email.message import EmailMessage
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import (
     Blueprint,
+    current_app,
     Response,
     flash,
     redirect,
     render_template,
     request,
+    jsonify,
     session,
     url_for,
     send_file,
@@ -26,6 +32,8 @@ from werkzeug.security import (
 
 from config import Config
 from database.db import get_connection
+from services.link_service import download_spreadsheet
+
 from services.admin_settings import (
     generate_admin_registration_code,
     verify_admin_registration_code,
@@ -36,12 +44,28 @@ from services.data_service import (
     delete_upload,
     get_all_datasets,
     get_all_rows,
+    get_record_counts,
     get_report,
     get_user_datasets,
     get_module_data,
     build_module_report,
     normalize_module,
     normalize_category,
+    normalize_department,
+    is_valid_department,
+    normalize_study_year,
+    normalize_reporting_period,
+    build_reporting_value,
+    DEPARTMENTS,
+    REPORTING_PERIODS,
+    MONTHS,
+    SEMESTERS,
+    get_department_summary,
+    read_spreadsheet,
+    resolve_submission_file,
+    classify_row,
+    is_documentation_sheet,
+    normalize_text,
 )
 
 
@@ -920,6 +944,668 @@ def logout():
 
 
 # =========================================================
+# USER - EXPORT OFFICIAL REPORT
+# =========================================================
+
+@main_bp.route(
+    "/export-report",
+    methods=["GET"]
+)
+@login_required
+def export_report():
+
+    report_path = (
+        Path(current_app.root_path)
+        / "static"
+        / "reports"
+        / "UCE_IQAC_Audit_Report.xlsx"
+    )
+
+    if not report_path.exists():
+        flash(
+            "The official report file is not available.",
+            "danger"
+        )
+        return redirect(
+            url_for("main.submit_link")
+        )
+
+    return send_file(
+        report_path,
+        mimetype=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        as_attachment=True,
+        download_name="UCE_IQAC_Audit_Report.xlsx",
+    )
+
+
+# =========================================================
+# USER - IMPORT PREVIEW HELPERS
+# =========================================================
+
+def _row_cell(row, aliases):
+    """Return the first non-empty spreadsheet value matching any header alias."""
+    if hasattr(row, "items"):
+        values = row.items()
+    else:
+        values = []
+
+    alias_set = {normalize_text(alias) for alias in aliases}
+
+    for key, value in values:
+        if normalize_text(key) not in alias_set:
+            continue
+        if value is None:
+            continue
+        text = str(value).strip()
+        if not text or text.lower() in {"nan", "nat", "none"}:
+            continue
+        return text
+
+    return ""
+
+
+def _detect_row_context(row):
+    """Detect department/year/reporting period information from one row."""
+    department = normalize_department(
+        _row_cell(
+            row,
+            ["department", "department name", "dept", "group", "department/group"],
+        )
+    )
+
+    year = _row_cell(
+        row,
+        [
+            "year",
+            "reporting year",
+            "reporting_year",
+            "academic year",
+            "academic_year",
+            "calendar year",
+        ],
+    )
+
+    # Accept 2025, 2026 etc. and also values such as 2025-26.
+    year_match = re.search(r"(?:19|20)\d{2}", year) if year else None
+    normalized_year = year_match.group(0) if year_match else year
+
+    period_raw = _row_cell(
+        row,
+        [
+            "period",
+            "period type",
+            "period_type",
+            "reporting period",
+            "reporting_period",
+            "frequency",
+            "reporting type",
+            "reporting_type",
+        ],
+    )
+
+    month = _row_cell(
+        row,
+        ["month", "reporting month", "reporting_month"],
+    )
+
+    semester = _row_cell(
+        row,
+        ["semester", "reporting semester", "reporting_semester", "sem"],
+    )
+
+    period_lower = period_raw.lower()
+
+    if "semester" in period_lower or re.search(r"\bsem(?:ester)?\s*[12]\b", period_lower):
+        period = "Semester"
+    elif any(token in period_lower for token in ["monthly", "month"]):
+        period = "Monthly"
+    elif any(token in period_lower for token in ["yearly", "annual", "year"]):
+        period = "Yearly"
+    else:
+        period = normalize_reporting_period(period_raw)
+
+    if not period:
+        if semester:
+            period = "Semester"
+        elif month:
+            period = "Monthly"
+        elif normalized_year:
+            period = "Yearly"
+
+    if not semester and period == "Semester":
+        sem_match = re.search(r"(?:semester|sem)\s*([12])", period_lower)
+        if sem_match:
+            semester = f"Semester {sem_match.group(1)}"
+
+    if not month and period == "Monthly":
+        month_names = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December",
+        ]
+        for month_name in month_names:
+            if month_name.lower() in period_lower:
+                month = month_name
+                break
+
+    detail = semester if period == "Semester" else month if period == "Monthly" else ""
+
+    if period == "Yearly":
+        reporting_value = normalized_year
+    elif period == "Semester" and normalized_year:
+        # Automatic Consolidation files may provide only `Period Type = Semester`
+        # and `Reporting Year`; do not reject the row just because there is no
+        # separate reporting-semester column.
+        reporting_value = f"{detail} - {normalized_year}" if detail else f"Semester - {normalized_year}"
+    elif period == "Monthly" and normalized_year:
+        # Automatic Consolidation files may provide only `Period Type = Monthly`
+        # and `Reporting Year`; the exact month is optional in that format.
+        reporting_value = f"{detail} {normalized_year}" if detail else f"Monthly {normalized_year}"
+    else:
+        reporting_value = ""
+
+    valid = bool(
+        department
+        and normalized_year
+        and period in REPORTING_PERIODS
+        and reporting_value
+    )
+
+    return {
+        "department": department,
+        "year": normalized_year,
+        "period": period,
+        "detail": detail,
+        "reporting_value": reporting_value,
+        "valid": valid,
+    }
+
+
+# =========================================================
+# USER - IMPORT PREVIEW
+# =========================================================
+
+def _cleanup_stale_preview_files(max_age_hours=2):
+    """Remove abandoned preview files left by closed tabs or failed requests."""
+    preview_dir = Path(current_app.root_path) / "instance" / "preview_uploads"
+    if not preview_dir.exists():
+        return
+
+    cutoff = time.time() - (max_age_hours * 60 * 60)
+    for path in preview_dir.iterdir():
+        if not path.is_file():
+            continue
+        try:
+            if path.stat().st_mtime < cutoff:
+                path.unlink(missing_ok=True)
+        except OSError:
+            # A file being used by another request should not break import.
+            continue
+
+
+@main_bp.route(
+    "/submit-link/preview",
+    methods=["POST"]
+)
+@login_required
+def submit_link_preview():
+    """Validate an uploaded/link spreadsheet without importing it.
+
+    The preview is deliberately database-free. The source file is stored in a
+    temporary preview directory and is only imported after the user presses
+    Confirm Import.
+    """
+
+    from collections import Counter
+
+    _cleanup_stale_preview_files()
+
+    source_url = request.form.get("source_url", "").strip()
+    upload = request.files.get("spreadsheet_file")
+    source_type = request.form.get("source_type", "file").strip().lower()
+    if source_type not in {"file", "link"}:
+        source_type = "file"
+
+    # -----------------------------------------------------
+    # Validate source
+    # -----------------------------------------------------
+
+    if source_type == "file" and upload and upload.filename:
+        original_name = Path(upload.filename).name
+        extension = Path(original_name).suffix.lower()
+
+        if extension not in {".csv", ".xlsx", ".xls"}:
+            return jsonify({
+                "success": False,
+                "error": "Only CSV, XLS or XLSX files are supported.",
+            }), 400
+
+    elif source_type == "link" and source_url:
+        if not source_url.startswith(("http://", "https://")):
+            return jsonify({
+                "success": False,
+                "error": "Please provide a valid HTTP/HTTPS spreadsheet link.",
+            }), 400
+
+        original_name = "Imported Spreadsheet"
+        extension = ""
+
+    else:
+        return jsonify({
+            "success": False,
+            "error": (
+                "Choose a spreadsheet file."
+                if source_type == "file"
+                else "Provide a spreadsheet link."
+            ),
+        }), 400
+
+    # -----------------------------------------------------
+    # Processing mode and metadata
+    # -----------------------------------------------------
+
+    upload_mode = request.form.get(
+        "upload_mode",
+        "mixed",
+    ).strip().lower()
+
+    if upload_mode not in {"mixed", "single"}:
+        upload_mode = "mixed"
+
+    automatic_mode = upload_mode == "mixed"
+
+    department = normalize_department(
+        request.form.get("department", "")
+    )
+
+    reporting_period = normalize_reporting_period(
+        request.form.get("reporting_period", "")
+    )
+
+    reporting_year = request.form.get(
+        "reporting_year",
+        ""
+    ).strip()
+
+    month = request.form.get(
+        "reporting_month",
+        ""
+    ).strip()
+
+    semester = request.form.get(
+        "reporting_semester",
+        ""
+    ).strip()
+
+    reporting_value = build_reporting_value(
+        reporting_period,
+        month,
+        semester,
+        reporting_year,
+    )
+
+    if not automatic_mode:
+        if department not in DEPARTMENTS:
+            return jsonify({
+                "success": False,
+                "error": "Please select a valid department/group.",
+            }), 400
+
+        if reporting_period not in REPORTING_PERIODS or not reporting_value:
+            return jsonify({
+                "success": False,
+                "error": "Please select a valid reporting period, detail and year.",
+            }), 400
+
+    # Both modes use the normal automatic module classifier.
+    target_module = None
+    target_category = None
+
+    # -----------------------------------------------------
+    # Create temporary preview file
+    # -----------------------------------------------------
+
+    preview_dir = (
+        Path(current_app.root_path)
+        / "instance"
+        / "preview_uploads"
+    )
+    preview_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    preview_token = secrets.token_urlsafe(24)
+
+    if upload and upload.filename:
+        suffix = extension
+        preview_path = preview_dir / f"{preview_token}{suffix}"
+        upload.save(preview_path)
+        filename = original_name
+    else:
+        try:
+            downloaded_path, downloaded_name = download_spreadsheet(
+                source_url
+            )
+            downloaded_path = Path(downloaded_path)
+            suffix = downloaded_path.suffix.lower()
+
+            if suffix not in {".csv", ".xlsx", ".xls"}:
+                downloaded_path.unlink(missing_ok=True)
+                return jsonify({
+                    "success": False,
+                    "error": "The linked source is not a CSV, XLS or XLSX spreadsheet.",
+                }), 400
+
+            preview_path = preview_dir / f"{preview_token}{suffix}"
+
+            # Windows may place the downloaded temporary file on C: while
+            # the Flask project is on another drive (for example E:).
+            # Path.replace() fails across drives with WinError 17.
+            # shutil.move() handles cross-drive moves safely.
+            shutil.move(
+                str(downloaded_path),
+                str(preview_path),
+            )
+
+            filename = downloaded_name or original_name
+
+        except Exception as error:
+            return jsonify({
+                "success": False,
+                "error": f"Unable to read the spreadsheet link: {error}",
+            }), 400
+
+    # -----------------------------------------------------
+    # Read and classify without inserting anything
+    # -----------------------------------------------------
+
+    try:
+        sheets = read_spreadsheet(
+            str(preview_path),
+            preview_path.suffix.lower(),
+        )
+
+        total_rows = 0
+        max_columns = 0
+        valid_metrics = 0
+        unrecognized_metrics = 0
+        missing_required_values = 0
+
+        classification_counts = Counter()
+        errors = []
+        row_previews = []
+        detected_departments = set()
+        detected_years = set()
+        detected_periods = set()
+        detected_semesters = set()
+        detected_months = set()
+
+        metric_headers = {
+            "description",
+            "audit item",
+            "audit_item",
+            "item",
+            "metric",
+            "metric name",
+            "metric_name",
+            "indicator",
+            "parameter",
+            "submodule",
+            "sub module",
+            "sub-module",
+        }
+
+        for sheet_name, dataframe in sheets.items():
+            if dataframe is None or is_documentation_sheet(sheet_name):
+                continue
+
+            dataframe = dataframe.dropna(how="all")
+
+            if dataframe.empty:
+                continue
+
+            dataframe.columns = [
+                str(column).strip()
+                if str(column).strip()
+                else f"Column_{index}"
+                for index, column in enumerate(
+                    dataframe.columns,
+                    start=1,
+                )
+            ]
+
+            max_columns = max(
+                max_columns,
+                len(dataframe.columns),
+            )
+
+            for row_number, (_, row) in enumerate(
+                dataframe.iterrows(),
+                start=2,
+            ):
+
+                row_dict = row.to_dict()
+
+                if not any(
+                    str(value).strip()
+                    for value in row_dict.values()
+                    if value is not None
+                ):
+                    continue
+
+                total_rows += 1
+
+                row_context = _detect_row_context(row)
+
+                if automatic_mode:
+                    row_department = row_context["department"]
+                    row_year = row_context["year"]
+                    row_period = row_context["period"]
+                    row_detail = row_context["detail"]
+                    row_reporting_value = row_context["reporting_value"]
+
+                    if row_department:
+                        detected_departments.add(row_department)
+                    if row_year:
+                        detected_years.add(row_year)
+                    if row_period:
+                        detected_periods.add(row_period)
+                    if row_period == "Semester" and row_detail:
+                        detected_semesters.add(row_detail)
+                    if row_period == "Monthly" and row_detail:
+                        detected_months.add(row_detail)
+                else:
+                    row_department = department
+                    row_year = reporting_year
+                    row_period = reporting_period
+                    row_detail = semester if reporting_period == "Semester" else month if reporting_period == "Monthly" else ""
+                    row_reporting_value = reporting_value
+
+                normalized_row = {
+                    normalize_text(key): value
+                    for key, value in row_dict.items()
+                }
+
+                # For the Category/Sub Category spreadsheet format,
+                # Sub Category is the actual metric name.  The old preview
+                # only searched Description/Metric columns, so this workbook
+                # incorrectly displayed "Missing" for every row.
+                metric_text = ""
+
+                subcategory_value = normalized_row.get(
+                    normalize_text("sub category")
+                )
+                if subcategory_value is None:
+                    subcategory_value = normalized_row.get(
+                        normalize_text("subcategory")
+                    )
+
+                if subcategory_value is not None:
+                    try:
+                        if not pd_is_na(subcategory_value) and str(subcategory_value).strip():
+                            metric_text = str(subcategory_value).strip()
+                    except Exception:
+                        if str(subcategory_value).strip():
+                            metric_text = str(subcategory_value).strip()
+
+                # Fallback for other spreadsheet formats.
+                if not metric_text:
+                    for header in metric_headers:
+                        value = normalized_row.get(
+                            normalize_text(header)
+                        )
+                        if value is None:
+                            continue
+                        try:
+                            if pd_is_na(value):
+                                continue
+                        except Exception:
+                            pass
+                        if str(value).strip():
+                            metric_text = str(value).strip()
+                            break
+
+                value_text = ""
+                for value_header in (
+                    "Value",
+                    "Metric Value",
+                    "Value / Count",
+                    "Count",
+                ):
+                    candidate_value = normalized_row.get(normalize_text(value_header))
+                    if candidate_value is None:
+                        continue
+                    try:
+                        if pd_is_na(candidate_value):
+                            continue
+                    except Exception:
+                        pass
+                    if str(candidate_value).strip():
+                        value_text = str(candidate_value).strip()
+                        break
+
+                classified_rows = classify_row(
+                    row,
+                    str(sheet_name),
+                    upload_mode=upload_mode,
+                    target_module=target_module,
+                    target_category=target_category,
+                )
+
+                valid_matches = [
+                    item
+                    for item in classified_rows
+                    if item[0] != "unclassified"
+                    and item[1] != "unclassified"
+                ]
+
+                metadata_ok = row_context["valid"] if automatic_mode else True
+
+                module_names = []
+                if valid_matches:
+                    seen_modules = set()
+                    for module_key, category_key, _ in valid_matches:
+                        if module_key in seen_modules:
+                            continue
+                        seen_modules.add(module_key)
+                        module_name = MODULES.get(
+                            module_key,
+                            {},
+                        ).get(
+                            "name",
+                            module_key,
+                        )
+                        module_names.append(module_name)
+
+                    if metadata_ok:
+                        valid_metrics += 1
+                        for module_name in module_names:
+                            classification_counts[module_name] += 1
+
+                    else:
+                        missing_required_values += 1
+                        errors.append({
+                            "sheet": str(sheet_name),
+                            "row": row_number,
+                            "type": "Missing row metadata",
+                            "message": "Automatic Consolidation requires Department, Year and reporting Period for every row.",
+                        })
+
+                elif metric_text:
+                    unrecognized_metrics += 1
+                    errors.append({
+                        "sheet": str(sheet_name),
+                        "row": row_number,
+                        "type": "Unrecognized metric",
+                        "message": metric_text,
+                    })
+
+                else:
+                    missing_required_values += 1
+                    errors.append({
+                        "sheet": str(sheet_name),
+                        "row": row_number,
+                        "type": "Missing required value",
+                        "message": "Metric/description value is missing.",
+                    })
+
+                row_previews.append({
+                    "row": row_number,
+                    "department": row_department or "Missing",
+                    "year": row_year or "Missing",
+                    "period": row_period or "Missing",
+                    "detail": row_detail or "-",
+                    "metric": metric_text or "Missing",
+                    "value": value_text or "Missing",
+                    "module": ", ".join(module_names) if module_names else "Unclassified",
+                })
+
+        # Keep preview errors manageable even for very large workbooks.
+        errors = errors[:100]
+
+        return jsonify({
+            "success": True,
+            "preview_token": preview_token,
+            "file_name": filename,
+            "mode_label": "Automatic Consolidation" if automatic_mode else "Single Department / Period",
+            "department": department if not automatic_mode else "",
+            "reporting_period": reporting_period if not automatic_mode else "",
+            "reporting_value": reporting_value if not automatic_mode else "",
+            "reporting_year": reporting_year if not automatic_mode else "",
+            "detected": {
+                "departments": sorted(detected_departments),
+                "years": sorted(detected_years),
+                "periods": sorted(detected_periods),
+                "semesters": sorted(detected_semesters),
+                "months": sorted(detected_months),
+                "mode_label": "Automatic Consolidation" if automatic_mode else "Single Department / Period",
+            },
+            "rows": row_previews[:100],
+            "total_rows": total_rows,
+            "valid_metrics": valid_metrics,
+            "unrecognized_metrics": unrecognized_metrics,
+            "missing_required_values": missing_required_values,
+            "classification": dict(
+                sorted(
+                    classification_counts.items(),
+                    key=lambda item: (-item[1], item[0]),
+                )
+            ),
+            "errors": errors,
+        })
+
+    except Exception as error:
+        preview_path.unlink(missing_ok=True)
+        return jsonify({
+            "success": False,
+            "error": f"Unable to preview the spreadsheet: {error}",
+        }), 400
+
+
+# =========================================================
 # USER - SUBMIT DATA LINK
 # =========================================================
 
@@ -930,9 +1616,15 @@ def logout():
 @login_required
 def submit_link():
 
+    _cleanup_stale_preview_files()
+
     return render_template(
         "submit_link.html",
         modules=MODULES,
+        departments=DEPARTMENTS,
+        reporting_periods=REPORTING_PERIODS,
+        months=MONTHS,
+        semesters=SEMESTERS,
     )
 
 
@@ -946,88 +1638,260 @@ def submit_link():
 )
 @login_required
 def submit_link_post():
+    """Confirm a previously previewed spreadsheet import."""
+
+    _cleanup_stale_preview_files()
+
+    preview_token = request.form.get(
+        "preview_token",
+        "",
+    ).strip()
 
     source_url = request.form.get(
         "source_url",
-        ""
+        "",
     ).strip()
 
-    title = request.form.get(
-        "title",
-        ""
-    ).strip()
-
-    if not title:
-
-        title = "Imported Dataset"
-
-
-    upload_mode = request.form.get(
-        "upload_mode",
-        "mixed"
-    ).strip().lower()
-
-
-    target_module = normalize_module(
-        request.form.get("target_module", "")
-    )
-    target_category = normalize_category(
-        request.form.get("target_category", ""),
-        target_module
+    upload = request.files.get(
+        "spreadsheet_file"
     )
 
+    source_type = request.form.get("source_type", "file").strip().lower()
+    if source_type not in {"file", "link"}:
+        source_type = "file"
 
-    if not source_url.startswith(
-        (
-            "http://",
-            "https://"
-        )
-    ):
+    # -----------------------------------------------------
+    # Resolve source file
+    # -----------------------------------------------------
 
-        flash(
-            "Please provide a valid HTTP/HTTPS spreadsheet link.",
-            "danger"
-        )
+    preview_dir = (
+        Path(current_app.root_path)
+        / "instance"
+        / "preview_uploads"
+    )
 
-        return redirect(
-            url_for(
-                "main.submit_link"
+    preview_path = None
+
+    if preview_token:
+        # Token is generated by the server, so only its exact filename
+        # inside the preview directory is accepted.
+        matches = list(
+            preview_dir.glob(
+                f"{preview_token}.*"
             )
         )
 
+        if len(matches) != 1:
+            flash(
+                "Your preview has expired. Please preview the file again.",
+                "warning",
+            )
+            return redirect(
+                url_for("main.submit_link")
+            )
+
+        preview_path = matches[0]
+
+    elif source_type == "file" and upload and upload.filename:
+        extension = Path(
+            upload.filename
+        ).suffix.lower()
+
+        if extension not in {".csv", ".xlsx", ".xls"}:
+            flash(
+                "Only CSV, XLS or XLSX files are supported.",
+                "danger",
+            )
+            return redirect(
+                url_for("main.submit_link")
+            )
+
+        preview_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        temporary_token = secrets.token_urlsafe(24)
+        preview_path = preview_dir / f"{temporary_token}{extension}"
+        upload.save(preview_path)
+
+    elif source_type == "link" and source_url:
+        if not source_url.startswith(("http://", "https://")):
+            flash(
+                "Please provide a valid HTTP/HTTPS spreadsheet link.",
+                "danger",
+            )
+            return redirect(
+                url_for("main.submit_link")
+            )
+
+        # Download it once and pass the local file to the existing importer.
+        try:
+            downloaded_path, _ = download_spreadsheet(
+                source_url
+            )
+            preview_path = Path(
+                downloaded_path
+            )
+        except Exception as error:
+            flash(
+                f"Unable to read the spreadsheet link: {error}",
+                "danger",
+            )
+            return redirect(
+                url_for("main.submit_link")
+            )
+
+    else:
+        flash(
+            "Please preview a spreadsheet before confirming the import.",
+            "warning",
+        )
+        return redirect(
+            url_for("main.submit_link")
+        )
+
+    # -----------------------------------------------------
+    # Metadata validation
+    # -----------------------------------------------------
+
+    title = request.form.get(
+        "title",
+        "",
+    ).strip() or "Imported Dataset"
+
+    upload_mode = request.form.get(
+        "upload_mode",
+        "mixed",
+    ).strip().lower()
+
+    if upload_mode not in {"mixed", "single"}:
+        upload_mode = "mixed"
+
+    automatic_mode = upload_mode == "mixed"
+
+    raw_department = request.form.get(
+        "department",
+        "",
+    )
+
+    department = normalize_department(
+        raw_department
+    )
+
+    if not automatic_mode and department not in DEPARTMENTS:
+        if preview_path and preview_token:
+            preview_path.unlink(missing_ok=True)
+        flash(
+            "Please select a valid department/group.",
+            "danger",
+        )
+        return redirect(
+            url_for("main.submit_link")
+        )
+
+    if automatic_mode:
+        department = None
+
+    reporting_period = normalize_reporting_period(
+        request.form.get(
+            "reporting_period",
+            "",
+        )
+    )
+
+    reporting_year = request.form.get(
+        "reporting_year",
+        "",
+    ).strip()
+
+    month = request.form.get(
+        "reporting_month",
+        "",
+    ).strip()
+
+    semester = request.form.get(
+        "reporting_semester",
+        "",
+    ).strip()
+
+    reporting_value = build_reporting_value(
+        reporting_period,
+        month,
+        semester,
+        reporting_year,
+    )
+
+    if not automatic_mode and (
+        reporting_period not in REPORTING_PERIODS
+        or not reporting_value
+    ):
+        if preview_path and preview_token:
+            preview_path.unlink(missing_ok=True)
+        flash(
+            "Please select a valid reporting period, detail and year.",
+            "danger",
+        )
+        return redirect(
+            url_for("main.submit_link")
+        )
+
+    if automatic_mode:
+        reporting_period = None
+        reporting_value = None
+        reporting_year = None
+
+    # Both UI modes use automatic module classification.
+    target_module = None
+    target_category = None
 
     user = get_current_user()
 
+    # -----------------------------------------------------
+    # Confirmed import
+    # -----------------------------------------------------
+
+    local_source = (
+        f"local://{preview_path}"
+        if preview_path
+        else source_url
+    )
 
     upload_id, success, error = create_dataset(
         user["id"],
         title,
-        source_url,
+        local_source,
         upload_mode,
         target_module,
         target_category,
+        department,
+        None,
+        reporting_period,
+        reporting_value,
+        "automatic" if automatic_mode else "single",
     )
 
+    # create_dataset consumes/deletes local files itself.
 
     if success:
-
-        flash(
-            f"Data imported successfully. Submission #{upload_id}.",
-            "success"
-        )
-
+        if error:
+            flash(
+                f"Import completed with warnings. Submission #{upload_id}. {error}",
+                "warning",
+            )
+        else:
+            flash(
+                f"Data imported successfully. Submission #{upload_id}.",
+                "success",
+            )
     else:
-
         flash(
             f"Data import failed: {error}",
-            "danger"
+            "danger",
         )
-
 
     return redirect(
-        url_for(
-            "main.home"
-        )
+        url_for("main.home")
     )
 
 
@@ -1042,96 +1906,47 @@ def submit_link_post():
 @login_required
 def submit_dataset():
 
-    source_url = request.form.get(
-        "source_url",
-        ""
-    ).strip()
-
-    title = request.form.get(
-        "title",
-        ""
-    ).strip()
-
-
-    if not title:
-
-        title = "Module Dataset"
-
+    source_url = request.form.get("source_url", "").strip()
+    title = request.form.get("title", "").strip() or "Module Dataset"
 
     module = (
-        request.form.get(
-            "target_module"
-        )
-        or
-        request.form.get(
-            "module"
-        )
-        or
-        ""
-    )
-
+        request.form.get("target_module")
+        or request.form.get("module")
+        or ""
+    ).strip().lower()
 
     category = (
-        request.form.get(
-            "target_category"
-        )
-        or
-        request.form.get(
-            "subtopic"
-        )
-        or
-        ""
-    )
+        request.form.get("target_category")
+        or request.form.get("subtopic")
+        or ""
+    ).strip().lower()
 
+    raw_department = request.form.get("department", "")
+    department = normalize_department(raw_department)
+    if raw_department.strip() and not department:
+        flash("Invalid department selected.", "danger")
+        return redirect(request.referrer or url_for("main.admin"))
+    reporting_period = normalize_reporting_period(request.form.get("reporting_period", ""))
+    reporting_value = request.form.get("reporting_value", "").strip()
 
-    module = module.strip().lower()
-
-    category = category.strip().lower()
-
-
-    # Use the single centralized module alias map.
-    module = normalize_module(module)
-
-
-    if module not in MODULES:
-
-        flash(
-            "Invalid module selected.",
-            "danger"
-        )
-
-        return redirect(
-            request.referrer
-            or
-            url_for(
-                "main.submit_link"
-            )
-        )
-
-
-    if not source_url.startswith(
-        (
-            "http://",
-            "https://"
-        )
+    if (
+        department not in DEPARTMENTS
+        or reporting_period not in REPORTING_PERIODS
+        or not reporting_value
     ):
+        flash("Department and reporting period are required.", "danger")
+        return redirect(request.referrer or url_for("main.submit_link"))
 
-        flash(
-            "Please provide a valid HTTP/HTTPS spreadsheet link.",
-            "danger"
-        )
+    module = normalize_module(module)
+    if module not in MODULES:
+        flash("Invalid module selected.", "danger")
+        return redirect(request.referrer or url_for("main.submit_link"))
 
-        return redirect(
-            request.referrer
-            or
-            url_for(
-                "main.submit_link"
-            )
-        )
-
+    if not source_url.startswith(("http://", "https://")):
+        flash("Please provide a valid HTTP/HTTPS spreadsheet link.", "danger")
+        return redirect(request.referrer or url_for("main.submit_link"))
 
     user = get_current_user()
-
 
     upload_id, success, error = create_dataset(
         user["id"],
@@ -1140,31 +1955,18 @@ def submit_dataset():
         "specific",
         module,
         category,
+        department,
+        None,
+        reporting_period,
+        reporting_value,
     )
-
 
     if success:
-
-        flash(
-            f"Data imported successfully. Submission #{upload_id}.",
-            "success"
-        )
-
+        flash(f"Data imported successfully. Submission #{upload_id}.", "success")
     else:
+        flash(f"Data import failed: {error}", "danger")
 
-        flash(
-            f"Data import failed: {error}",
-            "danger"
-        )
-
-
-    return redirect(
-        request.referrer
-        or
-        url_for(
-            "main.home"
-        )
-    )
+    return redirect(request.referrer or url_for("main.home"))
 
 
 # =========================================================
@@ -1251,6 +2053,163 @@ def delete_my_upload(upload_id):
     )
 
 # =========================================================
+# ADMIN - OPEN SUBMISSION SOURCE
+# =========================================================
+
+@main_bp.route("/admin/submission/<int:upload_id>/open")
+@login_required
+def open_submission(upload_id):
+    """Open the exact stored submission workbook in the browser.
+
+    Administrators can open any submission.  Normal users can open only their
+    own submissions.  The workbook is read from the permanently stored source
+    file, never reconstructed from imported database rows.
+    """
+    connection = get_connection()
+    try:
+        upload = connection.execute(
+            """
+            SELECT
+                u.*,
+                users.name AS uploader_name,
+                users.email AS uploader_email
+            FROM uploads u
+            LEFT JOIN users ON users.id=u.uploaded_by
+            WHERE u.id=?
+            LIMIT 1
+            """,
+            (upload_id,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+    if not upload:
+        flash("Submission not found.", "danger")
+        return redirect(url_for("main.my_data"))
+
+    current_user = get_current_user()
+    if (
+        current_user["role"] != "admin"
+        and int(upload.get("uploaded_by") or 0) != int(current_user["id"])
+    ):
+        flash("You do not have permission to open this submission.", "danger")
+        return redirect(url_for("main.my_data"))
+
+    upload = dict(upload)
+    original_path = str(upload.get("original_file_path") or "").strip()
+    source_url = str(upload.get("source_url") or "").strip()
+
+    # Prefer the permanently stored source file. This is the exact spreadsheet
+    # submitted/imported by the user.
+    resolved_original = resolve_submission_file(original_path)
+    if resolved_original:
+        file_path = resolved_original
+    elif source_url.startswith(("http://", "https://")) and not source_url.startswith("https://local-upload.invalid/"):
+        # Legacy link-only submissions can still open their original source.
+        return redirect(source_url)
+    else:
+        file_path = None
+
+    sheets = {}
+    original_file = bool(file_path)
+
+    try:
+        import pandas as pd
+
+        if file_path:
+            extension = file_path.suffix.lower()
+            if extension in {".xlsx", ".xls"}:
+                sheets = pd.read_excel(file_path, sheet_name=None, dtype=object)
+            elif extension == ".csv":
+                sheets = {
+                    "Imported Data": pd.read_csv(file_path, dtype=object)
+                }
+            else:
+                raise ValueError("Unsupported spreadsheet format.")
+        else:
+            # Older imports created before permanent file storage still get a
+            # useful browser view from the records already stored in SQLite.
+            records = get_all_rows(upload_id=upload_id)
+            if records:
+                rows = []
+                for record in records:
+                    data = record.get("data") or {}
+                    if isinstance(data, dict):
+                        rows.append(dict(data))
+                sheets = {"Imported Data": pd.DataFrame(rows)}
+
+        if not sheets:
+            flash("No spreadsheet data is available for this submission.", "warning")
+            return redirect(url_for("main.my_data"))
+
+        selected_sheet = request.args.get("sheet", "").strip()
+        if selected_sheet not in sheets:
+            selected_sheet = next(iter(sheets))
+
+        dataframe = sheets[selected_sheet].copy()
+        dataframe = dataframe.dropna(how="all")
+        dataframe.columns = [str(column) for column in dataframe.columns]
+        dataframe = dataframe.fillna("")
+
+        page = max(request.args.get("page", 1, type=int), 1)
+        per_page = 100
+        total_rows = len(dataframe)
+        total_pages = max((total_rows + per_page - 1) // per_page, 1)
+        page = min(page, total_pages)
+        start_row = (page - 1) * per_page
+        end_row = min(start_row + per_page, total_rows)
+        page_frame = dataframe.iloc[start_row:end_row]
+
+        rows = []
+        for values in page_frame.itertuples(index=False, name=None):
+            rows.append([_preview_value(value) for value in values])
+
+        departments = upload.get("department") or ""
+        periods = upload.get("reporting_period") or ""
+
+        if upload.get("upload_mode") == "mixed":
+            metadata = get_all_datasets()
+            current = next((item for item in metadata if int(item["id"]) == int(upload_id)), None)
+            if current:
+                departments = current.get("department_display") or departments or "Multiple / Row-level"
+                periods = current.get("period_display") or periods or "Multiple / Row-level"
+
+        return render_template(
+            "submission_view.html",
+            upload=upload,
+            original_file=original_file,
+            sheets=list(sheets.keys()),
+            selected_sheet=selected_sheet,
+            columns=list(dataframe.columns),
+            rows=rows,
+            page=page,
+            total_pages=total_pages,
+            total_rows=total_rows,
+            start_row=start_row,
+            end_row=end_row,
+            departments=departments or "—",
+            periods=periods or "—",
+            imported_record_count=int(upload.get("imported_record_count") or 0),
+        )
+
+    except Exception as error:
+        current_app.logger.exception("Unable to open submission %s: %s", upload_id, error)
+        flash(f"Unable to open this submission: {error}", "danger")
+        return redirect(url_for("main.admin"))
+
+
+def _preview_value(value):
+    if value is None:
+        return ""
+    try:
+        if hasattr(value, "item"):
+            value = value.item()
+    except Exception:
+        pass
+    return str(value)
+
+
+# =========================================================
 # ADMIN HOME
 # =========================================================
 
@@ -1261,6 +2220,8 @@ def admin():
     uploads = get_all_datasets()
 
     report = get_report()
+
+    department_summary = get_department_summary()
 
 
     return render_template(
@@ -1273,6 +2234,10 @@ def admin():
         report=report,
 
         modules=MODULES,
+
+        department_summary=department_summary,
+        departments=DEPARTMENTS,
+        reporting_periods=REPORTING_PERIODS,
     )
 
 
@@ -1352,16 +2317,25 @@ _RESERVED_DATA_FIELDS = {
 }
 
 
-def _filter_admin_records(records, module=None, category=None):
+def _filter_admin_records(
+    records,
+    module=None,
+    category=None,
+    department=None,
+    reporting_period=None,
+):
     """
-    Keep records strictly inside the requested module/category.
-    This prevents records belonging to other modules from appearing.
+    Keep records strictly inside the requested department/module/submodule.
+    Database queries already apply the same filters; this second pass protects
+    the UI/report layer from accidentally mixing records.
     """
 
     filtered = []
 
     module = (module or "").strip().lower()
     category = (category or "").strip().lower()
+    department = normalize_department(department) if department else ""
+    reporting_period = normalize_reporting_period(reporting_period) if reporting_period else ""
 
     for record in records:
 
@@ -1373,10 +2347,54 @@ def _filter_admin_records(records, module=None, category=None):
             record.get("category", "")
         ).strip().lower()
 
+        # Automatic Consolidation stores Department and Period Type
+        # inside each imported spreadsheet row. Single-department uploads
+        # may still store them at upload level. Prefer row-level values and
+        # fall back to upload-level metadata for older/single-mode records.
+        row_data = record.get("data", {})
+        if not isinstance(row_data, dict):
+            row_data = {}
+
+        def _row_value(*names):
+            normalized_names = {
+                str(name).strip().lower().replace(" ", "_").replace("-", "_")
+                for name in names
+            }
+            for key, value in row_data.items():
+                normalized_key = (
+                    str(key).strip().lower()
+                    .replace(" ", "_")
+                    .replace("-", "_")
+                )
+                if normalized_key in normalized_names:
+                    return value
+            return ""
+
+        row_department = _row_value(
+            "Department", "Department Name", "Dept"
+        )
+        row_period = _row_value(
+            "Period Type", "Reporting Period", "Period", "Frequency"
+        )
+
+        record_department = normalize_department(
+            row_department or record.get("department", "")
+        )
+
+        record_period = normalize_reporting_period(
+            row_period or record.get("reporting_period", "")
+        )
+
         if module and record_module != module:
             continue
 
         if category and record_category != category:
+            continue
+
+        if department and record_department != department:
+            continue
+
+        if reporting_period and record_period != reporting_period:
             continue
 
         filtered.append(record)
@@ -1604,9 +2622,11 @@ def _build_admin_module_report(
             records
         ),
 
-        "total_columns": len(
-            _clean_data_columns(
-                records
+        "total_columns": (
+            len(
+                _clean_data_columns(
+                    records
+                )
             )
             if records
             else 0
@@ -1642,6 +2662,22 @@ def admin_data():
         request.args.get("category", ""),
         module
     )
+
+    raw_department = request.args.get("department", "")
+    department = normalize_department(raw_department)
+
+    reporting_period = normalize_reporting_period(
+        request.args.get("period", "")
+    )
+
+    if raw_department.strip() and not is_valid_department(raw_department):
+        flash("Invalid department/group selected.", "danger")
+        return redirect(url_for("main.admin"))
+
+    if reporting_period and reporting_period not in REPORTING_PERIODS:
+        flash("Invalid reporting period selected.", "danger")
+        return redirect(url_for("main.admin"))
+
 
     # -----------------------------------------------------
     # VALIDATE MODULE
@@ -1703,20 +2739,57 @@ def admin_data():
     # GET DATABASE RECORDS
     # -----------------------------------------------------
 
-    records = get_all_rows(
-        module=module or None,
-        category=category or None
-    )
+    # The Admin landing page and department coverage page do not need raw
+    # rows. Counts are calculated in SQL so large imports are not loaded into
+    # the browser unnecessarily. A module/submodule page displays at most 50
+    # rows per submodule.
+    page_size = 50
+    records = []
+    total_records = 0
+    category_counts = {}
 
-    # -----------------------------------------------------
-    # STRICT FILTER
-    # -----------------------------------------------------
+    if module:
+        if category:
+            count_info = get_record_counts(
+                module=module,
+                category=category,
+                department=department or None,
+                reporting_period=reporting_period or None,
+            )
+            total_records = count_info["total"]
+            category_counts = {category: count for category, count in count_info.get("by_category", {}).items()}
+            records = get_all_rows(
+                module=module,
+                category=category,
+                department=department or None,
+                reporting_period=reporting_period or None,
+                limit=page_size,
+            )
+        else:
+            count_info = get_record_counts(
+                module=module,
+                department=department or None,
+                reporting_period=reporting_period or None,
+            )
+            total_records = count_info["total"]
+            category_counts = {category: count for category, count in count_info.get("by_category", {}).items()}
 
-    records = _filter_admin_records(
-        records,
-        module=module or None,
-        category=category or None
-    )
+            categories = MODULES[module].get("categories", {})
+            for category_key in categories:
+                category_rows = get_all_rows(
+                    module=module,
+                    category=category_key,
+                    department=department or None,
+                    reporting_period=reporting_period or None,
+                    limit=page_size,
+                )
+                records.extend(category_rows)
+    elif department:
+        count_info = get_record_counts(
+            department=department or None,
+            reporting_period=reporting_period or None,
+        )
+        total_records = count_info["total"]
 
     # -----------------------------------------------------
     # FIND COLUMNS
@@ -1727,20 +2800,26 @@ def admin_data():
     )
 
     # -----------------------------------------------------
-    # BUILD SUBMODULE TABLES
+    # BUILD MODULE / SUBMODULE TABLES
     #
-    # This is important:
+    # When a department is selected without a specific module, keep the
+    # department filter and build the complete hierarchy:
     #
-    # Module
+    # Department
     #   ↓
-    # Submodule 1 → its records
-    # Submodule 2 → its records
-    # Submodule 3 → its records
+    # Module 01
+    #   ↓
+    # Submodule 01 / Submodule 02 / ...
+    # Module 02
+    #   ↓
+    # ...
     #
-    # Records from another submodule are NOT mixed.
+    # This is intentionally built from the already department-filtered
+    # `records` list, so CSE-1 can never display CSE-2/ECE/etc. records.
     # -----------------------------------------------------
 
     submodule_tables = []
+    department_module_tables = []
 
     if module:
 
@@ -1782,7 +2861,7 @@ def admin_data():
                     category_name,
 
                 "count":
-                    len(category_records),
+                    category_counts.get(category_key, len(category_records)),
 
                 "records":
                     category_records,
@@ -1791,6 +2870,43 @@ def admin_data():
                     _clean_data_columns(
                         category_records
                     ),
+            })
+
+    elif department:
+
+        count_info = get_record_counts(
+            department=department,
+            reporting_period=reporting_period or None,
+        )
+
+        for module_key, module_info in MODULES.items():
+            module_count = count_info["by_module"].get(module_key, 0)
+            module_categories = []
+
+            for category_key, category_name in module_info.get(
+                "categories", {}
+            ).items():
+                category_count = get_record_counts(
+                    module=module_key,
+                    category=category_key,
+                    department=department,
+                    reporting_period=reporting_period or None,
+                )["total"]
+                module_categories.append({
+                    "key": category_key,
+                    "name": category_name,
+                    "count": category_count,
+                    "records": [],
+                    "columns": [],
+                })
+
+            department_module_tables.append({
+                "key": module_key,
+                "name": module_info.get("name", module_key),
+                "description": module_info.get("description", ""),
+                "icon": module_info.get("icon", "fa-folder"),
+                "count": module_count,
+                "categories": module_categories,
             })
 
     # -----------------------------------------------------
@@ -1803,10 +2919,20 @@ def admin_data():
 
         records=records,
 
+        total_records=total_records,
+
+        page_size=page_size,
+
         columns=columns,
 
         submodule_tables=
             submodule_tables,
+
+        category_counts=
+            category_counts,
+
+        department_module_tables=
+            department_module_tables,
 
         link_submissions=
             get_all_datasets(),
@@ -1818,6 +2944,21 @@ def admin_data():
 
         selected_category=
             category,
+
+        selected_department=
+            department,
+
+        selected_period=
+            reporting_period,
+
+        department_summary=
+            get_department_summary(),
+
+        departments=
+            DEPARTMENTS,
+
+        reporting_periods=
+            REPORTING_PERIODS,
     )
 
 
@@ -1951,9 +3092,26 @@ def admin_module_report(module):
         )
 
     # -----------------------------------------------------
-    # GET ONLY THIS MODULE
+    # PRESERVE DEPARTMENT / REPORTING-PERIOD CONTEXT
     # -----------------------------------------------------
 
+    raw_department = request.args.get("department", "")
+    department = normalize_department(raw_department)
+    reporting_period = normalize_reporting_period(
+        request.args.get("period", "")
+    )
+
+    if raw_department.strip() and not is_valid_department(raw_department):
+        flash("Invalid department selected.", "danger")
+        return redirect(url_for("main.admin"))
+
+    if reporting_period and reporting_period not in REPORTING_PERIODS:
+        flash("Invalid reporting period selected.", "danger")
+        return redirect(url_for("main.admin"))
+
+    # Do not filter at upload level here. Automatic Consolidation stores
+    # department/period per spreadsheet row; _filter_admin_records below
+    # applies the correct row-level filter.
     records = get_all_rows(
         module=module
     )
@@ -1964,7 +3122,9 @@ def admin_module_report(module):
 
     records = _filter_admin_records(
         records,
-        module=module
+        module=module,
+        department=department or None,
+        reporting_period=reporting_period or None,
     )
 
     # -----------------------------------------------------
@@ -2015,6 +3175,10 @@ def admin_module_report(module):
 
         columns=columns,
 
+        selected_department=department,
+
+        selected_period=reporting_period,
+
         modules=MODULES,
     )
 
@@ -2042,6 +3206,17 @@ def admin_report_csv():
         request.args.get("category", ""),
         module
     )
+
+    raw_department = request.args.get("department", "")
+    department = normalize_department(raw_department)
+    reporting_period = normalize_reporting_period(
+        request.args.get("period", "")
+    )
+
+    if raw_department.strip() and not is_valid_department(raw_department):
+        return Response("Invalid department selected.", status=400, mimetype="text/plain")
+    if reporting_period and reporting_period not in REPORTING_PERIODS:
+        return Response("Invalid year selected.", status=400, mimetype="text/plain")
 
     # -----------------------------------------------------
     # VALIDATE MODULE
@@ -2087,9 +3262,12 @@ def admin_report_csv():
     # GET EXACT RECORDS
     # -----------------------------------------------------
 
+    # Fetch the module/category rows first. Department and period are
+    # filtered below from the actual spreadsheet row, which is required
+    # for Automatic Consolidation uploads.
     rows = get_all_rows(
         module=module or None,
-        category=category or None
+        category=category or None,
     )
 
     # -----------------------------------------------------
@@ -2099,7 +3277,9 @@ def admin_report_csv():
     rows = _filter_admin_records(
         rows,
         module=module or None,
-        category=category or None
+        category=category or None,
+        department=department or None,
+        reporting_period=reporting_period or None,
     )
 
     # -----------------------------------------------------
@@ -2398,6 +3578,17 @@ def admin_report_pdf():
         module
     )
 
+    raw_department = request.args.get("department", "")
+    department = normalize_department(raw_department)
+    reporting_period = normalize_reporting_period(
+        request.args.get("period", "")
+    )
+
+    if raw_department.strip() and not is_valid_department(raw_department):
+        return Response("Invalid department selected.", status=400, mimetype="text/plain")
+    if reporting_period and reporting_period not in REPORTING_PERIODS:
+        return Response("Invalid year selected.", status=400, mimetype="text/plain")
+
     # -----------------------------------------------------
     # VALIDATION
     # -----------------------------------------------------
@@ -2438,15 +3629,20 @@ def admin_report_pdf():
     # GET DATA
     # -----------------------------------------------------
 
+    # Fetch the module/category rows first. Department and period are
+    # filtered below from the actual spreadsheet row, which is required
+    # for Automatic Consolidation uploads.
     rows = get_all_rows(
         module=module or None,
-        category=category or None
+        category=category or None,
     )
 
     rows = _filter_admin_records(
         rows,
         module=module or None,
-        category=category or None
+        category=category or None,
+        department=department or None,
+        reporting_period=reporting_period or None,
     )
 
     # -----------------------------------------------------
@@ -2519,6 +3715,12 @@ def admin_report_pdf():
         module_name = (
             "All University Modules"
         )
+
+    if department:
+        module_name += f" — {department}"
+
+    if reporting_period:
+        module_name += f" — {reporting_period}"
 
     if category:
 

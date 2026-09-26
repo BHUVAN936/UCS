@@ -76,12 +76,159 @@
     >
 
 
+    <!--
+        Theme compatibility layer.
+        static/style.css is intentionally left unchanged.
+        These rules only repair components/templates that still
+        contain legacy hard-coded light-mode colors.
+    -->
+    <style id="uce-theme-compatibility">
+
+        html[data-theme="dark"] body {
+            background: var(--bg) !important;
+            color: var(--text) !important;
+        }
+
+        html[data-theme="dark"] main {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        html[data-theme="dark"] .admin-page,
+        html[data-theme="dark"] .admin-data-page,
+        html[data-theme="dark"] .auth-page,
+        html[data-theme="dark"] .module-page,
+        html[data-theme="dark"] .submit-page,
+        html[data-theme="dark"] .about-page {
+            background: var(--bg) !important;
+            color: var(--text) !important;
+        }
+
+        html[data-theme="dark"] .admin-page .department-card,
+        html[data-theme="dark"] .admin-page .department-period-link,
+        html[data-theme="dark"] .admin-data-page .module-data-panel,
+        html[data-theme="dark"] .admin-data-page .submodule-data-header,
+        html[data-theme="dark"] .admin-data-page .submodule-action,
+        html[data-theme="dark"] .admin-data-page .admin-data-btn,
+        html[data-theme="dark"] .admin-data-page .admin-search-box input,
+        html[data-theme="dark"] .admin-page .upload-panel,
+        html[data-theme="dark"] .admin-page .uploads-history,
+        html[data-theme="dark"] .admin-page .history-table-wrapper,
+        html[data-theme="dark"] .admin-page .specific-upload-card,
+        html[data-theme="dark"] .upload-panel,
+        html[data-theme="dark"] .link-submit-card,
+        html[data-theme="dark"] .information-panel,
+        html[data-theme="dark"] .subtopic-card,
+        html[data-theme="dark"] .update-card,
+        html[data-theme="dark"] .summary-card,
+        html[data-theme="dark"] .report-panel,
+        html[data-theme="dark"] .report-kpi,
+        html[data-theme="dark"] .report-category-card,
+        html[data-theme="dark"] .analysis-module-card {
+            background: var(--surface) !important;
+            border-color: var(--border) !important;
+            color: var(--text) !important;
+        }
+
+        html[data-theme="dark"] .admin-page h1,
+        html[data-theme="dark"] .admin-page h2,
+        html[data-theme="dark"] .admin-page h3,
+        html[data-theme="dark"] .admin-page h4,
+        html[data-theme="dark"] .admin-page p,
+        html[data-theme="dark"] .admin-page label,
+        html[data-theme="dark"] .admin-data-page h1,
+        html[data-theme="dark"] .admin-data-page h2,
+        html[data-theme="dark"] .admin-data-page h3,
+        html[data-theme="dark"] .admin-data-page p,
+        html[data-theme="dark"] .admin-data-page th,
+        html[data-theme="dark"] .admin-data-page td,
+        html[data-theme="dark"] .report-panel h1,
+        html[data-theme="dark"] .report-panel h2,
+        html[data-theme="dark"] .report-panel h3,
+        html[data-theme="dark"] .report-panel p,
+        html[data-theme="dark"] .report-panel td,
+        html[data-theme="dark"] .report-panel th {
+            color: var(--text) !important;
+        }
+
+        html[data-theme="dark"] .admin-page .muted,
+        html[data-theme="dark"] .admin-data-page .muted,
+        html[data-theme="dark"] .admin-page small,
+        html[data-theme="dark"] .admin-data-page small,
+        html[data-theme="dark"] .report-panel small {
+            color: var(--muted) !important;
+        }
+
+        html[data-theme="dark"] .admin-data-page input,
+        html[data-theme="dark"] .admin-data-page select,
+        html[data-theme="dark"] .admin-data-page textarea,
+        html[data-theme="dark"] .admin-page input,
+        html[data-theme="dark"] .admin-page select,
+        html[data-theme="dark"] .admin-page textarea,
+        html[data-theme="dark"] .upload-panel input,
+        html[data-theme="dark"] .upload-panel select,
+        html[data-theme="dark"] .upload-panel textarea {
+            background: var(--surface-2) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+
+        html[data-theme="dark"] .admin-data-page input::placeholder,
+        html[data-theme="dark"] .admin-page input::placeholder,
+        html[data-theme="dark"] .upload-panel input::placeholder {
+            color: var(--muted) !important;
+        }
+
+        html[data-theme="dark"] .admin-page .stats-grid > div,
+        html[data-theme="dark"] .admin-page .specific-upload-card > div[style],
+        html[data-theme="dark"] .admin-page .department-period-link.empty {
+            background: var(--surface-2) !important;
+            border-color: var(--border) !important;
+        }
+
+        html[data-theme="dark"] .admin-page .department-period-link:hover,
+        html[data-theme="dark"] .admin-data-page .submodule-action:hover,
+        html[data-theme="dark"] .admin-data-page .admin-data-btn:hover {
+            background: var(--surface-2) !important;
+            border-color: var(--accent) !important;
+            color: var(--accent) !important;
+        }
+
+        /* Admin accounts must not see data-submission controls. */
+        html[data-theme="dark"] .admin-mode .link-submit-card,
+        .admin-mode .link-submit-card,
+        .admin-mode a[href*="submit-link"],
+        .admin-mode [action*="submit-dataset"],
+        .admin-mode [action*="submit-link"] {
+            display: none !important;
+        }
+
+        /* User homepage intentionally contains no dataset panel. */
+        .user-mode .information-panel {
+            display: none !important;
+        }
+
+        html[data-theme="dark"] .user-mode .subtopic-card {
+            background: var(--surface-2) !important;
+            color: var(--text) !important;
+        }
+
+        html[data-theme="dark"] .user-mode .subtopic-card small {
+            color: var(--muted) !important;
+        }
+
+    </style>
+
+
     {% block head %}{% endblock %}
 
 </head>
 
 
-<body>
+<body
+    data-role="{{ current_user.role if current_user else 'guest' }}"
+    class="{% if current_user and current_user.role == 'admin' %}admin-mode{% endif %}"
+>
 
 
     <!-- =====================================================
@@ -349,6 +496,23 @@
                     A unified interface for university information,
                     analytics and updates.
                 </p>
+
+                <div class="footer-support" style="margin-top:18px;">
+
+                    <strong style="display:block; margin-bottom:8px; font-size:12px;">
+                        Help &amp; Service
+                    </strong>
+
+                    <a
+                        href="mailto:{{ config.get('SUPPORT_EMAIL_OUTLOOK', '') }}?subject=UCE%20Connect%20Support"
+                        style="display:inline-block; margin-right:16px;"
+                    >
+                        <i class="fa-solid fa-envelope"></i>
+                        Outlook Support
+                    </a>
+
+
+                </div>
 
             </div>
 

@@ -10,9 +10,18 @@ BASE_DIR = Path(
 
 class Config:
 
-    # Set UCE_SECRET_KEY in production. A random development key is used
-    # when the environment variable is not configured.
-    SECRET_KEY = os.getenv("UCE_SECRET_KEY") or secrets.token_hex(32)
+    # Use an environment secret when supplied. Otherwise persist one locally
+    # so sessions and tokens survive application restarts.
+    _SECRET_FILE = BASE_DIR / "instance" / ".secret_key"
+    _SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    if os.getenv("UCE_SECRET_KEY"):
+        SECRET_KEY = os.getenv("UCE_SECRET_KEY")
+    elif _SECRET_FILE.exists():
+        SECRET_KEY = _SECRET_FILE.read_text(encoding="utf-8").strip()
+    else:
+        SECRET_KEY = secrets.token_hex(32)
+        _SECRET_FILE.write_text(SECRET_KEY, encoding="utf-8")
 
     DATABASE_PATH = str(
         BASE_DIR
@@ -123,3 +132,32 @@ class Config:
         "UCE_SMTP_FROM_EMAIL",
         SMTP_USERNAME,
     )
+    # -----------------------------------------------------
+    # HELP & SUPPORT
+    # -----------------------------------------------------
+    # Primary support address: KLU Outlook
+    SUPPORT_EMAIL_OUTLOOK = os.getenv(
+        "UCE_SUPPORT_EMAIL_OUTLOOK",
+        "2500032499@kluniversity.in",
+    )
+
+    # Secondary support address: Gmail
+    SUPPORT_EMAIL_GMAIL = os.getenv(
+        "UCE_SUPPORT_EMAIL_GMAIL",
+        "chimatabhuvan84@gmail.com",
+    )
+
+    SUPPORT_EMAIL = os.getenv(
+        "UCE_SUPPORT_EMAIL",
+        SUPPORT_EMAIL_OUTLOOK,
+    )
+
+    SUPPORT_EMAILS = [
+        email
+        for email in (
+            SUPPORT_EMAIL_OUTLOOK,
+            SUPPORT_EMAIL_GMAIL,
+        )
+        if email
+    ]
+

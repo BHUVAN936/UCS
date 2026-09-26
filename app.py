@@ -1,6 +1,7 @@
-from flask import Flask
+from flask import Flask, abort, request
 
 from config import Config
+from urllib.parse import urlparse
 from database.db import init_database
 from services.data_service import reclassify_existing_records
 
@@ -12,7 +13,7 @@ from routes.main import main_bp
 
 
 # =========================================================
-# 01 - 20 MODULE ROUTES
+# 01 - 22 MODULE ROUTES
 # =========================================================
 
 from routes.academics import academics_bp
@@ -42,9 +43,30 @@ from routes.extra_modules import extra_modules_bp
 # APPLICATION FACTORY
 # =========================================================
 
+def _same_origin_state_change_guard():
+    """Block cross-origin state-changing browser requests.
+
+    This is a lightweight CSRF defense that requires no third-party package
+    and does not require rewriting every existing HTML form. Browsers normally
+    send Origin/Referer on POST/PUT/PATCH/DELETE requests. Requests without
+    either header are left alone for compatibility with local tools/clients.
+    """
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return
+
+    source = request.headers.get("Origin") or request.headers.get("Referer")
+    if not source:
+        return
+
+    parsed = urlparse(source)
+    if parsed.netloc and parsed.netloc != request.host:
+        abort(403, description="Cross-origin state-changing request blocked.")
+
+
 def create_app():
 
     app = Flask(__name__)
+    app.before_request(_same_origin_state_change_guard)
 
     # -----------------------------------------------------
     # Load configuration
@@ -58,8 +80,8 @@ def create_app():
 
     init_database()
 
-    # Reclassify existing mixed datasets with the current conservative rules.
-    # Specific-mode uploads remain unchanged by the reclassifier.
+    # Repair legacy mixed imports once. The service writes a version marker,
+    # so normal application restarts do not repeatedly rewrite records.
     reclassify_existing_records()
 
     # -----------------------------------------------------
@@ -189,7 +211,7 @@ def create_app():
     app.register_blueprint(library_bp)
 
     # -----------------------------------------------------
-    # Existing MODULES entries without separate route files
+    # Existing MODULES entries handled by the shared route
     # -----------------------------------------------------
 
     app.register_blueprint(extra_modules_bp)

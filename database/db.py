@@ -9,7 +9,7 @@ from config import Config
 # DATABASE VERSION
 # ============================================================
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 6
 
 
 # ============================================================
@@ -249,6 +249,22 @@ def _create_tables(connection):
 
             target_category TEXT,
 
+            department TEXT,
+
+            study_year TEXT,
+
+            reporting_period TEXT,
+
+            reporting_value TEXT,
+
+            original_file_path TEXT,
+
+            original_filename TEXT,
+
+            warning_count INTEGER NOT NULL DEFAULT 0,
+
+            rejected_row_count INTEGER NOT NULL DEFAULT 0,
+
             status TEXT
                 NOT NULL DEFAULT 'pending',
 
@@ -294,6 +310,38 @@ def _create_tables(connection):
         CREATE INDEX IF NOT EXISTS
         idx_uploads_module
         ON uploads(target_module)
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_uploads_department
+        ON uploads(department)
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_uploads_study_year
+        ON uploads(study_year)
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_uploads_reporting_period
+        ON uploads(reporting_period)
+        """
+    )
+
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_uploads_reporting_value
+        ON uploads(reporting_value)
         """
     )
 
@@ -591,6 +639,64 @@ def _migrate_uploads(connection):
     columns = _columns(
         connection,
         "uploads"
+    )
+
+    # Department/year were added after the original schema.
+    # Add them in-place so existing databases keep all old data.
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "department",
+        "TEXT"
+    )
+
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "study_year",
+        "TEXT"
+    )
+
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "reporting_period",
+        "TEXT"
+    )
+
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "reporting_value",
+        "TEXT"
+    )
+
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "original_file_path",
+        "TEXT"
+    )
+
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "original_filename",
+        "TEXT"
+    )
+
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "warning_count",
+        "INTEGER NOT NULL DEFAULT 0"
+    )
+
+    _add_column_if_missing(
+        connection,
+        "uploads",
+        "rejected_row_count",
+        "INTEGER NOT NULL DEFAULT 0"
     )
 
     # If the old table is clearly incompatible,
@@ -1534,7 +1640,9 @@ def create_upload(
     source_type="other",
     upload_mode="mixed",
     target_module=None,
-    target_category=None
+    target_category=None,
+    department=None,
+    study_year=None
 ):
 
     connection = get_connection()
@@ -1553,6 +1661,8 @@ def create_upload(
                 upload_mode,
                 target_module,
                 target_category,
+                department,
+                study_year,
                 status
             )
 
@@ -1562,6 +1672,8 @@ def create_upload(
                 ?,
                 ?,
                 'link',
+                ?,
+                ?,
                 ?,
                 ?,
                 ?,
@@ -1576,7 +1688,9 @@ def create_upload(
                 source_type,
                 upload_mode,
                 target_module,
-                target_category
+                target_category,
+                department,
+                study_year
             )
         )
 

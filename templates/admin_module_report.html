@@ -704,7 +704,9 @@ SUBMODULE REPORT HEADER STAYS VISIBLE.
                 <a
                     href="{{ url_for(
                         'main.admin_data',
-                        module=module_key
+                        module=module_key,
+                        department=selected_department,
+                        period=selected_period
                     ) }}"
                     class="report-btn"
                 >
@@ -716,7 +718,9 @@ SUBMODULE REPORT HEADER STAYS VISIBLE.
                 <a
                     href="{{ url_for(
                         'main.admin_report_csv',
-                        module=module_key
+                        module=module_key,
+                        department=selected_department,
+                        period=selected_period
                     ) }}"
                     class="report-btn"
                 >
@@ -728,7 +732,9 @@ SUBMODULE REPORT HEADER STAYS VISIBLE.
                 <a
                     href="{{ url_for(
                         'main.admin_report_pdf',
-                        module=module_key
+                        module=module_key,
+                        department=selected_department,
+                        period=selected_period
                     ) }}"
                     class="report-btn"
                 >
@@ -919,7 +925,9 @@ SUBMODULE REPORT HEADER STAYS VISIBLE.
                             href="{{ url_for(
                                 'main.admin_report_csv',
                                 module=module_key,
-                                category=category_key
+                                category=category_key,
+                                department=selected_department,
+                                period=selected_period
                             ) }}"
                             class="report-btn"
                         >
@@ -932,7 +940,9 @@ SUBMODULE REPORT HEADER STAYS VISIBLE.
                             href="{{ url_for(
                                 'main.admin_report_pdf',
                                 module=module_key,
-                                category=category_key
+                                category=category_key,
+                                department=selected_department,
+                                period=selected_period
                             ) }}"
                             class="report-btn"
                         >

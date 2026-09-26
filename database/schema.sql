@@ -143,6 +143,22 @@ CREATE TABLE IF NOT EXISTS uploads (
 
     target_category TEXT,
 
+    department TEXT,
+
+    study_year TEXT,
+
+    reporting_period TEXT,
+
+    reporting_value TEXT,
+
+    original_file_path TEXT,
+
+    original_filename TEXT,
+
+    warning_count INTEGER NOT NULL DEFAULT 0,
+
+    rejected_row_count INTEGER NOT NULL DEFAULT 0,
+
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK (
             status IN (
