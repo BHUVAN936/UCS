@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -73,6 +74,37 @@ Submit Data Link — UCE Connect
             min-width: 0 !important;
         }
     }
+
+
+        /* =====================================================
+           AUTOMATIC CONSOLIDATION - DISABLED FIELD UI
+        ===================================================== */
+
+        .upload-form label.auto-detected-field {
+            position: relative;
+            color: #7b8799;
+            cursor: not-allowed !important;
+        }
+
+        /* Show the browser's prohibited/not-allowed cursor over every
+           disabled automatic/source field. No red marker is displayed. */
+        .upload-form input:disabled,
+        .upload-form select:disabled {
+            cursor: not-allowed !important;
+        }
+
+        .upload-form label:has(> input:disabled),
+        .upload-form label:has(> select:disabled) {
+            cursor: not-allowed !important;
+        }
+
+        html[data-theme="dark"] .upload-form label.auto-detected-field select,
+        html[data-theme="dark"] .upload-form label.auto-detected-field input {
+            background: #1a2435 !important;
+            color: #7f8ca3 !important;
+            border-color: #344158 !important;
+        }
+
 </style>
 
 <section class="admin-page">
@@ -819,14 +851,27 @@ document.addEventListener(
             const period = reportingPeriod.value;
             const monthly = period === "Monthly";
             const semester = period === "Semester";
+            const singleMode = mode.value === "single";
+
+            if (!singleMode) {
+
+                reportingMonthField.hidden = true;
+                reportingSemesterField.hidden = true;
+
+                reportingMonth.required = false;
+                reportingSemester.required = false;
+
+                reportingMonth.value = "";
+                reportingSemester.value = "";
+
+                return;
+            }
 
             reportingMonthField.hidden = !monthly;
             reportingSemesterField.hidden = !semester;
 
-            const singleMode = mode.value === "single";
-
-            reportingMonth.required = singleMode && monthly;
-            reportingSemester.required = singleMode && semester;
+            reportingMonth.required = monthly;
+            reportingSemester.required = semester;
 
             if (!monthly) {
                 reportingMonth.value = "";
@@ -856,24 +901,57 @@ document.addEventListener(
             const singleMode = mode.value === "single";
             const automaticMode = !singleMode;
 
-            departmentSelect.disabled = automaticMode;
-            reportingPeriod.disabled = automaticMode;
-            reportingYear.disabled = automaticMode;
-            reportingMonth.disabled = automaticMode;
-            reportingSemester.disabled = automaticMode;
+            const automaticFields = [
+                departmentSelect,
+                reportingPeriod,
+                reportingYear,
+                reportingMonth,
+                reportingSemester
+            ];
+
+            automaticFields.forEach(
+                function (field) {
+
+                    if (!field) {
+                        return;
+                    }
+
+                    field.disabled = automaticMode;
+
+                    field.setAttribute(
+                        "aria-disabled",
+                        String(automaticMode)
+                    );
+
+                    const label = field.closest("label");
+
+                    if (!label) {
+                        return;
+                    }
+
+                    label.classList.toggle(
+                        "auto-detected-field",
+                        automaticMode
+                    );
+
+
+                }
+            );
 
             departmentSelect.required = singleMode;
             reportingPeriod.required = singleMode;
             reportingYear.required = singleMode;
 
             if (singleMode) {
+
                 departmentHelp.textContent =
                     "Select the department for all rows in this spreadsheet.";
+
             } else {
+
                 departmentHelp.textContent =
-                    "Detected from the spreadsheet row-by-row.";
-                reportingMonth.required = false;
-                reportingSemester.required = false;
+                    "Automatically detected from the spreadsheet row-by-row.";
+
             }
 
             updateReportingFields();
@@ -1276,21 +1354,43 @@ document.addEventListener(
                                 method: "POST",
                                 body: formData,
                                 headers: {
-                                    "Accept": "application/json"
-                                }
+                                    "Accept": "application/json",
+                                    "X-Requested-With": "XMLHttpRequest"
+                                },
+                                credentials: "same-origin"
                             }
                         );
 
-                    const data =
-                        await response.json();
+                    // Read text first so an HTML Flask error page does not
+                    // get hidden by a JSON parsing exception.
+                    const rawResponse =
+                        await response.text();
+
+                    let data = null;
+
+                    try {
+                        data = rawResponse ? JSON.parse(rawResponse) : null;
+                    } catch (jsonError) {
+                        console.error(
+                            "Preview endpoint returned non-JSON:",
+                            rawResponse
+                        );
+
+                        throw new Error(
+                            `Preview server error (${response.status}). ` +
+                            "Check the Flask terminal for the exact traceback."
+                        );
+                    }
 
                     if (
                         !response.ok ||
+                        !data ||
                         !data.success
                     ) {
                         throw new Error(
-                            data.error ||
-                            "Unable to preview the spreadsheet."
+                            data && data.error
+                                ? data.error
+                                : `Preview failed (${response.status}).`
                         );
                     }
 
@@ -1312,16 +1412,18 @@ document.addEventListener(
                         statCard("Missing required values", data.missing_required_values)
                     ].join("");
 
-                    renderDetectedData(data.detected);
+                    renderDetectedData(data.detected || {});
 
                     renderClassification(
-                        data.classification
+                        data.classification || {}
                     );
 
-                    renderRows(data.rows);
+                    renderRows(
+                        data.rows || []
+                    );
 
                     renderErrors(
-                        data.errors
+                        data.errors || []
                     );
 
                     preview.hidden = false;
@@ -1333,6 +1435,11 @@ document.addEventListener(
 
                 }
                 catch (error) {
+
+                    console.error(
+                        "UCE Connect Preview Error:",
+                        error
+                    );
 
                     alert(
                         error.message ||

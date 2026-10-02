@@ -192,12 +192,55 @@ MODULES = {
         "icon": "fa-briefcase",
         "description": "Internships, placements, higher education and competitive examinations.",
         "categories": {
-            "internships_projects_practice_school": "Students undertaking internships/projects/practice school",
-            "students_to_be_placed": "Number of students to be placed",
-            "students_to_go_higher_education": "Number of students to go for higher education",
-            "students_to_appear_competitive_exams": "Number of students to appear for Competitive Exams",
-            "students_qualified_competitive_exams": "Number of students to be qualified in Competitive Exams",
-            "students_qualified_placed_international": "Number of students qualified & placed in international placements",
+            # Existing placement submodules
+            "internships_projects_practice_school":
+                "Students undertaking internships/projects/practice school",
+
+            "students_to_be_placed":
+                "Number of students to be placed",
+
+            "students_to_go_higher_education":
+                "Number of students to go for higher education",
+
+            "students_to_appear_competitive_exams":
+                "Number of students to appear for Competitive Exams",
+
+            "students_qualified_competitive_exams":
+                "Number of students to be qualified in Competitive Exams",
+
+            "students_qualified_placed_international":
+                "Number of students qualified & placed in international placements",
+
+            # Finance submodules moved permanently into Placements
+            "average_package":
+                "Average Package",
+
+            "companies_visited":
+                "Companies Visited",
+
+            "highest_package":
+                "Highest Package",
+
+            "internship_programs":
+                "Internship Programs",
+
+            "placement_drive":
+                "Placement Drive",
+
+            "students_placed":
+                "Students Placed",
+
+            "median_salary_ug":
+                "Median salary – UG",
+
+            "median_salary_pg":
+                "Median salary – PG",
+
+            "government_infrastructure_grants":
+                "Funds / Grants received from government bodies for development and maintenance of infrastructure (not covered under criteria III and V) (INR in Lakhs)",
+
+            "non_government_infrastructure_grants":
+                "Funds / Grants received from non-government bodies, individuals, philanthropists for development and maintenance of infrastructure (not covered under criteria III and V) (INR in Rs. Lakhs)",
         },
     },
 
@@ -206,8 +249,11 @@ MODULES = {
         "icon": "fa-comments",
         "description": "Student counselling and mentoring.",
         "categories": {
-            "number_of_counsellors": "Number of counsellors (with 1:20 ratio on campus student strength)",
-            "girl_students_mentoring": "% Girl students benefited from university through mentoring",
+            "number_of_counsellors":
+                "Number of counsellors (with 1:20 ratio on campus student strength)",
+
+            "girl_students_mentoring":
+                "% Girl students benefited from university through mentoring",
         },
     },
 
@@ -216,7 +262,8 @@ MODULES = {
         "icon": "fa-file-circle-check",
         "description": "Examination and result declaration.",
         "categories": {
-            "result_declaration_days": "No. of days to declare the results including the in-semester exams",
+            "result_declaration_days":
+                "No. of days to declare the results including the in-semester exams",
         },
     },
 
@@ -225,7 +272,8 @@ MODULES = {
         "icon": "fa-arrow-trend-up",
         "description": "Student graduation.",
         "categories": {
-            "students_graduated_final_year": "Number of students to be Graduated (Final Year)",
+            "students_graduated_final_year":
+                "Number of students to be Graduated (Final Year)",
         },
     },
 
@@ -234,8 +282,11 @@ MODULES = {
         "icon": "fa-chalkboard-user",
         "description": "Faculty and non-teaching staff professional development and training.",
         "categories": {
-            "professional_development_admin_training": "Number of professional development/ administrative training programmes organized for faculty/non-teaching staff (Academic Staff College)",
-            "teachers_fdp": "No of Teachers undergoing online/face-to-face faculty Development programmes (FDP)",
+            "professional_development_admin_training":
+                "Number of professional development/ administrative training programmes organized for faculty/non-teaching staff (Academic Staff College)",
+
+            "teachers_fdp":
+                "No of Teachers undergoing online/face-to-face faculty Development programmes (FDP)",
         },
     },
 
@@ -244,7 +295,8 @@ MODULES = {
         "icon": "fa-clock",
         "description": "Student contact hours.",
         "categories": {
-            "contact_hours_per_week": "Contact hours per week",
+            "contact_hours_per_week":
+                "Contact hours per week",
         },
     },
 
@@ -253,7 +305,8 @@ MODULES = {
         "icon": "fa-laptop",
         "description": "Self-study hours in the timetable.",
         "categories": {
-            "self_study_hours_timetable": "Self-study hours in Timetable",
+            "self_study_hours_timetable":
+                "Self-study hours in Timetable",
         },
     },
 
@@ -262,7 +315,8 @@ MODULES = {
         "icon": "fa-handshake",
         "description": "International academic collaborations.",
         "categories": {
-            "active_mous_academics": "International collaborations: Number of Active MOUs (Related to Academics)",
+            "active_mous_academics":
+                "International collaborations: Number of Active MOUs (Related to Academics)",
         },
     },
 
@@ -271,12 +325,23 @@ MODULES = {
         "icon": "fa-earth-americas",
         "description": "International student mobility and overseas programmes.",
         "categories": {
-            "summer_winter_overseas_internship": "International collaborations: Number of students going for Summer/Winter school (overseas internship)",
-            "dual_degrees_international": "International collaborations: Number of students doing Dual Degrees (International)",
-            "semester_exchange_student_inbound": "International collaborations: Number of Semester Exchange (Student) Inbound",
-            "semester_exchange_student_outbound": "International collaborations: Number of Semester Exchange (Student) outbound",
-            "student_exchange_inbound_2_weeks": "Number of Student Exchange Inbound for 2 weeks",
-            "student_exchange_outbound_2_weeks": "Number of Student Exchange Outbound for 2 weeks",
+            "summer_winter_overseas_internship":
+                "International collaborations: Number of students going for Summer/Winter school (overseas internship)",
+
+            "dual_degrees_international":
+                "International collaborations: Number of students doing Dual Degrees (International)",
+
+            "semester_exchange_student_inbound":
+                "International collaborations: Number of Semester Exchange (Student) Inbound",
+
+            "semester_exchange_student_outbound":
+                "International collaborations: Number of Semester Exchange (Student) outbound",
+
+            "student_exchange_inbound_2_weeks":
+                "Number of Student Exchange Inbound for 2 weeks",
+
+            "student_exchange_outbound_2_weeks":
+                "Number of Student Exchange Outbound for 2 weeks",
         },
     },
 
@@ -285,10 +350,17 @@ MODULES = {
         "icon": "fa-plane",
         "description": "International faculty exchange.",
         "categories": {
-            "semester_exchange_faculty_inbound": "International collaborations: Number of Semester Exchange (Faculty) Inbound",
-            "semester_exchange_faculty_outbound": "International collaborations: Number of Semester Exchange (Faculty) outbound",
-            "faculty_inbound_2_weeks": "Number of Faculty Inbound for 2 weeks",
-            "faculty_outbound_2_weeks": "Number of Faculty Outbound for 2 weeks",
+            "semester_exchange_faculty_inbound":
+                "International collaborations: Number of Semester Exchange (Faculty) Inbound",
+
+            "semester_exchange_faculty_outbound":
+                "International collaborations: Number of Semester Exchange (Faculty) outbound",
+
+            "faculty_inbound_2_weeks":
+                "Number of Faculty Inbound for 2 weeks",
+
+            "faculty_outbound_2_weeks":
+                "Number of Faculty Outbound for 2 weeks",
         },
     },
 
@@ -297,17 +369,38 @@ MODULES = {
         "icon": "fa-user-tie",
         "description": "Faculty strength, qualifications, experience, support and entrepreneurship.",
         "categories": {
-            "full_time_teachers_sanctioned_posts": "Number of full-time teachers against sanctioned posts (1:15 Ratio)",
-            "women_faculty": "Women faculty",
-            "foreign_faculty": "Foreign faculty",
-            "full_time_teachers_phd": "Full time teachers with Ph. D",
-            "faculty_experience": "Faculty experience",
-            "faculty_external_nonacademic_experience": "Faculty with at least two years part-time or full-time experience in external nonacademic organisation",
-            "teachers_financial_support": "Number of Teachers provided with financial support to attend conferences / workshops and towards membership fee of professional bodies",
-            "retention_ratio": "Retention ratio (Tenure: 3 + years)",
-            "external_consultations": "External consultations -faculty with a parallel appointment in a non-academic position (Industry, NGO, government committee, etc.)",
-            "faculty_entrepreneurship_experience": "Faculty with entrepreneurship experience -Proportion of faculty with experience of working in or running their own/co-founded start-up",
-            "demand_ratio": "Demand Ratio",
+            "full_time_teachers_sanctioned_posts":
+                "Number of full-time teachers against sanctioned posts (1:15 Ratio)",
+
+            "women_faculty":
+                "Women faculty",
+
+            "foreign_faculty":
+                "Foreign faculty",
+
+            "full_time_teachers_phd":
+                "Full time teachers with Ph. D",
+
+            "faculty_experience":
+                "Faculty experience",
+
+            "faculty_external_nonacademic_experience":
+                "Faculty with at least two years part-time or full-time experience in external nonacademic organisation",
+
+            "teachers_financial_support":
+                "Number of Teachers provided with financial support to attend conferences / workshops and towards membership fee of professional bodies",
+
+            "retention_ratio":
+                "Retention ratio (Tenure: 3 + years)",
+
+            "external_consultations":
+                "External consultations -faculty with a parallel appointment in a non-academic position (Industry, NGO, government committee, etc.)",
+
+            "faculty_entrepreneurship_experience":
+                "Faculty with entrepreneurship experience -Proportion of faculty with experience of working in or running their own/co-founded start-up",
+
+            "demand_ratio":
+                "Demand Ratio",
         },
     },
 
@@ -316,7 +409,8 @@ MODULES = {
         "icon": "fa-user-group",
         "description": "Visiting industry and academic experts.",
         "categories": {
-            "visiting_faculty_industry_academic": "Number of Visiting Faculty (Industry/Academic Experts)",
+            "visiting_faculty_industry_academic":
+                "Number of Visiting Faculty (Industry/Academic Experts)",
         },
     },
 
@@ -325,32 +419,83 @@ MODULES = {
         "icon": "fa-flask",
         "description": "Research funding, publications, patents, scholars, centres and collaborations.",
         "categories": {
-            "seed_money": "Seed money",
-            "research_fellows_enrolled": "Number of JRFs, SRFs, Post-Doctoral Fellows, Research Associates and other research fellows enrolled",
-            "sponsored_research_projects_govt": "Sponsored Research Projects amount (GOVT)",
-            "sponsored_research_projects_non_govt": "Sponsored Research Projects amount (NON GOVT)",
-            "consultancy_royalty_revenue": "Revenue generated from consultancy + Royalty",
-            "executive_development_programs": "Executive development programs with min 10 months duration (Academic Staff College) with min 20 intake per Department and revenue of 1.8 crs",
-            "research_funding_proposals_submitted": "Number of research funding proposals submitted",
-            "research_funding_proposals_approved_active": "Number of research funding proposals approved and active",
-            "fellowships_national_international": "Number of fellowships (national/international)",
-            "ipr_workshops_seminars": "Number of workshops/seminars conducted on IPR",
-            "research_awards_recognitions": "Number of awards / recognitions received for research/ innovations by the institution/teachers/research scholars/ students",
-            "patents_published": "Number of Patents published. (Utility patent – Published)",
-            "patents_granted": "Number of Patents- Granted",
-            "ip_commercialisation": "Commercialisation of Intellectual Property",
-            "h_index_scopus": "H index-Scopus",
-            "h_index_wos": "H index -WoS",
-            "phds_awarded": "Number of Ph.Ds awarded",
-            "research_papers_published": "Number of Research papers published",
-            "books_chapters_published": "Number of books and chapters in edited volumes published",
-            "conference_papers_published": "Number of conference papers published",
-            "citations": "Number of Citations",
-            "full_time_phd_scholars": "Full time Ph.D. scholars",
-            "active_research_centres": "Number of active Research Centres with atlest One ongoing govt funded project and Publications",
-            "international_conferences_research_reports": "International conferences organised, and research reports published by the Research centre in the last 12 months",
-            "joint_research_international": "Number of Joint Research (International collaborations) activities (other than paper and book publications)-1 per dept/year",
-            "joint_conferences_international": "Number of Joint Conferences with International collaborations",
+            "seed_money":
+                "Seed money",
+
+            "research_fellows_enrolled":
+                "Number of JRFs, SRFs, Post-Doctoral Fellows, Research Associates and other research fellows enrolled",
+
+            "sponsored_research_projects_govt":
+                "Sponsored Research Projects amount (GOVT)",
+
+            "sponsored_research_projects_non_govt":
+                "Sponsored Research Projects amount (NON GOVT)",
+
+            "consultancy_royalty_revenue":
+                "Revenue generated from consultancy + Royalty",
+
+            "executive_development_programs":
+                "Executive development programs with min 10 months duration (Academic Staff College) with min 20 intake per Department and revenue of 1.8 crs",
+
+            "research_funding_proposals_submitted":
+                "Number of research funding proposals submitted",
+
+            "research_funding_proposals_approved_active":
+                "Number of research funding proposals approved and active",
+
+            "fellowships_national_international":
+                "Number of fellowships (national/international)",
+
+            "ipr_workshops_seminars":
+                "Number of workshops/seminars conducted on IPR",
+
+            "research_awards_recognitions":
+                "Number of awards / recognitions received for research/ innovations by the institution/teachers/research scholars/ students",
+
+            "patents_published":
+                "Number of Patents published. (Utility patent – Published)",
+
+            "patents_granted":
+                "Number of Patents- Granted",
+
+            "ip_commercialisation":
+                "Commercialisation of Intellectual Property",
+
+            "h_index_scopus":
+                "H index-Scopus",
+
+            "h_index_wos":
+                "H index -WoS",
+
+            "phds_awarded":
+                "Number of Ph.Ds awarded",
+
+            "research_papers_published":
+                "Number of Research papers published",
+
+            "books_chapters_published":
+                "Number of books and chapters in edited volumes published",
+
+            "conference_papers_published":
+                "Number of conference papers published",
+
+            "citations":
+                "Number of Citations",
+
+            "full_time_phd_scholars":
+                "Full time Ph.D. scholars",
+
+            "active_research_centres":
+                "Number of active Research Centres with atlest One ongoing govt funded project and Publications",
+
+            "international_conferences_research_reports":
+                "International conferences organised, and research reports published by the Research centre in the last 12 months",
+
+            "joint_research_international":
+                "Number of Joint Research (International collaborations) activities (other than paper and book publications)-1 per dept/year",
+
+            "joint_conferences_international":
+                "Number of Joint Conferences with International collaborations",
         },
     },
 
@@ -359,8 +504,11 @@ MODULES = {
         "icon": "fa-building",
         "description": "Corporate training programmes and revenue.",
         "categories": {
-            "corporate_training_programs": "No.of corporate training Programs per year",
-            "corporate_training_revenue": "Revenue generated from corporate training",
+            "corporate_training_programs":
+                "No.of corporate training Programs per year",
+
+            "corporate_training_revenue":
+                "Revenue generated from corporate training",
         },
     },
 
@@ -369,9 +517,14 @@ MODULES = {
         "icon": "fa-lightbulb",
         "description": "Student entrepreneurship training and start-ups.",
         "categories": {
-            "entrepreneurship_training_25_hours": "Number of students who completed at least 25 hours entrepreneurship training course on/offcampus",
-            "students_willing_business": "Students with entrepreneurship: Number of students willing to start own business",
-            "startups_incubated": "No. of start-ups incubated on campus",
+            "entrepreneurship_training_25_hours":
+                "Number of students who completed at least 25 hours entrepreneurship training course on/offcampus",
+
+            "students_willing_business":
+                "Students with entrepreneurship: Number of students willing to start own business",
+
+            "startups_incubated":
+                "No. of start-ups incubated on campus",
         },
     },
 
@@ -380,13 +533,26 @@ MODULES = {
         "icon": "fa-people-group",
         "description": "Extension, clubs, student participation, gender equity and professional ethics activities.",
         "categories": {
-            "extension_outreach_programs": "Number of extension and outreach programs to be conducted through NSS/NCC/Red Cross/YRC",
-            "students_extension_activities": "Number of Students participating in extension activities",
-            "sports_cultural_awards": "Number of awards/medals won by students for outstanding performance in sports/cultural activities at inter-university/state/ national/international events",
-            "clubs_technical_societies": "Clubs’ activities or Technical societies and their Concerts & Exhibitions",
-            "students_clubs_societies_associations": "Number of students involved in Clubs/Student societies /Associations on campus",
-            "gender_equity_activities": "Number of Activities planned on Gender equity",
-            "professional_ethics_events": "Number of events/workshops conducted by the college to develop students’ professional ethics",
+            "extension_outreach_programs":
+                "Number of extension and outreach programs to be conducted through NSS/NCC/Red Cross/YRC",
+
+            "students_extension_activities":
+                "Number of Students participating in extension activities",
+
+            "sports_cultural_awards":
+                "Number of awards/medals won by students for outstanding performance in sports/cultural activities at inter-university/state/ national/international events",
+
+            "clubs_technical_societies":
+                "Clubs’ activities or Technical societies and their Concerts & Exhibitions",
+
+            "students_clubs_societies_associations":
+                "Number of students involved in Clubs/Student societies /Associations on campus",
+
+            "gender_equity_activities":
+                "Number of Activities planned on Gender equity",
+
+            "professional_ethics_events":
+                "Number of events/workshops conducted by the college to develop students’ professional ethics",
         },
     },
 
@@ -395,12 +561,23 @@ MODULES = {
         "icon": "fa-chart-line",
         "description": "Planning, development and infrastructure facilities.",
         "categories": {
-            "extension_activity_awards": "Number of awards received by institution, teachers and students from Gov./Gov. recognized bodies in extension activities",
-            "classrooms_tutorial_rooms": "Total number of classrooms including Tutorial rooms",
-            "labs": "Total number of Labs",
-            "ict_enabled_classrooms": "Number of classrooms with ICT-enabled facilities",
-            "student_computers": "Total number of computers (For students only 1:4)",
-            "office_faculty_computers": "Number of computers for office work/faculty",
+            "extension_activity_awards":
+                "Number of awards received by institution, teachers and students from Gov./Gov. recognized bodies in extension activities",
+
+            "classrooms_tutorial_rooms":
+                "Total number of classrooms including Tutorial rooms",
+
+            "labs":
+                "Total number of Labs",
+
+            "ict_enabled_classrooms":
+                "Number of classrooms with ICT-enabled facilities",
+
+            "student_computers":
+                "Total number of computers (For students only 1:4)",
+
+            "office_faculty_computers":
+                "Number of computers for office work/faculty",
         },
     },
 
@@ -409,17 +586,38 @@ MODULES = {
         "icon": "fa-building-columns",
         "description": "Student admissions, scholarships, reservations and enrolment information.",
         "categories": {
-            "scholarships_freeships": "Number of students benefited by scholarships and Freeships provided by the institution, Government, and NGOs",
-            "full_tuition_fee_reimbursement": "Full Tuition Fee reimbursement for economically and socially challenged students",
-            "girl_students_scholarships": "% Girl students benefited from university through scholarships",
-            "career_counselling_competitive_exams": "Number of students benefited by career counselling and guidance for competitive examinations",
-            "total_seats_filled": "Total number of seats filled against sanctioned seats",
-            "reserved_category_seats": "Seats filled against reserved categories (SC, ST, OBC, Divyangjan, etc.)",
-            "girl_students_enrolled": "Percentage of girl students enrolled",
-            "students_other_states": "Percentage of students enrolled from other states",
-            "students_other_countries": "Percentage of students enrolled from other countries",
-            "first_generation_students": "Number of first-generation students admitted in 1st year",
-            "first_generation_girl_students": "Number of first-generation Girl Students admitted in 1st year",
+            "scholarships_freeships":
+                "Number of students benefited by scholarships and Freeships provided by the institution, Government, and NGOs",
+
+            "full_tuition_fee_reimbursement":
+                "Full Tuition Fee reimbursement for economically and socially challenged students",
+
+            "girl_students_scholarships":
+                "% Girl students benefited from university through scholarships",
+
+            "career_counselling_competitive_exams":
+                "Number of students benefited by career counselling and guidance for competitive examinations",
+
+            "total_seats_filled":
+                "Total number of seats filled against sanctioned seats",
+
+            "reserved_category_seats":
+                "Seats filled against reserved categories (SC, ST, OBC, Divyangjan, etc.)",
+
+            "girl_students_enrolled":
+                "Percentage of girl students enrolled",
+
+            "students_other_states":
+                "Percentage of students enrolled from other states",
+
+            "students_other_countries":
+                "Percentage of students enrolled from other countries",
+
+            "first_generation_students":
+                "Number of first-generation students admitted in 1st year",
+
+            "first_generation_girl_students":
+                "Number of first-generation Girl Students admitted in 1st year",
         },
     },
 
@@ -428,30 +626,32 @@ MODULES = {
         "icon": "fa-user-graduate",
         "description": "Alumni contribution and entrepreneurship.",
         "categories": {
-            "alumni_contribution": "Alumni contribution",
-            "alumni_entrepreneurship": "Alumni with entrepreneurship: Number of alumni running their own/co-founded start-up within 5 years after graduation",
+            "alumni_contribution":
+                "Alumni contribution",
+
+            "alumni_entrepreneurship":
+                "Alumni with entrepreneurship: Number of alumni running their own/co-founded start-up within 5 years after graduation",
         },
     },
 
-    "finance": {
-        "name": "Finance",
-        "icon": "fa-coins",
-        "description": "Salary and infrastructure development funding.",
-        "categories": {
-            "median_salary_ug": "Median salary – UG",
-            "median_salary_pg": "Median salary – PG",
-            "government_infrastructure_grants": "Funds / Grants received from government bodies for development and maintenance of infrastructure (not covered under criteria III and V) (INR in Lakhs)",
-            "non_government_infrastructure_grants": "Funds / Grants received from non-government bodies, individuals, philanthropists for development and maintenance of infrastructure (not covered under criteria III and V) (INR in Rs. Lakhs)",
-        },
-    },
+    # =====================================================
+    # FINANCE REMOVED
+    # =====================================================
+    #
+    # The old "finance" module has intentionally been removed.
+    # Its four categories now belong to "placements" above.
+    #
 
     "library": {
         "name": "Library",
         "icon": "fa-book",
         "description": "Daily library usage by teachers and students.",
         "categories": {
-            "library_usage_teachers": "Per day usage of library by teachers",
-            "library_usage_students": "Per day usage of library by students",
+            "library_usage_teachers":
+                "Per day usage of library by teachers",
+
+            "library_usage_students":
+                "Per day usage of library by students",
         },
     },
 }
@@ -485,6 +685,11 @@ _EXCEL_CATEGORY_DEFINITIONS = {
         "Internship Programs",
         "Placement Drive",
         "Students Placed",
+
+        "Median salary – UG",
+        "Median salary – PG",
+        "Funds / Grants received from government bodies for development and maintenance of infrastructure (not covered under criteria III and V) (INR in Lakhs)",
+        "Funds / Grants received from non-government bodies, individuals, philanthropists for development and maintenance of infrastructure (not covered under criteria III and V) (INR in Rs. Lakhs)",
     ],
     "faculty_affairs": [
         "Academic Excellence",
@@ -553,7 +758,10 @@ _EXCEL_CATEGORY_DEFINITIONS = {
 for _excel_module, _excel_categories in _EXCEL_CATEGORY_DEFINITIONS.items():
     # Excel data may extend the subcategory list of an EXISTING module,
     # but it must never create a new portal module automatically.
-    if _excel_module not in MODULES:
+    # Placements is explicitly defined above because its legacy placement
+    # metrics and the former Finance metrics must remain in one ordered list;
+    # do not inject duplicate placement labels from the generic Excel list.
+    if _excel_module not in MODULES or _excel_module == "placements":
         continue
 
     for _excel_category in _excel_categories:
@@ -571,6 +779,7 @@ for _excel_module, _excel_categories in _EXCEL_CATEGORY_DEFINITIONS.items():
 # =========================================================
 
 MODULE_ALIASES = {
+    "finance": "placements",
     "faculty_exchange": "faculty_exchange_abroad",
     "placementa": "placements",
     "faculty_fdp_corporate": "faculty_fdp_corporate",
@@ -1099,12 +1308,6 @@ CATEGORY_COLUMN_HINTS = {
     "alumni": {
         "alumni_contribution": ["alumni_contribution"],
         "alumni_entrepreneurship": ["alumni_entrepreneurship", "alumni_startup", "alumni_start_up"],
-    },
-    "finance": {
-        "median_salary_ug": ["median_salary_ug", "ug_median_salary"],
-        "median_salary_pg": ["median_salary_pg", "pg_median_salary"],
-        "government_infrastructure_grants": ["government_infrastructure_grants", "govt_infrastructure_grants"],
-        "non_government_infrastructure_grants": ["non_government_infrastructure_grants", "non_govt_infrastructure_grants"],
     },
     "library": {
         "library_usage_teachers": ["library_usage_teachers", "teacher_library_usage"],
@@ -2187,6 +2390,7 @@ def create_dataset(
     reporting_value=None,
     metadata_mode="single",
     upload_method=None,
+    source_type_for_metadata=None,
 ):
     # Canonical internal values are mixed/specific.  The UI uses mixed/single.
     upload_mode = normalize_upload_mode(upload_mode)
@@ -2247,7 +2451,11 @@ def create_dataset(
     if upload_method not in {"file", "link"}:
         upload_method = "file" if str(processing_source).startswith("local://") else "link"
 
-    source_type = detect_source_type(source_url)
+    source_type = (
+        str(source_type_for_metadata).strip().lower()
+        if source_type_for_metadata
+        else detect_source_type(source_url)
+    )
 
     connection = get_connection()
 

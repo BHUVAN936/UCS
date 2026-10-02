@@ -8190,3 +8190,242 @@ body[data-theme="dark"] .updates-section .update-card:hover {
 
 }
 
+
+/* ============================================================
+   UCE CONNECT — GLOBAL THEME / HEADER REPAIR
+   ============================================================ */
+
+/* Use the same theme source everywhere. */
+html[data-theme="light"],
+html[data-theme="dark"] {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] main {
+    background: var(--bg) !important;
+    color: var(--text) !important;
+}
+
+/* Header: no hard-coded white surfaces in dark mode. */
+html[data-theme="dark"] .site-header {
+    background: var(--surface) !important;
+    border-bottom-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .brand-logo {
+    background: #f4f7fb !important;
+    color: #17233b !important;
+}
+
+html[data-theme="dark"] .brand-text strong,
+html[data-theme="dark"] .main-navigation a,
+html[data-theme="dark"] .header-link,
+html[data-theme="dark"] .user-pill,
+html[data-theme="dark"] .theme-toggle {
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .user-pill,
+html[data-theme="dark"] .theme-toggle,
+html[data-theme="dark"] .outline-button,
+html[data-theme="dark"] .header-actions .secondary-button {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .header-button {
+    background: #f4f7fb !important;
+    border-color: #f4f7fb !important;
+    color: #17233b !important;
+}
+
+html[data-theme="dark"] .header-button:hover,
+html[data-theme="dark"] .outline-button:hover,
+html[data-theme="dark"] .theme-toggle:hover {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #07121f !important;
+}
+
+html[data-theme="dark"] .mobile-menu-button {
+    background: var(--surface-2) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Common cards and controls. */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .section-card,
+html[data-theme="dark"] .module-card,
+html[data-theme="dark"] .portal-module,
+html[data-theme="dark"] .submodule-card,
+html[data-theme="dark"] .information-panel,
+html[data-theme="dark"] .upload-panel,
+html[data-theme="dark"] .link-submit-card,
+html[data-theme="dark"] .summary-card,
+html[data-theme="dark"] .report-panel,
+html[data-theme="dark"] .update-card,
+html[data-theme="dark"] .about-card,
+html[data-theme="dark"] .auth-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+    background: var(--surface-2) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+    color: var(--muted) !important;
+}
+
+html[data-theme="dark"] option {
+    background: var(--surface-2) !important;
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] table,
+html[data-theme="dark"] th,
+html[data-theme="dark"] td {
+    border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] th {
+    background: var(--surface-2) !important;
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] td {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .site-footer {
+    background: #080e18 !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* ============================================================
+   ADMIN HEADER — CLEANER DESKTOP / MOBILE LAYOUT
+   ============================================================ */
+
+.admin-page .module-page-header {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px !important;
+    align-items: start !important;
+}
+
+.admin-page .module-page-header > div:first-child {
+    min-width: 0;
+    max-width: 760px;
+}
+
+.admin-page .module-page-header > div:first-child h1 {
+    max-width: 760px;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+.admin-page .admin-header-actions {
+    width: 100%;
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.admin-page .admin-header-actions > * {
+    flex: 0 0 auto;
+}
+
+@media (min-width: 1100px) {
+    .admin-page .module-page-header {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 32px !important;
+        align-items: end !important;
+    }
+
+    .admin-page .admin-header-actions {
+        width: auto;
+        max-width: 650px;
+        justify-content: flex-end !important;
+    }
+}
+
+@media (max-width: 700px) {
+    .admin-page .admin-header-actions > * {
+        flex: 1 1 auto;
+    }
+}
+
+/* ============================================================
+   ADMIN DARK MODE — OVERRIDE LEGACY INLINE COLORS
+   ============================================================ */
+
+html[data-theme="dark"] .admin-page .department-data-panel .department-card,
+html[data-theme="dark"] .admin-page .department-data-panel .department-period-link,
+html[data-theme="dark"] .admin-page .specific-upload-card,
+html[data-theme="dark"] .admin-page .upload-panel,
+html[data-theme="dark"] .admin-page .uploads-history,
+html[data-theme="dark"] .admin-page .history-table-wrapper,
+html[data-theme="dark"] .admin-page .stats-grid > div {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-data-panel .department-period-link.empty {
+    background: var(--surface-2) !important;
+    color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-card h3,
+html[data-theme="dark"] .admin-page .department-card p,
+html[data-theme="dark"] .admin-page .department-card small,
+html[data-theme="dark"] .admin-page .department-card .period-name,
+html[data-theme="dark"] .admin-page .department-card .period-records,
+html[data-theme="dark"] .admin-page .stats-grid strong,
+html[data-theme="dark"] .admin-page .stats-grid span {
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-card p,
+html[data-theme="dark"] .admin-page .department-card small {
+    color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-card .module-icon {
+    background: rgba(34, 211, 238, 0.10) !important;
+    color: var(--accent) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-period-link .period-records {
+    color: var(--accent) !important;
+}
+
+html[data-theme="dark"] .admin-page .admin-header-actions .outline-button {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .admin-page .admin-header-actions .header-button {
+    background: #f4f7fb !important;
+    color: #17233b !important;
+}

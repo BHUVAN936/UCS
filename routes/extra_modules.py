@@ -35,7 +35,3 @@ def _render_module(module_key):
 def alumni():
     return _render_module("alumni")
 
-
-@extra_modules_bp.route("/finance")
-def finance():
-    return _render_module("finance")

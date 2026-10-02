@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-Admin Portal | UCE Connect
+Admin Dashboard | UCE Connect
 {% endblock %}
 
 {% block content %}
@@ -808,6 +808,43 @@ Admin Portal | UCE Connect
 
 </style>
 
+<style id="admin-theme-final-fix">
+html[data-theme="dark"] .admin-page .module-page-header h1,
+html[data-theme="dark"] .admin-page .module-page-header p,
+html[data-theme="dark"] .admin-page .module-page-header .eyebrow {
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .admin-page .module-page-header > div:first-child > p:last-child {
+    color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-data-panel .department-card,
+html[data-theme="dark"] .admin-page .department-data-panel .department-period-link {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-data-panel .department-period-link.empty {
+    background: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-data-panel .department-card .specific-heading h3,
+html[data-theme="dark"] .admin-page .department-data-panel .department-card .specific-heading small,
+html[data-theme="dark"] .admin-page .department-data-panel .department-card > p,
+html[data-theme="dark"] .admin-page .department-data-panel .department-period-link .period-name {
+    color: var(--text) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-data-panel .department-card .specific-heading small,
+html[data-theme="dark"] .admin-page .department-data-panel .department-card > p {
+    color: var(--muted) !important;
+}
+
+html[data-theme="dark"] .admin-page .department-data-panel .department-period-link .period-records {
+    color: var(--accent) !important;
+}
+</style>
 
 <section class="admin-page">
 
@@ -839,17 +876,7 @@ Admin Portal | UCE Connect
 
             <div class="admin-header-actions">
 
-                <a
-                    class="admin-badge"
-                    href="{{ url_for('main.admin_settings') }}"
-                    style="text-decoration:none;"
-                >
 
-                    <i class="fa-solid fa-shield-halved"></i>
-
-                    Admin Portal
-
-                </a>
 
 
                 <a

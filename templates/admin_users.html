@@ -5,35 +5,57 @@
 {% block content %}
 
 <style>
-/* =========================================================
-   USER ANALYTICS PAGE
-   ========================================================= */
+
+/* ============================================================
+   UCE CONNECT — USER ANALYTICS
+   PROFESSIONAL ADMIN UI
+   ============================================================ */
 
 .user-analytics-page {
-    padding: 36px 0 70px;
+    padding: 42px 0 80px;
+    min-height: calc(100vh - 80px);
 }
+
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
 
 .analytics-header {
     display: flex;
-    align-items: flex-start;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 24px;
-    margin-bottom: 26px;
+    gap: 32px;
+    margin-bottom: 30px;
+}
+
+.analytics-header > div:first-child {
+    min-width: 0;
 }
 
 .analytics-header h1 {
-    margin: 0 0 8px;
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(30px, 3vw, 40px);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    font-weight: 800;
 }
 
 .analytics-header p {
-    margin: 0;
+    margin: 10px 0 0;
     color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .analytics-actions {
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
     flex-wrap: wrap;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .analytics-actions a {
@@ -41,375 +63,936 @@
 }
 
 
-/* =========================================================
+/* ============================================================
+   GENERAL BUTTON SYSTEM
+   ============================================================ */
+
+.analytics-actions .header-button,
+.analytics-actions .primary-button,
+.analytics-actions .secondary-button {
+    min-height: 42px;
+    padding: 0 17px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        background .18s ease,
+        border-color .18s ease;
+}
+
+.analytics-actions .header-button:hover,
+.analytics-actions .primary-button:hover,
+.analytics-actions .secondary-button:hover {
+    transform: translateY(-1px);
+}
+
+
+/* ============================================================
+   CREATE ACCOUNT PANEL
+   ============================================================ */
+
+.create-account-panel {
+    position: relative;
+    margin-bottom: 24px;
+    padding: 25px 26px 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.create-account-panel::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent);
+}
+
+.create-account-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.create-account-icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: color-mix(
+        in srgb,
+        var(--accent) 12%,
+        var(--surface-2)
+    );
+
+    color: var(--accent);
+    font-size: 17px;
+}
+
+.create-account-heading h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1.25;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+}
+
+.create-account-panel .panel-subtitle {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+
+/* ============================================================
+   ACCOUNT FORM
+   ============================================================ */
+
+.create-account-form {
+    display: grid;
+    grid-template-columns:
+        minmax(180px, 1.1fr)
+        minmax(210px, 1.25fr)
+        minmax(170px, 1fr)
+        minmax(150px, .85fr)
+        auto;
+
+    align-items: end;
+    gap: 12px;
+}
+
+.create-account-field {
+    min-width: 0;
+}
+
+.create-account-field label {
+    display: block;
+    margin: 0 0 7px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.create-account-field input,
+.create-account-field select {
+    width: 100%;
+    height: 46px;
+
+    padding: 0 13px;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--surface-2);
+    color: var(--text);
+
+    font: inherit;
+    font-size: 13px;
+
+    outline: none;
+
+    transition:
+        border-color .18s ease,
+        box-shadow .18s ease,
+        background .18s ease;
+}
+
+.create-account-field input::placeholder {
+    color: var(--muted);
+    opacity: .85;
+}
+
+.create-account-field input:hover,
+.create-account-field select:hover {
+    border-color: color-mix(
+        in srgb,
+        var(--accent) 40%,
+        var(--border)
+    );
+}
+
+.create-account-field input:focus,
+.create-account-field select:focus {
+    border-color: var(--accent);
+
+    box-shadow:
+        0 0 0 3px
+        color-mix(
+            in srgb,
+            var(--accent) 15%,
+            transparent
+        );
+
+    background: var(--surface);
+}
+
+
+/* ============================================================
+   CREATE BUTTON
+   ============================================================ */
+
+.create-account-button {
+    height: 46px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 0 18px;
+
+    border: 1px solid transparent;
+    border-radius: 10px;
+
+    background: var(--accent);
+    color: #062a2d;
+
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+
+    white-space: nowrap;
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 16px
+        color-mix(
+            in srgb,
+            var(--accent) 18%,
+            transparent
+        );
+
+    transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        filter .18s ease;
+}
+
+.create-account-button:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 9px 22px
+        color-mix(
+            in srgb,
+            var(--accent) 25%,
+            transparent
+        );
+
+    filter: brightness(1.03);
+}
+
+.create-account-button:active {
+    transform: translateY(0);
+}
+
+.create-account-button:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px
+        color-mix(
+            in srgb,
+            var(--accent) 22%,
+            transparent
+        );
+}
+
+.create-account-note {
+    margin: 13px 0 0;
+
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
+/* ============================================================
    STATISTICS
-   ========================================================= */
+   ============================================================ */
 
 .analytics-stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
     gap: 16px;
+
     margin-bottom: 24px;
 }
 
 .analytics-stat {
+    position: relative;
+
+    min-width: 0;
+
+    padding: 22px;
+
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
+
+    box-shadow: var(--shadow);
+
+    overflow: hidden;
+
+    transition:
+        transform .18s ease,
+        border-color .18s ease,
+        box-shadow .18s ease;
+}
+
+.analytics-stat:hover {
+    transform: translateY(-2px);
+
+    border-color:
+        color-mix(
+            in srgb,
+            var(--accent) 35%,
+            var(--border)
+        );
+
+    box-shadow:
+        0 18px 38px
+        color-mix(
+            in srgb,
+            var(--text) 7%,
+            transparent
+        );
 }
 
 .analytics-stat .icon {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 11px;
-    background: var(--surface-2);
+
+    margin-bottom: 16px;
+
+    border-radius: 12px;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--accent) 11%,
+            var(--surface-2)
+        );
+
     color: var(--accent);
-    margin-bottom: 14px;
+
+    font-size: 16px;
 }
 
 .analytics-stat strong {
     display: block;
-    font-size: 28px;
-    line-height: 1.1;
+
     color: var(--text);
+
+    font-size: 30px;
+    line-height: 1;
+
+    font-weight: 800;
+    letter-spacing: -0.03em;
 }
 
 .analytics-stat span {
     display: block;
-    margin-top: 6px;
+
+    margin-top: 8px;
+
     color: var(--muted);
-    font-size: 13px;
+
+    font-size: 12px;
+    line-height: 1.4;
 }
 
 .analytics-stat small {
     display: block;
-    margin-top: 8px;
+
+    margin-top: 7px;
+
     color: var(--muted);
+
     font-size: 11px;
 }
 
 
-/* =========================================================
-   PANELS
-   ========================================================= */
-
-.analytics-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, .05);
-    min-width: 0;
-}
-
-.analytics-panel h2 {
-    margin: 0;
-    font-size: 18px;
-    color: var(--text);
-}
-
-.analytics-panel .panel-subtitle {
-    margin: 5px 0 20px;
-    color: var(--muted);
-    font-size: 12px;
-}
-
-.table-panel {
-    overflow: hidden;
-    padding: 0;
-}
-
-.table-panel-header {
-    padding: 22px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-
-/* =========================================================
-   TABLE WRAPPERS
-   ========================================================= */
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-
-/*
-   Existing Admin Accounts / User Accounts scrolling.
-*/
-.role-table-scroll {
-    max-height: 420px;
-    overflow-y: auto;
-    overflow-x: auto;
-}
-
-
-/*
-   NEW:
-   Recent Login Activity gets its OWN internal scrollbar.
-
-   This means:
-   - Page itself does not become extremely long.
-   - Login records scroll inside this box.
-   - Maximum visible height = 420px.
-   - Header remains visible while scrolling.
-*/
-.login-activity-scroll {
-    height: 420px;
-    max-height: 420px;
-    overflow-y: auto;
-    overflow-x: auto;
-    width: 100%;
-}
-
-
-/* =========================================================
-   STICKY TABLE HEADERS
-   ========================================================= */
-
-.role-table-scroll .analytics-table thead th,
-.login-activity-scroll .analytics-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-}
-
-
-/* =========================================================
-   TABLE
-   ========================================================= */
-
-.analytics-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 1050px;
-}
-
-.analytics-table th,
-.analytics-table td {
-    padding: 13px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-}
-
-.analytics-table th {
-    background: var(--surface-2);
-    color: var(--muted);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-}
-
-.analytics-table td {
-    color: var(--text);
-    font-size: 13px;
-}
-
-
-/* =========================================================
-   USER INFORMATION
-   ========================================================= */
-
-.user-name {
-    font-weight: 700;
-}
-
-.user-email {
-    color: var(--muted);
-    font-size: 12px;
-}
-
-
-/* =========================================================
-   BADGES
-   ========================================================= */
-
-.role-badge,
-.status-badge,
-.event-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 9px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-}
-
-.role-badge {
-    background: var(--surface-2);
-    color: var(--text);
-}
-
-.status-online {
-    background: rgba(34, 197, 94, .12);
-    color: #15803d;
-}
-
-.status-offline {
-    background: var(--surface-2);
-    color: var(--muted);
-}
-
-.event-login {
-    background: rgba(34, 197, 94, .12);
-    color: #15803d;
-}
-
-.event-logout {
-    background: rgba(59, 130, 246, .12);
-    color: #2563eb;
-}
-
-.event-failed_login {
-    background: rgba(239, 68, 68, .12);
-    color: #dc2626;
-}
-
-
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
-
-.empty-state {
-    padding: 35px;
-    text-align: center;
-    color: var(--muted);
-}
-
-
-/* =========================================================
-   USER ROLE SUMMARY
-   ========================================================= */
-
-.analytics-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: 720px;
-    margin-bottom: 18px;
-}
+/* ============================================================
+   ROLE SUMMARY
+   ============================================================ */
 
 .role-summary {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px 20px;
-    margin-bottom: 24px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, .04);
-
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+
+    margin-bottom: 24px;
+    padding: 18px 20px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+
+    box-shadow: var(--shadow);
 }
 
 .role-summary-title {
-    font-weight: 800;
     color: var(--text);
     font-size: 14px;
+    font-weight: 750;
 }
 
 .role-summary-items {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 10px;
 }
 
 .role-summary-item {
+    min-width: 140px;
+
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
+    gap: 10px;
+
+    padding: 9px 13px;
+
     border: 1px solid var(--border);
     border-radius: 10px;
+
     background: var(--surface-2);
 }
 
 .role-summary-item strong {
-    font-size: 16px;
     color: var(--text);
+    font-size: 15px;
+    font-weight: 800;
 }
 
 .role-summary-item > span:last-child {
-    font-size: 11px;
     color: var(--muted);
+    font-size: 11px;
 }
 
 
-/* =========================================================
-   SCROLLBAR - RECENT LOGIN ACTIVITY
-   ========================================================= */
+/* ============================================================
+   ROLE BADGES
+   ============================================================ */
 
-.login-activity-scroll::-webkit-scrollbar {
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 48px;
+    height: 25px;
+
+    padding: 0 9px;
+
+    border-radius: 999px;
+
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+
+    color: var(--text);
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+
+/* ============================================================
+   ANALYTICS PANELS
+   ============================================================ */
+
+.analytics-panel {
+    min-width: 0;
+
+    margin-bottom: 24px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+
+    box-shadow: var(--shadow);
+
+    overflow: hidden;
+}
+
+.analytics-panel h2 {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: 18px;
+    line-height: 1.3;
+
+    font-weight: 750;
+    letter-spacing: -0.015em;
+}
+
+.analytics-panel .panel-subtitle {
+    margin: 6px 0 0;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.table-panel {
+    padding: 0;
+}
+
+.table-panel-header {
+    min-height: 82px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 20px 22px;
+
+    background: var(--surface);
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+/* ============================================================
+   TABLE SCROLLING
+   ============================================================ */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.role-table-scroll {
+    max-height: 430px;
+
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.login-activity-scroll {
+    width: 100%;
+    height: 430px;
+    max-height: 430px;
+
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+.role-table-scroll::-webkit-scrollbar,
+.login-activity-scroll::-webkit-scrollbar,
+.table-wrapper::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-.login-activity-scroll::-webkit-scrollbar-track {
+.role-table-scroll::-webkit-scrollbar-track,
+.login-activity-scroll::-webkit-scrollbar-track,
+.table-wrapper::-webkit-scrollbar-track {
     background: var(--surface-2);
-    border-radius: 10px;
 }
 
-.login-activity-scroll::-webkit-scrollbar-thumb {
-    background: #94a3b8;
-    border-radius: 10px;
+.role-table-scroll::-webkit-scrollbar-thumb,
+.login-activity-scroll::-webkit-scrollbar-thumb,
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
 }
 
-.login-activity-scroll::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+.role-table-scroll::-webkit-scrollbar-thumb:hover,
+.login-activity-scroll::-webkit-scrollbar-thumb:hover,
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
 }
 
 
-/* =========================================================
-   SCROLLBAR - ROLE TABLES
-   ========================================================= */
+/* ============================================================
+   TABLE
+   ============================================================ */
 
-.role-table-scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+.analytics-table {
+    width: 100%;
+
+    border-collapse: separate;
+    border-spacing: 0;
+
+    background: var(--surface);
+
+    color: var(--text);
+
+    font-size: 12px;
 }
 
-.role-table-scroll::-webkit-scrollbar-track {
+.analytics-table th,
+.analytics-table td {
+    padding: 14px 15px;
+
+    text-align: left;
+
+    border-bottom: 1px solid var(--border);
+
+    vertical-align: middle;
+
+    white-space: nowrap;
+}
+
+.analytics-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+
     background: var(--surface-2);
-    border-radius: 10px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: .07em;
+    text-transform: uppercase;
+
+    box-shadow:
+        0 1px 0 var(--border);
 }
 
-.role-table-scroll::-webkit-scrollbar-thumb {
-    background: #94a3b8;
-    border-radius: 10px;
+.analytics-table td {
+    color: var(--text);
 }
 
-.role-table-scroll::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+.analytics-table tbody tr {
+    background: var(--surface);
+
+    transition:
+        background .15s ease;
+}
+
+.analytics-table tbody tr:hover {
+    background:
+        color-mix(
+            in srgb,
+            var(--accent) 4%,
+            var(--surface)
+        );
+}
+
+.analytics-table tbody tr:last-child td {
+    border-bottom: 0;
 }
 
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
+/* ============================================================
+   USER NAME / EMAIL
+   ============================================================ */
+
+.user-name {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.user-email {
+    margin-top: 4px;
+
+    color: var(--muted);
+
+    font-size: 10px;
+}
+
+
+/* ============================================================
+   ACCOUNT STATUS
+   ============================================================ */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 25px;
+
+    padding: 0 10px;
+
+    border-radius: 999px;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.status-badge.online,
+.status-online {
+    background:
+        color-mix(
+            in srgb,
+            var(--success) 13%,
+            var(--surface)
+        );
+
+    color: var(--success);
+
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--success) 25%,
+            var(--border)
+        );
+}
+
+.status-badge.inactive,
+.status-inactive {
+    background:
+        color-mix(
+            in srgb,
+            var(--muted) 10%,
+            var(--surface)
+        );
+
+    color: var(--muted);
+
+    border: 1px solid var(--border);
+}
+
+
+/* ============================================================
+   ACCOUNT ACTION COLUMN
+   ============================================================ */
+
+.analytics-table .account-actions-cell {
+    width: 1%;
+    min-width: 115px;
+
+    text-align: right;
+
+    white-space: nowrap;
+}
+
+.delete-account-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.delete-account-button {
+    min-height: 34px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 0 12px;
+
+    border: 1px solid
+        color-mix(
+            in srgb,
+            var(--danger) 35%,
+            var(--border)
+        );
+
+    border-radius: 9px;
+
+    background:
+        color-mix(
+            in srgb,
+            var(--danger) 7%,
+            var(--surface)
+        );
+
+    color: var(--danger);
+
+    font: inherit;
+    font-size: 10px;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        transform .16s ease,
+        background .16s ease,
+        border-color .16s ease,
+        box-shadow .16s ease;
+}
+
+.delete-account-button:hover {
+    transform: translateY(-1px);
+
+    background:
+        color-mix(
+            in srgb,
+            var(--danger) 13%,
+            var(--surface)
+        );
+
+    border-color: var(--danger);
+
+    box-shadow:
+        0 5px 14px
+        color-mix(
+            in srgb,
+            var(--danger) 15%,
+            transparent
+        );
+}
+
+.delete-account-button:active {
+    transform: translateY(0);
+}
+
+.delete-account-button:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px
+        color-mix(
+            in srgb,
+            var(--danger) 18%,
+            transparent
+        );
+}
+
+.delete-account-disabled {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    min-height: 34px;
+
+    padding: 0 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    background: var(--surface-2);
+    color: var(--muted);
+
+    font-size: 10px;
+    font-weight: 750;
+
+    cursor: not-allowed;
+}
+
+
+/* ============================================================
+   DARK MODE REFINEMENT
+   ============================================================ */
+
+html[data-theme="dark"] .create-account-panel,
+html[data-theme="dark"] .analytics-stat,
+html[data-theme="dark"] .analytics-panel,
+html[data-theme="dark"] .role-summary {
+    box-shadow:
+        0 18px 45px rgba(0, 0, 0, .22);
+}
+
+html[data-theme="dark"] .create-account-field input,
+html[data-theme="dark"] .create-account-field select {
+    background: #0d1626;
+}
+
+html[data-theme="dark"] .create-account-field input:focus,
+html[data-theme="dark"] .create-account-field select:focus {
+    background: #101b2d;
+}
+
+html[data-theme="dark"] .analytics-table th {
+    background: #172236;
+}
+
+html[data-theme="dark"] .analytics-table tbody tr {
+    background: #111a2b;
+}
+
+html[data-theme="dark"] .analytics-table tbody tr:hover {
+    background: #152238;
+}
+
+html[data-theme="dark"] .role-summary-item {
+    background: #151f31;
+}
+
+html[data-theme="dark"] .delete-account-disabled {
+    background: #151f31;
+}
+
+
+/* ============================================================
+   RESPONSIVE — TABLET
+   ============================================================ */
 
 @media (max-width: 1100px) {
 
-    .analytics-stat-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .create-account-form {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .create-account-button {
+        width: 100%;
     }
 
 }
 
-@media (max-width: 800px) {
+
+/* ============================================================
+   RESPONSIVE — SMALL TABLET
+   ============================================================ */
+
+@media (max-width: 850px) {
 
     .analytics-header {
+        align-items: flex-start;
         flex-direction: column;
+    }
+
+    .analytics-actions {
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .analytics-stat-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
     }
 
     .role-summary {
@@ -418,16 +1001,97 @@
     }
 
     .role-summary-items {
+        justify-content: flex-start;
         width: 100%;
-        flex-wrap: wrap;
     }
 
 }
 
-@media (max-width: 560px) {
+
+/* ============================================================
+   RESPONSIVE — MOBILE
+   ============================================================ */
+
+@media (max-width: 600px) {
+
+    .user-analytics-page {
+        padding: 28px 0 55px;
+    }
+
+    .analytics-header {
+        margin-bottom: 22px;
+    }
+
+    .analytics-header h1 {
+        font-size: 30px;
+    }
+
+    .analytics-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .analytics-actions a,
+    .analytics-actions .header-button,
+    .analytics-actions .primary-button,
+    .analytics-actions .secondary-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .create-account-panel {
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    .create-account-form {
+        grid-template-columns: 1fr;
+    }
+
+    .create-account-heading {
+        align-items: flex-start;
+    }
 
     .analytics-stat-grid {
         grid-template-columns: 1fr;
+    }
+
+    .analytics-stat {
+        padding: 19px;
+    }
+
+    .role-summary {
+        padding: 16px;
+    }
+
+    .role-summary-items {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .role-summary-item {
+        width: 100%;
+    }
+
+    .analytics-panel {
+        border-radius: 15px;
+    }
+
+    .table-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 18px;
+    }
+
+    .analytics-table th,
+    .analytics-table td {
+        padding: 12px;
+    }
+
+    .role-table-scroll {
+        max-height: 360px;
     }
 
     .login-activity-scroll {
@@ -435,11 +1099,56 @@
         max-height: 360px;
     }
 
-    .role-table-scroll {
-        max-height: 360px;
+    .analytics-table .account-actions-cell {
+        min-width: 105px;
     }
 
 }
+
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .analytics-stat,
+    .delete-account-button,
+    .create-account-button,
+    .analytics-actions .header-button {
+        transition: none;
+    }
+
+}
+
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+
+@media print {
+
+    .analytics-actions,
+    .create-account-button,
+    .delete-account-button,
+    .delete-account-disabled {
+        display: none !important;
+    }
+
+    .user-analytics-page {
+        padding: 0;
+    }
+
+    .analytics-panel,
+    .analytics-stat,
+    .create-account-panel,
+    .role-summary {
+        box-shadow: none;
+        break-inside: avoid;
+    }
+
+}
+
 </style>
 
 
@@ -463,10 +1172,7 @@
                 User Analytics
             </h1>
 
-            <p>
-                Registration, login, activity and submission
-                statistics for UCE Connect.
-            </p>
+          <p>Account management, login activity and submission statistics for UCE Connect.</p>
 
         </div>
 
@@ -493,6 +1199,91 @@
         </div>
 
     </div>
+
+
+    <!-- =====================================================
+         CREATE ACCOUNT
+         ===================================================== -->
+
+    <section id="create-account" class="create-account-panel">
+
+        <div class="create-account-heading">
+            <div class="create-account-icon">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+
+            <div>
+                <h2>Create User / Admin Account</h2>
+                <p class="panel-subtitle">
+                    Only an authenticated administrator can create accounts.
+                    Public self-registration is disabled.
+                </p>
+            </div>
+        </div>
+
+        <form
+            class="create-account-form"
+            method="POST"
+            action="{{ url_for('main.admin_create_user') }}"
+        >
+
+            <div class="create-account-field">
+                <label for="create-name">Full Name</label>
+                <input
+                    id="create-name"
+                    type="text"
+                    name="name"
+                    placeholder="Enter full name"
+                    autocomplete="name"
+                    required
+                >
+            </div>
+
+            <div class="create-account-field">
+                <label for="create-email">Email</label>
+                <input
+                    id="create-email"
+                    type="email"
+                    name="email"
+                    placeholder="name@example.com"
+                    autocomplete="email"
+                    required
+                >
+            </div>
+
+            <div class="create-account-field">
+                <label for="create-password">Password</label>
+                <input
+                    id="create-password"
+                    type="password"
+                    name="password"
+                    placeholder="Minimum 6 characters"
+                    minlength="6"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <div class="create-account-field">
+                <label for="create-role">Account Type</label>
+                <select id="create-role" name="role" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <button class="create-account-button" type="submit">
+                <i class="fa-solid fa-user-plus"></i>
+                Create Account
+            </button>
+
+        </form>
+
+        <p class="create-account-note">
+            The account is created immediately and can sign in using the email and password entered above.
+        </p>
+
+    </section>
 
 
     <!-- =====================================================
@@ -622,6 +1413,7 @@
          ===================================================== -->
 
     <section
+        id="admin-accounts"
         class="analytics-panel table-panel"
         style="margin-bottom:24px;"
     >
@@ -719,6 +1511,40 @@
                             <span class="status-badge status-online">
                                 Full Access
                             </span>
+
+                        </td>
+
+                        <td class="account-actions-cell">
+
+                            {% if user.id == session.get('user_id') %}
+
+                                <span
+                                    class="delete-account-disabled"
+                                    title="You cannot delete the administrator account you are currently using."
+                                >
+                                    <i class="fa-solid fa-lock"></i>
+                                    Current account
+                                </span>
+
+                            {% else %}
+
+                                <form
+                                    class="delete-account-form"
+                                    method="POST"
+                                    action="{{ url_for('main.admin_delete_user', user_id=user.id) }}"
+                                    onsubmit="return confirm('Delete the administrator account for {{ user.name|e }}? This action cannot be undone.');"
+                                >
+                                    <button
+                                        class="delete-account-button"
+                                        type="submit"
+                                        title="Delete administrator account"
+                                    >
+                                        <i class="fa-solid fa-trash-can"></i>
+                                        Delete Account
+                                    </button>
+                                </form>
+
+                            {% endif %}
 
                         </td>
 
@@ -852,6 +1678,26 @@
 
                         <td>
                             {{ user.submission_count }}
+                        </td>
+
+                        <td class="account-actions-cell">
+
+                            <form
+                                class="delete-account-form"
+                                method="POST"
+                                action="{{ url_for('main.admin_delete_user', user_id=user.id) }}"
+                                onsubmit="return confirm('Delete the user account for {{ user.name|e }}? The account cannot be recovered. Uploaded datasets will remain available but will no longer be linked to this account.');"
+                            >
+                                <button
+                                    class="delete-account-button"
+                                    type="submit"
+                                    title="Delete user account"
+                                >
+                                    <i class="fa-solid fa-trash-can"></i>
+                                    Delete Account
+                                </button>
+                            </form>
+
                         </td>
 
                     </tr>

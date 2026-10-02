@@ -12,94 +12,253 @@ document.addEventListener("DOMContentLoaded", function () {
     // =========================================================
     // THEME
     // =========================================================
+    //
+    // UCE Connect uses more than one theme button across the
+    // application.  All of them are handled here so Login,
+    // Admin, Modules and Upload pages share the same theme.
+    //
+    // Supported selectors:
+    //   #themeToggle
+    //   .theme-button
+    //   [data-theme-toggle]
+    //
+    // Theme state is synchronized on BOTH <html> and <body>.
+    // =========================================================
 
     const root = document.documentElement;
-    const themeToggle = document.getElementById("themeToggle");
+    const THEME_KEY = "uce-theme";
 
-    function updateThemeButton() {
-        if (!themeToggle) return;
+    function getThemeButtons() {
 
-        const isDark = root.getAttribute("data-theme") === "dark";
-        const icon = themeToggle.querySelector("i");
-
-        if (icon) {
-            icon.className = isDark
-                ? "fa-solid fa-sun"
-                : "fa-solid fa-moon";
-        }
-
-        themeToggle.setAttribute(
-            "aria-label",
-            isDark ? "Switch to light mode" : "Switch to dark mode"
+        return Array.from(
+            document.querySelectorAll(
+                "#themeToggle, .theme-button, [data-theme-toggle]"
+            )
         );
 
-        themeToggle.setAttribute(
-            "title",
-            isDark ? "Switch to light mode" : "Switch to dark mode"
-        );
     }
 
-    function setTheme(theme) {
-        const value = theme === "dark" ? "dark" : "light";
-
-        root.setAttribute("data-theme", value);
-        document.body.setAttribute("data-theme", value);
-        document.body.classList.toggle(
-            "dark-theme",
-            value === "dark"
-        );
+    function getSavedTheme() {
 
         try {
-            localStorage.setItem(
-                "uce-theme",
-                value
-            );
+
+            const stored =
+                localStorage.getItem(THEME_KEY);
+
+            if (
+                stored === "dark" ||
+                stored === "light"
+            ) {
+                return stored;
+            }
+
         } catch (error) {
-            // Storage can be unavailable.
+            // Storage may be unavailable.
         }
 
-        updateThemeButton();
+        return "light";
+
     }
 
-    let savedTheme = "light";
+    function updateThemeButtons(theme) {
 
-    try {
-        const stored =
-            localStorage.getItem("uce-theme");
+        const isDark =
+            theme === "dark";
 
-        if (
-            stored === "dark" ||
-            stored === "light"
-        ) {
-            savedTheme = stored;
-        }
-    } catch (error) {
-        savedTheme = "light";
-    }
+        getThemeButtons().forEach(
+            function (button) {
 
-    setTheme(savedTheme);
+                const icon =
+                    button.querySelector("i");
 
-    if (themeToggle) {
+                if (icon) {
 
-        themeToggle.addEventListener(
-            "click",
-            function (event) {
+                    icon.className = isDark
+                        ? "fa-solid fa-sun"
+                        : "fa-solid fa-moon";
 
-                event.preventDefault();
+                }
 
-                const current =
-                    root.getAttribute("data-theme");
+                const textIcon =
+                    button.querySelector("#themeIcon");
 
-                setTheme(
-                    current === "dark"
-                        ? "light"
-                        : "dark"
+                if (textIcon) {
+                    textIcon.textContent =
+                        isDark ? "☀" : "◐";
+                }
+
+                button.setAttribute(
+                    "aria-label",
+                    isDark
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                );
+
+                button.setAttribute(
+                    "title",
+                    isDark
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                );
+
+                button.setAttribute(
+                    "aria-pressed",
+                    String(isDark)
                 );
 
             }
         );
 
     }
+
+    function applyTheme(theme) {
+
+        const value =
+            theme === "dark"
+                ? "dark"
+                : "light";
+
+        root.setAttribute(
+            "data-theme",
+            value
+        );
+
+        if (document.body) {
+
+            document.body.setAttribute(
+                "data-theme",
+                value
+            );
+
+            document.body.classList.toggle(
+                "dark-theme",
+                value === "dark"
+            );
+
+            document.body.classList.toggle(
+                "dark-mode",
+                value === "dark"
+            );
+
+            document.body.classList.toggle(
+                "light-theme",
+                value === "light"
+            );
+
+            document.body.classList.toggle(
+                "light-mode",
+                value === "light"
+            );
+
+        }
+
+        root.style.colorScheme =
+            value === "dark"
+                ? "dark"
+                : "light";
+
+        if (document.body) {
+            document.body.style.colorScheme =
+                value === "dark"
+                    ? "dark"
+                    : "light";
+        }
+
+        try {
+
+            localStorage.setItem(
+                THEME_KEY,
+                value
+            );
+
+        } catch (error) {
+            // Storage may be unavailable.
+        }
+
+        updateThemeButtons(value);
+
+        document.dispatchEvent(
+            new CustomEvent(
+                "uceThemeChanged",
+                {
+                    detail: {
+                        theme: value
+                    }
+                }
+            )
+        );
+
+    }
+
+    function toggleTheme() {
+
+        const current =
+            root.getAttribute("data-theme") === "dark"
+                ? "dark"
+                : "light";
+
+        applyTheme(
+            current === "dark"
+                ? "light"
+                : "dark"
+        );
+
+    }
+
+    /*
+     * Apply the saved theme immediately.
+     */
+    applyTheme(
+        getSavedTheme()
+    );
+
+    /*
+     * Theme toggle handler.
+     *
+     * Use event delegation in CAPTURE phase so the toggle still works
+     * even if another script attaches a click handler to the button.
+     * The handler supports all existing UCE Connect theme controls:
+     *     #themeToggle
+     *     .theme-button
+     *     [data-theme-toggle]
+     */
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const target = event.target;
+
+            if (!target) {
+                return;
+            }
+
+            const button =
+                target.closest(
+                    "#themeToggle, .theme-button, [data-theme-toggle]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            toggleTheme();
+
+        },
+        true
+    );
+
+    /*
+     * Keep dynamically-created theme buttons synchronized with the
+     * current theme without adding additional click handlers.
+     */
+    updateThemeButtons(
+        root.getAttribute("data-theme") === "dark"
+            ? "dark"
+            : "light"
+    );
 
 
     // =========================================================

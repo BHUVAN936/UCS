@@ -33,6 +33,7 @@ from werkzeug.security import (
 from config import Config
 from database.db import (
     get_connection,
+    create_user,
     record_login_activity,
     get_user_analytics,
     update_last_login,
@@ -294,207 +295,21 @@ def about():
 
 
 # =========================================================
-# REGISTER
+# PUBLIC REGISTRATION DISABLED
 # =========================================================
 
 @main_bp.route("/register", methods=["GET", "POST"])
 def register():
+    """Public self-registration is disabled.
 
-    if request.method == "POST":
-
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        confirm_password = request.form.get("confirm_password", "")
-        role = request.form.get("role", "user").strip().lower()
-        terms = request.form.get("terms")
-        registration_code = request.form.get(
-            "registration_code", ""
-        ).strip()
-
-        # =====================================================
-        # BASIC VALIDATION
-        # =====================================================
-
-        if not name:
-            flash("Please enter your full name.", "danger")
-            return redirect(url_for("main.register"))
-
-        if not email:
-            flash("Please enter your email address.", "danger")
-            return redirect(url_for("main.register"))
-
-        if not password:
-            flash("Please enter a password.", "danger")
-            return redirect(url_for("main.register"))
-
-        if len(password) < 6:
-            flash(
-                "Password must contain at least 6 characters.",
-                "danger"
-            )
-            return redirect(url_for("main.register"))
-
-        if password != confirm_password:
-            flash(
-                "Passwords do not match.",
-                "danger"
-            )
-            return redirect(url_for("main.register"))
-
-        if not terms:
-            flash(
-                "Please accept the terms before creating your account.",
-                "danger"
-            )
-            return redirect(url_for("main.register"))
-
-        # =====================================================
-        # ROLE VALIDATION
-        # =====================================================
-
-        if role not in ("user", "admin"):
-            flash(
-                "Invalid account type selected.",
-                "danger"
-            )
-            return redirect(url_for("main.register"))
-
-        # =====================================================
-        # ADMIN CODE VALIDATION
-        # =====================================================
-
-        if role == "admin":
-
-            if not registration_code:
-                flash(
-                    "Admin registration code is required.",
-                    "danger"
-                )
-                return redirect(url_for("main.register"))
-
-            if not verify_admin_registration_code(registration_code):
-                flash(
-                    "Invalid administrator registration code.",
-                    "danger"
-                )
-                return redirect(url_for("main.register"))
-
-        # =====================================================
-        # DATABASE
-        # =====================================================
-
-        connection = None
-
-        try:
-
-            # -------------------------------------------------
-            # USE THE SAME DATABASE CONNECTION AS LOGIN/AUTH
-            # -------------------------------------------------
-
-            connection = get_connection()
-
-            # -------------------------------------------------
-            # CHECK EXISTING EMAIL
-            # -------------------------------------------------
-
-            existing_user = connection.execute(
-                """
-                SELECT id
-                FROM users
-                WHERE email = ?
-                COLLATE NOCASE
-                LIMIT 1
-                """,
-                (email,)
-            ).fetchone()
-
-            if existing_user:
-
-                flash(
-                    "An account with this email already exists.",
-                    "danger"
-                )
-
-                return redirect(
-                    url_for("main.register")
-                )
-
-            # -------------------------------------------------
-            # HASH PASSWORD
-            # -------------------------------------------------
-
-            password_hash = generate_password_hash(
-                password
-            )
-
-            # -------------------------------------------------
-            # CREATE USER
-            # -------------------------------------------------
-
-            connection.execute(
-                """
-                INSERT INTO users
-                (
-                    name,
-                    email,
-                    password_hash,
-                    role
-                )
-                VALUES (?, ?, ?, ?)
-                """,
-                (
-                    name,
-                    email,
-                    password_hash,
-                    role
-                )
-            )
-
-            connection.commit()
-
-            flash(
-                "Account created successfully. Please sign in.",
-                "success"
-            )
-
-            return redirect(
-                url_for("main.login")
-            )
-
-        except Exception as e:
-
-            if connection is not None:
-
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
-
-            print(
-                "REGISTRATION ERROR:",
-                repr(e)
-            )
-
-            flash(
-                "Unable to create account. Please try again.",
-                "danger"
-            )
-
-            return redirect(
-                url_for("main.register")
-            )
-
-        finally:
-
-            if connection is not None:
-
-                try:
-                    connection.close()
-                except Exception:
-                    pass
-
-    return render_template("register.html")
+    All UCE Connect accounts must be created by an existing administrator
+    from the Admin -> User Analytics page.
+    """
+    flash(
+        "Public registration is disabled. Please contact an administrator to create your account.",
+        "warning",
+    )
+    return redirect(url_for("main.login"))
 
 
 # =========================================================
@@ -2403,6 +2218,215 @@ def admin():
 # =========================================================
 # ADMIN USER ANALYTICS
 # =========================================================
+
+@main_bp.route("/admin/users/create", methods=["POST"])
+@admin_required
+def admin_create_user():
+    """Create a normal user or another administrator.
+
+    Only an authenticated administrator can reach this endpoint.
+    """
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+    role = request.form.get("role", "user").strip().lower()
+
+    if not name:
+        flash("Please enter the user's full name.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    if not email:
+        flash("Please enter the user's email address.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    if not password or len(password) < 6:
+        flash("Password must contain at least 6 characters.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    if role not in ("user", "admin"):
+        flash("Invalid account type selected.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    # Basic email validation.  The existing login system remains the source
+    # of truth; this only prevents obviously malformed addresses.
+    if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+        flash("Please enter a valid email address.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    connection = None
+
+    try:
+        connection = get_connection()
+
+        existing = connection.execute(
+            """
+            SELECT id
+            FROM users
+            WHERE email = ? COLLATE NOCASE
+            LIMIT 1
+            """,
+            (email,),
+        ).fetchone()
+
+        if existing:
+            flash("An account with this email already exists.", "danger")
+            return redirect(url_for("main.admin_users"))
+
+        # Use the same password hashing used by login.
+        password_hash = generate_password_hash(password)
+
+        # Keep account creation in the central DB helper so the users/admins
+        # tables stay consistent.  The helper opens its own connection, so
+        # close this read-only connection before calling it.
+        connection.close()
+        connection = None
+
+        user_id = create_user(
+            name=name,
+            email=email,
+            password_hash=password_hash,
+            role=role,
+        )
+
+        account_label = "administrator" if role == "admin" else "user"
+        flash(
+            f"{account_label.capitalize()} account created successfully for {name}.",
+            "success",
+        )
+        return redirect(url_for("main.admin_users"))
+
+    except Exception as exc:
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception:
+                pass
+
+        print("ADMIN CREATE USER ERROR:", repr(exc))
+        flash(
+            "Unable to create the account. The email may already be registered or the database may be unavailable.",
+            "danger",
+        )
+        return redirect(url_for("main.admin_users"))
+
+
+@main_bp.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def admin_delete_user(user_id):
+    """Delete a user or administrator account from the admin portal."""
+    current_user_id = session.get("user_id")
+
+    if current_user_id == user_id:
+        flash(
+            "You cannot delete the administrator account you are currently using.",
+            "danger",
+        )
+        return redirect(url_for("main.admin_users"))
+
+    connection = None
+
+    try:
+        connection = get_connection()
+
+        target = connection.execute(
+            """
+            SELECT id, name, email, role
+            FROM users
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (user_id,),
+        ).fetchone()
+
+        if not target:
+            flash("The account could not be found.", "danger")
+            return redirect(url_for("main.admin_users"))
+
+        target_role = str(target["role"] or "user").lower()
+
+        # Never allow the application to end up without an administrator.
+        if target_role == "admin":
+            admin_count_row = connection.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM users
+                WHERE LOWER(role) = 'admin'
+                """
+            ).fetchone()
+
+            if int(admin_count_row["total"] or 0) <= 1:
+                flash(
+                    "The last administrator account cannot be deleted.",
+                    "danger",
+                )
+                return redirect(url_for("main.admin_users"))
+
+        # Preserve uploaded datasets, but remove their ownership from the
+        # deleted account. Remove account-specific authentication records.
+        connection.execute(
+            "UPDATE uploads SET uploaded_by = NULL WHERE uploaded_by = ?",
+            (user_id,),
+        )
+
+        connection.execute(
+            "DELETE FROM login_activity WHERE user_id = ?",
+            (user_id,),
+        )
+
+        try:
+            connection.execute(
+                "DELETE FROM password_reset_tokens WHERE user_id = ?",
+                (user_id,),
+            )
+        except Exception:
+            # Older databases may not have this table.
+            pass
+
+        connection.execute(
+            "DELETE FROM admins WHERE user_id = ?",
+            (user_id,),
+        )
+
+        connection.execute(
+            "DELETE FROM users WHERE id = ?",
+            (user_id,),
+        )
+
+        connection.commit()
+
+        account_label = (
+            "administrator"
+            if target_role == "admin"
+            else "user"
+        )
+
+        flash(
+            f"{account_label.capitalize()} account for {target['name']} was deleted successfully.",
+            "success",
+        )
+
+    except Exception as exc:
+        if connection is not None:
+            try:
+                connection.rollback()
+            except Exception:
+                pass
+
+        print("ADMIN DELETE USER ERROR:", repr(exc))
+        flash(
+            "Unable to delete the account. No changes were made.",
+            "danger",
+        )
+
+    finally:
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception:
+                pass
+
+    return redirect(url_for("main.admin_users"))
+
 
 @main_bp.route("/admin/users")
 @admin_required

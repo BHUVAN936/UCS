@@ -7,6 +7,17 @@
 
     <title>Login | UCE Connect</title>
 
+    <script>
+    (function () {
+        try {
+            const theme = localStorage.getItem("uce-theme");
+            if (theme === "dark" || theme === "light") {
+                document.documentElement.setAttribute("data-theme", theme);
+            }
+        } catch (e) {}
+    })();
+</script>
+
     <style>
         * {
             margin: 0;
@@ -957,7 +968,93 @@
             color: #7f8ca3;
         }
 
-    </style>
+
+
+        /* =====================================================
+           THEME CONSISTENCY
+        ===================================================== */
+
+        html[data-theme="light"] body {
+            background: var(--background);
+            color: var(--text);
+        }
+
+        html[data-theme="dark"] body {
+            background: #0d1525;
+            color: #f5f7fb;
+        }
+
+        html[data-theme="dark"] .navbar {
+            background: #111b2e;
+            border-bottom-color: #26344b;
+        }
+
+        html[data-theme="dark"] .brand {
+            color: #f5f7fb;
+        }
+
+        html[data-theme="dark"] .nav-links a {
+            color: #aab6c9;
+        }
+
+        html[data-theme="dark"] .nav-links a:hover,
+        html[data-theme="dark"] .nav-links .login-link {
+            color: #ffffff;
+        }
+
+        html[data-theme="dark"] .theme-button {
+            background: #1b2942;
+            border-color: #35435c;
+            color: #ffffff;
+        }
+
+        html[data-theme="dark"] .theme-button:hover {
+            background: #243451;
+        }
+
+        html[data-theme="dark"] .main {
+            background: #0d1525;
+        }
+
+        html[data-theme="dark"] .login-card {
+            background: #151f34;
+            border-color: #2c3a53;
+            box-shadow: 0 22px 55px rgba(0,0,0,.30);
+        }
+
+        html[data-theme="dark"] .heading-area h1,
+        html[data-theme="dark"] .form-group label {
+            color: #f5f7fb;
+        }
+
+        html[data-theme="dark"] .heading-area p,
+        html[data-theme="dark"] .help-text,
+        html[data-theme="dark"] .remember,
+        html[data-theme="dark"] .security-note,
+        html[data-theme="dark"] .footer {
+            color: #aab6c9;
+        }
+
+        html[data-theme="dark"] .form-input {
+            background: #111a2d;
+            border-color: #354158;
+            color: #ffffff;
+        }
+
+        html[data-theme="dark"] .form-input::placeholder {
+            color: #74839b;
+        }
+
+        html[data-theme="dark"] .form-input:focus {
+            background: #111a2d;
+            border-color: #718bb8;
+        }
+
+        html[data-theme="dark"] .divider::before,
+        html[data-theme="dark"] .divider::after {
+            background: #344057;
+        }
+</style>
 </head>
 
 <body>
@@ -1013,10 +1110,12 @@
             <button
                 type="button"
                 class="theme-button"
-                onclick="toggleTheme()"
-                title="Toggle theme"
+                id="themeToggle"
+                title="Switch to dark mode"
+                aria-label="Switch to dark mode"
+                aria-pressed="false"
             >
-                ◐
+                <span id="themeIcon" aria-hidden="true">◐</span>
             </button>
 
             <a
@@ -1025,15 +1124,7 @@
             >
                 Login
             </a>
-
-            <a
-                href="{{ url_for('main.register') }}"
-                class="register-nav"
-            >
-                Register
-            </a>
-
-        </nav>
+</nav>
 
     </header>
 
@@ -1340,6 +1431,8 @@
          JAVASCRIPT
     ====================================================== -->
 
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
     <script>
 
         /* =====================================================
@@ -1391,77 +1484,16 @@
         }
 
 
-        /* =====================================================
-           THEME TOGGLE
-        ===================================================== */
-
-        function toggleTheme() {
-
-            const body =
-                document.body;
-
-            if (
-                body.getAttribute("data-theme")
-                === "dark"
-            ) {
-
-                body.removeAttribute("data-theme");
-
-                localStorage.removeItem(
-                    "uce-theme"
-                );
-
-            } else {
-
-                body.setAttribute(
-                    "data-theme",
-                    "dark"
-                );
-
-                localStorage.setItem(
-                    "uce-theme",
-                    "dark"
-                );
-
-            }
-
-        }
-
-
-        /* =====================================================
-           PAGE LOAD
-        ===================================================== */
-
         document.addEventListener(
             "DOMContentLoaded",
             function () {
-
-                /* Restore theme */
-
-                if (
-                    localStorage.getItem("uce-theme")
-                    === "dark"
-                ) {
-
-                    document.body.setAttribute(
-                        "data-theme",
-                        "dark"
-                    );
-
-                }
-
-                /* Focus email */
-
                 const email =
                     document.getElementById("email");
-
                 if (email) {
                     email.focus();
                 }
-
             }
         );
-
     </script>
 
 </body>
