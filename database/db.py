@@ -1921,6 +1921,89 @@ def update_user_password(
         connection.close()
 
 
+def update_user_profile(
+    user_id,
+    name,
+    email,
+):
+    """Update a user's editable profile fields."""
+
+    connection = get_connection()
+
+    try:
+        cursor = connection.execute(
+            """
+            UPDATE users
+            SET
+                name = ?,
+                email = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                name.strip(),
+                email.strip().lower(),
+                user_id,
+            ),
+        )
+
+        connection.commit()
+        return cursor.rowcount > 0
+
+    finally:
+        connection.close()
+
+
+def update_user_role(
+    user_id,
+    role,
+):
+    """Change an account between the supported user/admin roles."""
+
+    normalized_role = (
+        "admin"
+        if str(role).strip().lower() == "admin"
+        else "user"
+    )
+
+    connection = get_connection()
+
+    try:
+        connection.execute(
+            """
+            UPDATE users
+            SET
+                role = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (
+                normalized_role,
+                user_id,
+            ),
+        )
+
+        if normalized_role == "admin":
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO admins(user_id)
+                VALUES(?)
+                """,
+                (user_id,),
+            )
+        else:
+            connection.execute(
+                "DELETE FROM admins WHERE user_id = ?",
+                (user_id,),
+            )
+
+        connection.commit()
+        return True
+
+    finally:
+        connection.close()
+
+
 def get_all_users():
 
     connection = get_connection()

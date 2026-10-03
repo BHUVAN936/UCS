@@ -1453,6 +1453,7 @@ html[data-theme="dark"] .delete-account-disabled {
                         <th>Last Seen</th>
                         <th>Status</th>
                         <th>Access</th>
+                        <th>Actions</th>
                     </tr>
 
                 </thead>
@@ -1516,6 +1517,16 @@ html[data-theme="dark"] .delete-account-disabled {
 
                         <td class="account-actions-cell">
 
+                            <button
+                                type="button"
+                                class="edit-account-button"
+                                data-edit-user-id="{{ user.id }}" data-edit-name="{{ user.name|e }}" data-edit-email="{{ user.email|e }}" data-edit-role="admin"
+                                title="Edit administrator account"
+                            >
+                                <i class="fa-solid fa-pen"></i>
+                                Edit
+                            </button>
+
                             {% if user.id == session.get('user_id') %}
 
                                 <span
@@ -1540,7 +1551,7 @@ html[data-theme="dark"] .delete-account-disabled {
                                         title="Delete administrator account"
                                     >
                                         <i class="fa-solid fa-trash-can"></i>
-                                        Delete Account
+                                        Delete
                                     </button>
                                 </form>
 
@@ -1614,6 +1625,7 @@ html[data-theme="dark"] .delete-account-disabled {
                         <th>Last Seen</th>
                         <th>Status</th>
                         <th>Submissions</th>
+                        <th>Actions</th>
                     </tr>
 
                 </thead>
@@ -1682,6 +1694,16 @@ html[data-theme="dark"] .delete-account-disabled {
 
                         <td class="account-actions-cell">
 
+                            <button
+                                type="button"
+                                class="edit-account-button"
+                                data-edit-user-id="{{ user.id }}" data-edit-name="{{ user.name|e }}" data-edit-email="{{ user.email|e }}" data-edit-role="user"
+                                title="Edit user account"
+                            >
+                                <i class="fa-solid fa-pen"></i>
+                                Edit
+                            </button>
+
                             <form
                                 class="delete-account-form"
                                 method="POST"
@@ -1694,7 +1716,7 @@ html[data-theme="dark"] .delete-account-disabled {
                                     title="Delete user account"
                                 >
                                     <i class="fa-solid fa-trash-can"></i>
-                                    Delete Account
+                                    Delete
                                 </button>
                             </form>
 
@@ -1887,5 +1909,361 @@ html[data-theme="dark"] .delete-account-disabled {
 </div>
 
 </section>
+
+
+<!-- =====================================================
+     EDIT ACCOUNT MODAL
+     Kept inside the content block so the browser receives both
+     the CSS and JavaScript. This fixes the non-working Edit button.
+     ===================================================== -->
+<div id="editAccountModal" class="edit-account-modal" hidden>
+    <div class="edit-account-backdrop" data-edit-close></div>
+
+    <section class="edit-account-dialog" role="dialog" aria-modal="true" aria-labelledby="editAccountTitle">
+        <div class="edit-account-dialog-header">
+            <div>
+                <span class="edit-account-eyebrow">ACCOUNT MANAGEMENT</span>
+                <h2 id="editAccountTitle">Edit account</h2>
+                <p>Correct the name or email and change the account access level.</p>
+            </div>
+            <button type="button" class="edit-account-close" data-edit-close aria-label="Close edit account">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST" id="editAccountForm" class="edit-account-form">
+            <div class="edit-account-grid">
+                <div class="edit-account-field">
+                    <label for="edit-account-name">Full Name</label>
+                    <input id="edit-account-name" type="text" name="name" autocomplete="name" required>
+                </div>
+
+                <div class="edit-account-field">
+                    <label for="edit-account-email">Email Address</label>
+                    <input id="edit-account-email" type="email" name="email" autocomplete="email" required>
+                </div>
+
+                <div class="edit-account-field edit-account-field-full">
+                    <label for="edit-account-role">Access Level</label>
+                    <select id="edit-account-role" name="role" required>
+                        <option value="user">User — Standard Access</option>
+                        <option value="admin">Admin — Full Access</option>
+                    </select>
+                    <p class="edit-account-help">
+                        Admin has full portal access. User has standard portal access.
+                    </p>
+                </div>
+            </div>
+
+            <div class="edit-account-dialog-actions">
+                <button type="button" class="edit-secondary-button" data-edit-close>Cancel</button>
+                <button type="submit" class="edit-primary-button">
+                    <i class="fa-solid fa-check"></i>
+                    Save changes
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<style>
+/* ==========================================================
+   ACCOUNT EDIT UI
+   ========================================================== */
+.edit-account-modal[hidden] { display: none !important; }
+.edit-account-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+.edit-account-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .58);
+    backdrop-filter: blur(7px);
+}
+.edit-account-dialog {
+    position: relative;
+    width: min(620px, 100%);
+    max-height: min(720px, calc(100vh - 48px));
+    overflow: auto;
+    padding: 28px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 30px 90px rgba(15, 23, 42, .30);
+    animation: editAccountIn .18s ease-out;
+}
+@keyframes editAccountIn {
+    from { opacity: 0; transform: translateY(10px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.edit-account-dialog-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+.edit-account-eyebrow {
+    display: inline-flex;
+    margin-bottom: 8px;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .12em;
+}
+.edit-account-dialog-header h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 25px;
+    line-height: 1.15;
+    letter-spacing: -.025em;
+}
+.edit-account-dialog-header p {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.55;
+}
+.edit-account-close {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface-2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: .18s ease;
+}
+.edit-account-close:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+.edit-account-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.edit-account-field { min-width: 0; }
+.edit-account-field-full { grid-column: 1 / -1; }
+.edit-account-field label {
+    display: block;
+    margin: 0 0 8px;
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 800;
+}
+.edit-account-field input,
+.edit-account-field select {
+    box-sizing: border-box;
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    color: var(--text);
+    outline: none;
+    font: inherit;
+    font-size: 13px;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.edit-account-field input:hover,
+.edit-account-field select:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.edit-account-field input:focus,
+.edit-account-field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+    background: var(--surface);
+}
+.edit-account-help {
+    margin: 7px 0 0;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.5;
+}
+.edit-account-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+.edit-secondary-button,
+.edit-primary-button {
+    min-height: 43px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 17px;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .18s ease;
+}
+.edit-secondary-button {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+}
+.edit-primary-button {
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #062a2d;
+}
+.edit-secondary-button:hover,
+.edit-primary-button:hover { transform: translateY(-1px); }
+.edit-secondary-button:hover { border-color: var(--accent); }
+.edit-primary-button:hover { box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 24%, transparent); }
+
+/* Modern action buttons in both account tables. */
+.account-actions-cell {
+    white-space: nowrap;
+    min-width: 165px;
+}
+.edit-account-button,
+.delete-account-button,
+.delete-account-disabled {
+    min-height: 35px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 0 11px;
+    margin: 0 5px 0 0;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    vertical-align: middle;
+}
+.edit-account-button {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    cursor: pointer;
+}
+.edit-account-button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface-2));
+    transform: translateY(-1px);
+}
+.delete-account-button {
+    border: 1px solid rgba(220, 38, 38, .28);
+    background: rgba(220, 38, 38, .06);
+    color: #dc2626;
+    cursor: pointer;
+}
+.delete-account-button:hover {
+    border-color: rgba(220, 38, 38, .5);
+    background: rgba(220, 38, 38, .11);
+    transform: translateY(-1px);
+}
+.delete-account-disabled {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+}
+.edit-account-button,
+.delete-account-button { transition: .18s ease; }
+
+@media (max-width: 680px) {
+    .edit-account-modal { padding: 14px; }
+    .edit-account-dialog { padding: 21px; border-radius: 18px; }
+    .edit-account-grid { grid-template-columns: 1fr; }
+    .edit-account-field-full { grid-column: auto; }
+    .edit-account-dialog-actions { flex-direction: column-reverse; }
+    .edit-secondary-button,
+    .edit-primary-button { width: 100%; }
+}
+</style>
+
+<script>
+(function () {
+    const modal = document.getElementById("editAccountModal");
+    const form = document.getElementById("editAccountForm");
+    const nameInput = document.getElementById("edit-account-name");
+    const emailInput = document.getElementById("edit-account-email");
+    const roleInput = document.getElementById("edit-account-role");
+
+    if (!modal || !form) return;
+
+    window.openEditAccountModal = function (userId, name, email, role) {
+        if (!userId) return;
+
+        nameInput.value = name || "";
+        emailInput.value = email || "";
+        roleInput.value = role === "admin" ? "admin" : "user";
+
+        const template = "{{ url_for('main.admin_edit_user', user_id=0) }}";
+        form.action = template.replace("/0/edit", "/" + encodeURIComponent(userId) + "/edit");
+
+        modal.hidden = false;
+        document.body.style.overflow = "hidden";
+
+        window.setTimeout(function () {
+            nameInput.focus();
+            nameInput.select();
+        }, 30);
+    };
+
+    // Use data attributes instead of inline onclick handlers.
+    // This avoids Jinja/HTML quoting problems with names and emails.
+    document.querySelectorAll(".edit-account-button[data-edit-user-id]").forEach(function (button) {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            window.openEditAccountModal(
+                button.getAttribute("data-edit-user-id"),
+                button.getAttribute("data-edit-name") || "",
+                button.getAttribute("data-edit-email") || "",
+                button.getAttribute("data-edit-role") || "user"
+            );
+        });
+    });
+
+    window.closeEditAccountModal = function () {
+        modal.hidden = true;
+        document.body.style.overflow = "";
+        form.reset();
+    };
+
+    modal.querySelectorAll("[data-edit-close]").forEach(function (element) {
+        element.addEventListener("click", window.closeEditAccountModal);
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.hidden) {
+            window.closeEditAccountModal();
+        }
+    });
+
+    // Prevent accidental double submissions.
+    form.addEventListener("submit", function () {
+        const submit = form.querySelector("button[type='submit']");
+        if (submit) {
+            submit.disabled = true;
+            submit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        }
+    });
+})();
+</script>
 
 {% endblock %}

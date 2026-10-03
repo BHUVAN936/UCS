@@ -844,6 +844,57 @@ html[data-theme="dark"] .admin-page .department-data-panel .department-card > p 
 html[data-theme="dark"] .admin-page .department-data-panel .department-period-link .period-records {
     color: var(--accent) !important;
 }
+
+
+/* Original uploaded file actions */
+.source-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.source-link,
+.source-download-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 34px;
+    padding: 0 11px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+    transition: .18s ease;
+}
+
+.source-link {
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.source-download-link {
+    color: var(--text);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+}
+
+.source-link:hover,
+.source-download-link:hover {
+    transform: translateY(-1px);
+    border-color: var(--accent);
+}
+
+@media (max-width: 800px) {
+    .source-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
 </style>
 
 <section class="admin-page">
@@ -1437,19 +1488,33 @@ html[data-theme="dark"] .admin-page .department-data-panel .department-period-li
 
                                 {% if upload.original_file_path %}
 
-                                    <a
-                                        href="{{ url_for(
-                                            'main.open_submission',
-                                            upload_id=upload.id
-                                        ) }}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="source-link"
-                                    >
+                                    <div class="source-actions">
 
-                                        Open File
+                                        <a
+                                            href="{{ url_for(
+                                                'main.open_submission',
+                                                upload_id=upload.id
+                                            ) }}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="source-link"
+                                        >
+                                            Open File
+                                        </a>
 
-                                    </a>
+                                        <a
+                                            href="{{ url_for(
+                                                'main.download_submission',
+                                                upload_id=upload.id
+                                            ) }}"
+                                            class="source-download-link"
+                                            title="Download the original uploaded file"
+                                        >
+                                            <i class="fa-solid fa-download"></i>
+                                            Download
+                                        </a>
+
+                                    </div>
 
                                 {% elif upload.source_url
                                       and upload.source_url.startswith(('http://', 'https://'))

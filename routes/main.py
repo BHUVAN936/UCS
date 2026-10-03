@@ -38,6 +38,8 @@ from database.db import (
     get_user_analytics,
     update_last_login,
     update_last_seen,
+    update_user_profile,
+    update_user_role,
 )
 from services.link_service import download_spreadsheet
 
@@ -2024,6 +2026,78 @@ def delete_my_upload(upload_id):
 # ADMIN - OPEN SUBMISSION SOURCE
 # =========================================================
 
+# =========================================================
+# ADMIN / USER - DOWNLOAD ORIGINAL SUBMISSION FILE
+# =========================================================
+
+@main_bp.route("/admin/submission/<int:upload_id>/download")
+@login_required
+def download_submission(upload_id):
+    """Download the exact original CSV/XLS/XLSX submitted for an upload.
+
+    The stored original file is used; the imported database rows are never
+    reconstructed into a new spreadsheet. Administrators may download any
+    submission, while normal users may download only their own submission.
+    """
+    connection = get_connection()
+    try:
+        upload = connection.execute(
+            """
+            SELECT *
+            FROM uploads
+            WHERE id=?
+            LIMIT 1
+            """,
+            (upload_id,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+    if not upload:
+        flash("Submission not found.", "danger")
+        return redirect(url_for("main.admin"))
+
+    # sqlite3.Row does not provide .get(); convert it once to a normal dict.
+    upload = dict(upload)
+
+    current_user = get_current_user()
+
+    if (
+        current_user["role"] != "admin"
+        and int(upload.get("uploaded_by") or 0) != int(current_user["id"])
+    ):
+        flash("You do not have permission to download this submission.", "danger")
+        return redirect(url_for("main.my_data"))
+
+    original_path = str(upload.get("original_file_path") or "").strip()
+    file_path = resolve_submission_file(original_path)
+
+    if not file_path:
+        flash("The original uploaded file is no longer available.", "danger")
+        return redirect(
+            request.referrer
+            or (url_for("main.admin") if current_user["role"] == "admin" else url_for("main.my_data"))
+        )
+
+    suffix = file_path.suffix.lower()
+    mimetypes_map = {
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".xls": "application/vnd.ms-excel",
+        ".csv": "text/csv",
+    }
+
+    filename = str(upload.get("original_filename") or "").strip()
+    if not filename:
+        filename = f"submission_{upload_id}{suffix or '.xlsx'}"
+
+    return send_file(
+        file_path,
+        mimetype=mimetypes_map.get(suffix, "application/octet-stream"),
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
 @main_bp.route("/admin/submission/<int:upload_id>/open")
 @login_required
 def open_submission(upload_id):
@@ -2055,6 +2129,9 @@ def open_submission(upload_id):
         flash("Submission not found.", "danger")
         return redirect(url_for("main.my_data"))
 
+    # sqlite3.Row does not provide .get(); convert it once to a normal dict.
+    upload = dict(upload)
+
     current_user = get_current_user()
     if (
         current_user["role"] != "admin"
@@ -2063,7 +2140,6 @@ def open_submission(upload_id):
         flash("You do not have permission to open this submission.", "danger")
         return redirect(url_for("main.my_data"))
 
-    upload = dict(upload)
     original_path = str(upload.get("original_file_path") or "").strip()
     source_url = str(upload.get("source_url") or "").strip()
 
@@ -2175,6 +2251,85 @@ def _preview_value(value):
     except Exception:
         pass
     return str(value)
+
+
+# =========================================================
+# USER ACCOUNT
+# =========================================================
+
+@main_bp.route("/account", methods=["GET", "POST"])
+@login_required
+def account():
+    """Allow the logged-in account owner to edit their own name/email.
+
+    Role/access is intentionally not editable here.  Only administrators can
+    change another account's access level from the Admin User Analytics page.
+    """
+
+    user_id = session.get("user_id")
+    current = get_current_user()
+
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        email = request.form.get("email", "").strip().lower()
+
+        if not name:
+            flash("Please enter your full name.", "danger")
+            return redirect(url_for("main.account"))
+
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+            flash("Please enter a valid email address.", "danger")
+            return redirect(url_for("main.account"))
+
+        connection = None
+
+        try:
+            connection = get_connection()
+
+            existing = connection.execute(
+                """
+                SELECT id
+                FROM users
+                WHERE email = ? COLLATE NOCASE
+                  AND id <> ?
+                LIMIT 1
+                """,
+                (email, user_id),
+            ).fetchone()
+
+            if existing:
+                flash("That email address is already registered to another account.", "danger")
+                return redirect(url_for("main.account"))
+
+            connection.close()
+            connection = None
+
+            if not update_user_profile(user_id, name, email):
+                flash("The account could not be updated.", "danger")
+                return redirect(url_for("main.account"))
+
+            flash("Your account details were updated successfully.", "success")
+            return redirect(url_for("main.account"))
+
+        except Exception as exc:
+            if connection is not None:
+                try:
+                    connection.rollback()
+                except Exception:
+                    pass
+                try:
+                    connection.close()
+                except Exception:
+                    pass
+
+            print("USER ACCOUNT UPDATE ERROR:", repr(exc))
+            flash("Unable to update your account. No changes were made.", "danger")
+            return redirect(url_for("main.account"))
+
+    return render_template(
+        "account.html",
+        account_user=current,
+    )
 
 
 # =========================================================
@@ -2308,6 +2463,138 @@ def admin_create_user():
             "danger",
         )
         return redirect(url_for("main.admin_users"))
+
+
+@main_bp.route("/admin/users/<int:user_id>/edit", methods=["POST"])
+@admin_required
+def admin_edit_user(user_id):
+    """Edit an account's name/email and, when safe, its access level."""
+
+    current_user_id = session.get("user_id")
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    role = request.form.get("role", "user").strip().lower()
+
+    if not name:
+        flash("Please enter the user's full name.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+        flash("Please enter a valid email address.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    if role not in ("user", "admin"):
+        flash("Invalid account access selected.", "danger")
+        return redirect(url_for("main.admin_users"))
+
+    connection = None
+
+    try:
+        connection = get_connection()
+
+        target = connection.execute(
+            """
+            SELECT id, name, email, role
+            FROM users
+            WHERE id = ?
+            LIMIT 1
+            """,
+            (user_id,),
+        ).fetchone()
+
+        if not target:
+            flash("The account could not be found.", "danger")
+            return redirect(url_for("main.admin_users"))
+
+        duplicate = connection.execute(
+            """
+            SELECT id
+            FROM users
+            WHERE email = ? COLLATE NOCASE
+              AND id <> ?
+            LIMIT 1
+            """,
+            (email, user_id),
+        ).fetchone()
+
+        if duplicate:
+            flash("That email address is already registered to another account.", "danger")
+            return redirect(url_for("main.admin_users"))
+
+        current_role = str(target["role"] or "user").lower()
+
+        # Never let an administrator accidentally remove their own admin access.
+        if current_user_id == user_id and role != "admin":
+            flash("You cannot remove administrator access from the account you are currently using.", "danger")
+            return redirect(url_for("main.admin_users"))
+
+        # Never leave the system without an administrator.
+        if current_role == "admin" and role == "user":
+            count_row = connection.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM users
+                WHERE LOWER(role) = 'admin'
+                """
+            ).fetchone()
+
+            if int(count_row["total"] or 0) <= 1:
+                flash("The last administrator account cannot be changed to a user.", "danger")
+                return redirect(url_for("main.admin_users"))
+
+        connection.execute(
+            """
+            UPDATE users
+            SET
+                name = ?,
+                email = ?,
+                role = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (name, email, role, user_id),
+        )
+
+        if role == "admin":
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO admins(user_id)
+                VALUES(?)
+                """,
+                (user_id,),
+            )
+        else:
+            connection.execute(
+                "DELETE FROM admins WHERE user_id = ?",
+                (user_id,),
+            )
+
+        connection.commit()
+
+        account_label = "administrator" if role == "admin" else "user"
+        flash(
+            f"{account_label.capitalize()} account for {name} was updated successfully.",
+            "success",
+        )
+
+    except Exception as exc:
+        if connection is not None:
+            try:
+                connection.rollback()
+            except Exception:
+                pass
+
+        print("ADMIN EDIT USER ERROR:", repr(exc))
+        flash("Unable to update the account. No changes were made.", "danger")
+
+    finally:
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception:
+                pass
+
+    return redirect(url_for("main.admin_users"))
 
 
 @main_bp.route("/admin/users/<int:user_id>/delete", methods=["POST"])
